@@ -56,8 +56,8 @@
 		EndIf
 	EndProcedure
 	;}
-EndModule MoveWindow_(
+EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 33
+; CursorPosition = 58
 ; Folding = --
 ; EnableXP
