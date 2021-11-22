@@ -1,0 +1,3 @@
+[submodule "Libraries/FlatMenu"]
+	path = Libraries/FlatMenu
+	url = https://github.com/LastLifeLeft/FlatMenu.git

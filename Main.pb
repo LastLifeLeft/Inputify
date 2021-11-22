@@ -6,6 +6,7 @@ CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
 CompilerElse	
 	UsePNGImageDecoder()
 CompilerEndIf
+IncludeFile "FlatMenu/FlatMenu.pbi"
 
 IncludePath "Includes"
 IncludeFile "General.pbi"
@@ -18,6 +19,6 @@ Repeat
 	WaitWindowEvent()
 ForEver
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 7
+; CursorPosition = 8
 ; Folding = -
 ; EnableXP
