@@ -5,6 +5,7 @@ EndDeclareModule
 
 DeclareModule MainWindow
 	; Public variables, structures and constants
+	Global WindowID
 	
 	; Public procedures declaration
 	Declare Open()
@@ -23,6 +24,6 @@ Module General
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 17
+; CursorPosition = 8
 ; Folding = 4
 ; EnableXP

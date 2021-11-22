@@ -18,7 +18,7 @@
 	;{ Public procedures
 	Procedure Open()
 		
-		OpenWindow(#Window, 0, 0, 100, 100, "Inputify", #PB_Window_Invisible)
+		WindowID = OpenWindow(#Window, 0, 0, 100, 100, "Inputify", #PB_Window_Invisible)
 		
 		; Set up a hook for keyboard input
 		Protected Dim Rid.RAWINPUTDEVICE(0)
@@ -66,6 +66,6 @@ EndProcedure
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 50
+; CursorPosition = 47
 ; Folding = -
 ; EnableXP
