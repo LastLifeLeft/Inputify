@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2021-11-22 07:23" user="Poshu" host="DESKTOP-RGG8DMG"/>
+    <lastopen date="2021-11-22 08:05" user="Poshu" host="DESKTOP-RGG8DMG"/>
   </section>
   <section name="files">
     <file name="Includes\General.pbi">
@@ -16,11 +16,15 @@
     </file>
     <file name="Includes\MainWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="72fd2db2940b1c64b5802c170142d935"/>
+      <fingerprint md5="d6b0eb8bb6e49fefed16979c5b955b6f"/>
     </file>
     <file name="Includes\PopupWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
       <fingerprint md5="6e414c37e79e7668331afb5c2c4f7352"/>
+    </file>
+    <file name="Libraries\FlatMenu\FlatMenu.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+++"/>
+      <fingerprint md5="fbb2da928ae60584a20f4efb0b682508"/>
     </file>
     <file name="Libraries\ImagePlugin.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
@@ -28,11 +32,7 @@
     </file>
     <file name="Main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="948e9cc0ff67b46be49040536025b00a"/>
-    </file>
-    <file name="Libraries\FlatMenu\FlatMenu.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+++"/>
-      <fingerprint md5="9fd5bc150fd36121437d9c0c051b1c05"/>
+      <fingerprint md5="9a59b99d21c872e869f0053e15431b3b"/>
     </file>
   </section>
   <section name="targets">
