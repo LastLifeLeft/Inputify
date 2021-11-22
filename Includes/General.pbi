@@ -1,5 +1,5 @@
 ﻿DeclareModule General
-	
+	#AppName = "Inputify"
 	
 EndDeclareModule
 
@@ -14,9 +14,11 @@ EndDeclareModule
 DeclareModule PopupWindow
 	; Public variables, structures and constants
 	
+	
 	; Public procedures declaration
 	Declare Create(VKey)
 	Declare Hide(Window)
+	Declare SetPopupOrigin(X, Y)
 EndDeclareModule
 
 Module General
@@ -24,6 +26,6 @@ Module General
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 8
+; CursorPosition = 1
 ; Folding = 4
 ; EnableXP

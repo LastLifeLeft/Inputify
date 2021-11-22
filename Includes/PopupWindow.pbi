@@ -27,12 +27,10 @@
 		Hold.b
 	EndStructure
 	
-	ExamineDesktops()
 	Global WindowDuration = 1200									; The time left to a window once its key has been released
 	Global FrameDuration = 33										; The duration of a movement frame. 33ms =~ two frames on a 60fps screen
 	Global FrameCount = 9											; The number of step in a movement animation.
-	Global OriginX													; The horizontal apparition spot of a new window
-	Global OriginY = DesktopHeight(0) - #Window_Height				; The vertical apparition spot of a new window
+	Global OriginX, OriginY											; The apparition coordinates of a new window
 	Global NewList WindowList.WindowData()
 	
 	; Private procedures declaration
@@ -56,7 +54,7 @@
 			EndIf
 		Next
 		
-		Window = OpenWindow(#PB_Any, OriginX, OriginY - Count * #Window_MovementTarget, #Window_Width, #Window_Height, "Input", #PB_Window_Invisible | #PB_Window_BorderLess, MainWindow::WindowID)
+		Window = OpenWindow(#PB_Any, OriginX, OriginY - Count * #Window_MovementTarget, #Window_Width, #Window_Height, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess, MainWindow::WindowID)
 		
 		If Window
 			; Set up the window data
@@ -86,6 +84,11 @@
 		
  		AddWindowTimer(Window, #Timer_Duration, WindowDuration + (FrameCount - *WindowData\MovementStep) * FrameDuration)
 		*WindowData\Hold = #False
+	EndProcedure
+	
+	Procedure SetPopupOrigin(X, Y)
+		OriginX = X
+		OriginY = Y - #Window_Height
 	EndProcedure
 	;}
 	
@@ -164,7 +167,6 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 119
-; FirstLine = 70
-; Folding = -9
+; CursorPosition = 56
+; Folding = 45
 ; EnableXP

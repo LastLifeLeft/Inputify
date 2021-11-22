@@ -18,6 +18,6 @@ Repeat
 	WaitWindowEvent()
 ForEver
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 6
+; CursorPosition = 7
 ; Folding = -
 ; EnableXP
