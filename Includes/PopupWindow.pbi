@@ -145,7 +145,7 @@
 					*WindowData\CurrentPosition = Ease_CubicOut(*WindowData\MovementStep, *WindowData\OriginalPosition, *WindowData\MovementTarget, FrameCount)
 				EndIf
 				
-				SetWindowPos_(*WindowData\WindowID, 0, *WindowData\X, *WindowData\CurrentPosition, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER)
+				SetWindowPos_(*WindowData\WindowID, 0, *WindowData\X, *WindowData\CurrentPosition, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW)
 				
 			Case #Timer_Apparition
 				AddWindowTimer(Window, #Timer_FadeInAnimation, FrameDuration)
@@ -167,6 +167,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 56
-; Folding = 45
+; CursorPosition = 26
+; FirstLine = 9
+; Folding = n6
 ; EnableXP

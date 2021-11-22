@@ -1,6 +1,6 @@
 ﻿DeclareModule General
 	#AppName = "Inputify"
-	
+	#Version = 0.1
 EndDeclareModule
 
 DeclareModule MainWindow
@@ -26,6 +26,6 @@ Module General
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 1
+; CursorPosition = 8
 ; Folding = 4
 ; EnableXP
