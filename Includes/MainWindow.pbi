@@ -1,8 +1,10 @@
 ﻿Module MainWindow
 	EnableExplicit
-	; Private variables
+	; Private variables, structures and constants
 	#Window = 0
-	#SystrayIcon = 0
+	#Systray = 0
+	
+	Global Dim InputArray.i(256)				; Used to discriminate between an actual input and a repeat.
 	
 	; Private procedures declaration
 	Import "User32.lib"
@@ -31,7 +33,7 @@
   		Protected nIcons = ExtractIconEx_(ProgramFilename(), -1, #Null, #Null, #Null)
   		Protected Dim phiconSmall(nIcons)
   		ExtractIconEx_(ProgramFilename(), 0, #NUL, phiconSmall(), nIcons) 
-  		AddSysTrayIcon(#SystrayIcon, WindowID(#Window), phiconSmall(0))
+  		AddSysTrayIcon(#Systray, WindowID(#Window), phiconSmall(0))
   		
 	EndProcedure
 	;}
@@ -45,9 +47,16 @@
 				If pRawData\header\dwType = #RIM_TYPEKEYBOARD
 					
 					If pRawData\keyboard\Flags
-						Debug "VKey " + pRawData\keyboard\VKey + " released"
+						If InputArray(pRawData\keyboard\VKey)
+							; An input has been released, start the windows disparition timer
+							PopupWindow::Hide(InputArray(pRawData\keyboard\VKey))
+							InputArray(pRawData\keyboard\VKey) = #False
+						EndIf
 					Else
-						Debug "VKey " + pRawData\keyboard\VKey + " pressed"
+						If Not InputArray(pRawData\keyboard\VKey)
+							; This is a new input, create a new window
+							InputArray(pRawData\keyboard\VKey) = PopupWindow::Create(pRawData\keyboard\VKey)
+						EndIf
 					EndIf
 				EndIf
 			EndIf
@@ -57,6 +66,6 @@ EndProcedure
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 48
+; CursorPosition = 50
 ; Folding = -
 ; EnableXP

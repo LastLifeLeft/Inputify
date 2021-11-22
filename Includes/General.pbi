@@ -4,14 +4,18 @@
 EndDeclareModule
 
 DeclareModule MainWindow
-	; Public variables
+	; Public variables, structures and constants
 	
 	; Public procedures declaration
 	Declare Open()
 EndDeclareModule
 
 DeclareModule PopupWindow
+	; Public variables, structures and constants
 	
+	; Public procedures declaration
+	Declare Create(VKey)
+	Declare Hide(Window)
 EndDeclareModule
 
 Module General
@@ -19,6 +23,6 @@ Module General
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 5
+; CursorPosition = 17
 ; Folding = 4
 ; EnableXP
