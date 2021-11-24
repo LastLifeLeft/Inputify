@@ -27,7 +27,6 @@
 		Hold.b
 	EndStructure
 	
-	Global WindowDuration = 1200									; The time left to a window once its key has been released
 	Global FrameDuration = 33										; The duration of a movement frame. 33ms =~ two frames on a 60fps screen
 	Global FrameCount = 9											; The number of step in a movement animation.
 	Global OriginX, OriginY											; The apparition coordinates of a new window
@@ -69,7 +68,7 @@
 			StickyWindow(Window, #True)
 			SetWindowLongPtr_(WindowList()\WindowID,#GWL_EXSTYLE,#WS_EX_LAYERED)
 			SetLayeredWindowAttributes_(WindowList()\WindowID,0,0,#LWA_ALPHA)
-			HideWindow(Window, #False)
+			HideWindow(Window, #False, #PB_Window_NoActivate)
 			BindEvent(#PB_Event_Timer, @HandlerTimer(), Window)
 			
 			; Delay the apparition (helps for Hold and Combo)
@@ -82,7 +81,7 @@
 	Procedure Hide(Window)
 		Protected *WindowData.WindowData = GetWindowData(Window)
 		
- 		AddWindowTimer(Window, #Timer_Duration, WindowDuration + (FrameCount - *WindowData\MovementStep) * FrameDuration)
+ 		AddWindowTimer(Window, #Timer_Duration, General::Preferences(General::#Pref_Duration) + (FrameCount - *WindowData\MovementStep) * FrameDuration)
 		*WindowData\Hold = #False
 	EndProcedure
 	
@@ -167,7 +166,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 26
-; FirstLine = 9
-; Folding = n6
+; CursorPosition = 70
+; FirstLine = 22
+; Folding = v5
 ; EnableXP
