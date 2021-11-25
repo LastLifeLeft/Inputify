@@ -2,6 +2,7 @@
 	; Public variables, structures and constants
 	#AppName = "Inputify"
 	#Version = 0.1
+	#Event_Update = #PB_Event_FirstCustomValue
 	
 	;{ Colors
 	Enumeration ; Colors type
@@ -108,6 +109,7 @@
 	;}
 	
 	Declare AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
+	Declare UpdateThread(Null)
 EndDeclareModule
 
 DeclareModule MainWindow
@@ -136,7 +138,6 @@ EndDeclareModule
 Module General
 	EnableExplicit
 	
-	
 	Procedure AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
 		MovePathCursor(x, y + Radius, Flag)
 		
@@ -147,9 +148,32 @@ Module General
 		ClosePath()
 	EndProcedure
 	
+	Procedure UpdateThread(Null)
+		Protected Text.s, URL.s, HTTPRequest, LineCount, Loop
+		HTTPRequest = HTTPRequest(#PB_HTTP_Get, "https://github.com/LastLifeLeft/Inputify/releases/latest")
+		If HTTPRequest
+			
+			Text.s = HTTPInfo(HTTPRequest, #PB_HTTP_Headers )
+			
+			LineCount = CountString(Text, #CRLF$)
+			
+			For loop = 1 To LineCount
+				If StringField(StringField(Text, loop, #CRLF$), 1, ":") = "Location"
+					URL.s = StringField(StringField(Text, loop, #CRLF$), 2, "Location:")
+					If Val(StringField(URL, CountString(URL, "/") + 1, "/")) > #Version
+						PostEvent(#Event_Update)
+					EndIf
+					Break
+				EndIf
+			Next
+			
+			FinishHTTP(HTTPRequest)
+		Else
+			FinishHTTP(HTTPRequest)
+		EndIf
+	EndProcedure
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 132
-; FirstLine = 35
-; Folding = H5-
+; CursorPosition = 172
+; Folding = B5+
 ; EnableXP

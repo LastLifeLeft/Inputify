@@ -100,6 +100,7 @@
 	Declare HandlerSystray()
 	Declare HandlerToggle()
 	Declare HandlerTrackbar()
+	Declare HandlerUpdate()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare RedrawToggle(ID)
@@ -173,10 +174,15 @@
 	  		BindEvent(#PB_Event_Menu, @HandlerMenuEnabled(), #Window, #Menu_Enabled) ; We can't use BindMenuEvent with FlatMenu
 	  		BindEvent(#PB_Event_Menu, @HandlerMenuOptions(), #Window, #Menu_Options)
 	  		BindEvent(#PB_Event_Menu, @HandlerMenuQuit(), #Window, #Menu_Quit)
+	  		BindEvent(General::#Event_Update, @HandlerUpdate())
 	  		SetWindowCallback(@WindowCallback(), #Window)
 	  		KeyboardHook = SetWindowsHookEx_(#WH_KEYBOARD_LL, @KeyboardHook(), GetModuleHandle_(0), 0)
 	  		If General::Preferences(General::#Pref_Mouse)
 	  			MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
+	  		EndIf
+	  		
+	  		If General::Preferences(General::#Pref_CheckUpdate)
+	  			CreateThread(General::@UpdateThread(), #Null)
 	  		EndIf
 	  		
 	  	Else
@@ -224,6 +230,12 @@
 	
 	Procedure HandlerMenuEnabled()
 		Enabled = EventData()
+	EndProcedure
+	
+	Procedure HandlerUpdate()
+		If MessageRequester(General::#AppName, ~"A new version is available!\nDo you want to download it?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
+			RunProgram("https://github.com/LastLifeLeft/Inputify/releases/latest")
+		EndIf
 	EndProcedure
 	
 	Procedure HandlerMenuOptions()
@@ -584,7 +596,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 454
-; FirstLine = 31
-; Folding = RjAE9
+; CursorPosition = 184
+; FirstLine = 49
+; Folding = xhAA5
 ; EnableXP

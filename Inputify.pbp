@@ -7,16 +7,16 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2021-11-25 14:07" user="Poshu" host="DESKTOP-RGG8DMG"/>
+    <lastopen date="2021-11-25 17:29" user="Poshu" host="DESKTOP-RGG8DMG"/>
   </section>
   <section name="files">
     <file name="Includes\General.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="c7032f4ed82bfb22e498e3bcf198d584"/>
+      <fingerprint md5="db8592cbce122a241beb1ac5247163fd"/>
     </file>
     <file name="Includes\MainWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="3cfa65b1f2ee85a0cc3812a76e6980dd"/>
+      <fingerprint md5="d85fe2b6465f68b76155d86adbd5acce"/>
     </file>
     <file name="Includes\PopupWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
