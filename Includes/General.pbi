@@ -15,6 +15,12 @@
 		#Color_Type_ToggleFront
 		#Color_Type_Trackbar
 		
+		#Color_Keyboard_0
+		#Color_Keyboard_1
+		#Color_Keyboard_2
+		#Color_Keyboard_3
+		#Color_Keyboard_4
+		
 		#_Color_Type_COUNT
 	EndEnumeration
 	
@@ -44,20 +50,34 @@
 	ColorScheme(#Color_Mode_Light, #Color_Type_FrontCold)		= FixColor($6A7480)
 	ColorScheme(#Color_Mode_Light, #Color_Type_FrontHot)		= FixColor($000000)
 	ColorScheme(#Color_Mode_Light, #Color_Type_FrontDisabled)	= FixColor($DCDDDE)
+	
 	ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOff)		= SetAlpha(255, FixColor($72767D))
 	ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOn)		= SetAlpha(255, FixColor($3AA55D))
 	ColorScheme(#Color_Mode_Light, #Color_Type_ToggleFront)		= SetAlpha(255, FixColor($FFFFFF))
 	ColorScheme(#Color_Mode_Light, #Color_Type_Trackbar) 		= SetAlpha(255, FixColor($5765F2))
+	
+	ColorScheme(#Color_Mode_Light, #Color_Keyboard_0)			= SetAlpha(255, FixColor($404040))
+	ColorScheme(#Color_Mode_Light, #Color_Keyboard_1)			= SetAlpha(255, FixColor($D7D7D7))
+	ColorScheme(#Color_Mode_Light, #Color_Keyboard_2)			= SetAlpha(255, FixColor($FFFFFF))
+	ColorScheme(#Color_Mode_Light, #Color_Keyboard_3)			= SetAlpha(255, FixColor($F5F5F5))
+	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_4)			= SetAlpha(255, FixColor($414141))
 	
 	ColorScheme(#Color_Mode_Dark, #Color_Type_BackCold) 		= FixColor($2F3136)
 	ColorScheme(#Color_Mode_Dark, #Color_Type_BackHot )			= FixColor($393C43)
 	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontCold)		= FixColor($8E9297)
 	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontHot)			= FixColor($FFFFFF)
 	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontDisabled)	= FixColor($4F545C)
+	
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleOff)		= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOff)		
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleOn)			= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOn)		
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleFront)		= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleFront)		
-	ColorScheme(#Color_Mode_Dark, #Color_Type_Trackbar) 		= ColorScheme(#Color_Mode_Light, #Color_Type_Trackbar) 		
+	ColorScheme(#Color_Mode_Dark, #Color_Type_Trackbar) 		= ColorScheme(#Color_Mode_Light, #Color_Type_Trackbar) 
+	
+	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_0)			= SetAlpha(255, FixColor($1D1D1D))
+	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_1)			= SetAlpha(255, FixColor($353535))
+	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_2)			= SetAlpha(255, FixColor($696969))
+	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_3)			= SetAlpha(255, FixColor($595959))
+	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_4)			= SetAlpha(255, FixColor($CDCDCD))
 	;}
 	
 	;{ Fonts
@@ -86,11 +106,15 @@
 	Preferences(#Pref_Combo) = #True
 	Preferences(#Pref_CheckUpdate) = #True
 	;}
+	
+	Declare AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
 EndDeclareModule
 
 DeclareModule MainWindow
 	; Public variables, structures and constants
+	Global Ctrl, Shift, Alt
 	Global WindowID
+	Global Dim InputArray.i(255)
 	
 	; Public procedures declaration
 	Declare Open()
@@ -104,13 +128,28 @@ DeclareModule PopupWindow
 	Declare Create(VKey)
 	Declare Hide(Window)
 	Declare SetPopupOrigin(X, Y)
+	Declare ShortCut(Control, Shift, Alt, Vkey)
+	Declare AddKey(Window, VKey)
+	Declare SetScale(NewScale)
 EndDeclareModule
 
 Module General
 	EnableExplicit
 	
+	
+	Procedure AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
+		MovePathCursor(x, y + Radius, Flag)
+		
+		AddPathArc(0, Height - radius, Width, Height - radius, Radius, #PB_Path_Relative)
+		AddPathArc(Width - Radius, 0, Width - Radius, - Height, Radius, #PB_Path_Relative)
+		AddPathArc(0, Radius - Height, -Width, Radius - Height, Radius, #PB_Path_Relative)
+		AddPathArc(Radius - Width, 0, Radius - Width, Height, Radius, #PB_Path_Relative)
+		ClosePath()
+	EndProcedure
+	
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 45
-; Folding = H9-
+; CursorPosition = 132
+; FirstLine = 35
+; Folding = H5-
 ; EnableXP

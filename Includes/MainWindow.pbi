@@ -85,10 +85,10 @@
 	#WH_KEYBOARD_LL = 13
 	#WM_INSTANCESTART = 111
 	
-	Global Dim InputArray.i(255)
 	Global PopupMenu
 	Global Enabled = #True
 	Global MouseOffset = -1000
+	Global MouseHook, KeyboardHook
 	
 	; Private procedures declaration
 	Declare CreateToggleButton(x, y, ID)
@@ -100,7 +100,8 @@
 	Declare HandlerSystray()
 	Declare HandlerToggle()
 	Declare HandlerTrackbar()
-	Declare Hook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
+	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
+	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare RedrawToggle(ID)
 	Declare RedrawTrackbar(ID)
 	Declare SetColor()
@@ -173,7 +174,11 @@
 	  		BindEvent(#PB_Event_Menu, @HandlerMenuOptions(), #Window, #Menu_Options)
 	  		BindEvent(#PB_Event_Menu, @HandlerMenuQuit(), #Window, #Menu_Quit)
 	  		SetWindowCallback(@WindowCallback(), #Window)
-	  		SetWindowsHookEx_(#WH_KEYBOARD_LL,@Hook(),GetModuleHandle_(0),0)
+	  		KeyboardHook = SetWindowsHookEx_(#WH_KEYBOARD_LL, @KeyboardHook(), GetModuleHandle_(0), 0)
+	  		If General::Preferences(General::#Pref_Mouse)
+	  			MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
+	  		EndIf
+	  		
 	  	Else
 	  		HandlerMenuQuit() 
 	  	EndIf
@@ -250,11 +255,34 @@
 			
 			General::Preferences(ID) = Bool(Not General::Preferences(ID))
 			
-			If ID = #Canvas_DarkMode
-				SetColor()
-			Else
-				RedrawToggle(ID)
-			EndIf
+			Select ID
+				Case #Canvas_DarkMode
+					SetColor()
+				Case #Canvas_Mouse
+					If General::Preferences(General::#Pref_Mouse)
+						MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
+					Else
+						UnhookWindowsHookEx_(MouseHook)
+						
+						If InputArray(#VK_LBUTTON)
+							PopupWindow::Hide(InputArray(#VK_LBUTTON))
+							InputArray(#VK_LBUTTON) = #False
+						EndIf
+						
+						If InputArray(#VK_RBUTTON)
+							PopupWindow::Hide(InputArray(#VK_RBUTTON))
+							InputArray(#VK_RBUTTON) = #False
+						EndIf
+						
+						If InputArray(#VK_MBUTTON)
+							PopupWindow::Hide(InputArray(#VK_MBUTTON))
+							InputArray(#VK_MBUTTON) = #False
+						EndIf
+					EndIf
+					RedrawToggle(ID)
+				Default
+					RedrawToggle(ID)
+			EndSelect
 			
 		EndIf
 	EndProcedure
@@ -277,6 +305,8 @@
 				If MouseOffset = - 1000
 					If MouseX >= 131 + Position - 5 And MouseX <= 131 + Position + 4
 						SetGadgetAttribute(ID, #PB_Canvas_Cursor, #PB_Cursor_LeftRight)
+					ElseIf MouseX >= 131 And MouseY >= 10 And MouseY <= 18
+						SetGadgetAttribute(ID, #PB_Canvas_Cursor, #PB_Cursor_Hand)
 					Else
 						SetGadgetAttribute(ID, #PB_Canvas_Cursor, #PB_Cursor_Default)
 					EndIf
@@ -289,12 +319,27 @@
 					EndIf
 					
 					General::Preferences(ID) = Minimum + (Position * Maximum) / 100
+					
+					If ID = #Canvas_Scale
+						PopupWindow::SetScale(General::Preferences(ID))
+					EndIf
+					
 					RedrawTrackbar(ID)
 				EndIf
 			Case #PB_EventType_LeftButtonDown
 				If MouseX >= 131 + Position - 5 And MouseX <= 131 + Position + 4
 					MouseOffset = (MouseX - 131) - Position
 					SetGadgetAttribute(ID, #PB_Canvas_Cursor, #PB_Cursor_LeftRight)
+				ElseIf MouseX >= 131 And MouseY >= 10 And MouseY <= 18
+					Position = MouseX - 131 
+					MouseOffset = 0
+					General::Preferences(ID) = Minimum + (Position * Maximum) / 100
+					RedrawTrackbar(ID)
+					SetGadgetAttribute(ID, #PB_Canvas_Cursor, #PB_Cursor_LeftRight)
+					
+					If ID = #Canvas_Scale
+						PopupWindow::SetScale(General::Preferences(ID))
+					EndIf
 				EndIf
 			Case #PB_EventType_LeftButtonUp
 				MouseOffset = - 1000
@@ -306,19 +351,52 @@
 		EndSelect
 	EndProcedure
 	
-	Procedure Hook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
+	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 		If nCode = #HC_ACTION
+			If (*p\vkCode = #VK_LCONTROL Or *p\vkCode = #VK_RCONTROL)
+				*p\vkCode = #VK_CONTROL
+			ElseIf (*p\vkCode = #VK_LSHIFT Or *p\vkCode = #VK_RSHIFT)
+				*p\vkCode = #VK_SHIFT
+			ElseIf (*p\vkCode = #VK_LMENU Or *p\vkCode = #VK_RMENU)
+				*p\vkCode = #VK_MENU
+			EndIf
 			
 			If wParam = #WM_KEYDOWN
-				If Enabled
-					If Not InputArray(*p\vkCode)
-						; This is a new input, create a new window
+				If Not InputArray(*p\vkCode)
+					If (*p\vkCode = #VK_CONTROL)
 						InputArray(*p\vkCode) = PopupWindow::Create(*p\vkCode)
+						Ctrl = #True
+					ElseIf (*p\vkCode = #VK_SHIFT)
+						If Ctrl
+							PopupWindow::ShortCut(Ctrl, Shift, Alt, *p\vkCode)
+						Else
+							InputArray(*p\vkCode) = PopupWindow::Create(*p\vkCode)
+						EndIf
+						Shift = #True
+					ElseIf (*p\vkCode = #VK_MENU)
+						If Ctrl
+							PopupWindow::ShortCut(Ctrl, Shift, Alt, *p\vkCode)
+						Else 
+							InputArray(*p\vkCode) = PopupWindow::Create(*p\vkCode)
+						EndIf
+						Alt = #True
+					ElseIf Ctrl Or Shift Or Alt
+						PopupWindow::ShortCut(Ctrl, Shift, Alt, *p\vkCode)
 					Else
-						; Hold!
+						InputArray(*p\vkCode) = PopupWindow::Create(*p\vkCode)
 					EndIf
+				Else
+					; Hold!
 				EndIf
 			Else
+				If (*p\vkCode = #VK_CONTROL)
+					Ctrl = #False
+				ElseIf (*p\vkCode = #VK_SHIFT)
+					Shift = #False
+				ElseIf (*p\vkCode = #VK_MENU)
+					Alt = #False
+				EndIf
+				
 				If InputArray(*p\vkCode)
 					; An input has been released, start the windows disparition timer
 					PopupWindow::Hide(InputArray(*p\vkCode))
@@ -328,7 +406,36 @@
 		EndIf
 		ProcedureReturn #False
 	EndProcedure
+	
+	Procedure MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
+		If nCode = #HC_ACTION
+			Select wParam 
+				Case #WM_LBUTTONDOWN
+					InputArray(#VK_LBUTTON) = PopupWindow::Create(#VK_LBUTTON)
+				Case #WM_RBUTTONDOWN
+					InputArray(#VK_RBUTTON) = PopupWindow::Create(#VK_RBUTTON)
+				Case #WM_MBUTTONDOWN
+					InputArray(#VK_MBUTTON) = PopupWindow::Create(#VK_MBUTTON)
+				Case #WM_LBUTTONUP
+					If InputArray(#VK_LBUTTON)
+						PopupWindow::Hide(InputArray(#VK_LBUTTON))
+						InputArray(#VK_LBUTTON) = #False
+					EndIf
+				Case #WM_RBUTTONUP
+					If InputArray(#VK_RBUTTON)
+						PopupWindow::Hide(InputArray(#VK_RBUTTON))
+						InputArray(#VK_RBUTTON) = #False
+					EndIf
+				Case #WM_MBUTTONUP
+					If InputArray(#VK_MBUTTON)
+						PopupWindow::Hide(InputArray(#VK_MBUTTON))
+						InputArray(#VK_MBUTTON) = #False
+					EndIf
+			EndSelect
+		EndIf
 		
+	EndProcedure
+	
 	Procedure RedrawToggle(ID)
 		StartVectorDrawing(CanvasVectorOutput(ID))
 		AddPathBox(0, 0, VectorOutputWidth(), VectorOutputHeight())
@@ -348,7 +455,7 @@
 		If General::Preferences(ID)
 			VectorCheck(195 + 6  + General::Preferences(ID) * 15, 13, 11)
 		Else
-			VectorPlus(195 + 12  + General::Preferences(ID) * 15, 2, 13)
+			VectorPlus(195 + 12 + General::Preferences(ID) * 15, 2, 14)
 		EndIf
 		VectorSourceColor(General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_ToggleFront))
 		FillPath()
@@ -374,13 +481,13 @@
 		VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold)))
 		FillPath()
 		
-		VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontDisabled)))
-		
 		MovePathCursor(131, 5)
 		AddPathLine(0, 18, #PB_Path_Relative)
 		
 		MovePathCursor(231, 5)
 		AddPathLine(0, 18, #PB_Path_Relative)
+		
+		VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontDisabled)))
 		StrokePath(2)
 		
 		AddPathBox(131 + Position, 10, 100 - Position, 8)
@@ -397,8 +504,6 @@
 		StrokePath(2, #PB_Path_Preserve)
 		VectorSourceColor($FFFFFFFF)
 		FillPath()
-		
-		
 		
 		StopVectorDrawing()
 	EndProcedure
@@ -479,7 +584,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 224
-; FirstLine = 105
-; Folding = XBgE+
+; CursorPosition = 454
+; FirstLine = 31
+; Folding = RjAE9
 ; EnableXP
