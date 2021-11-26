@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2021-11-26 14:51" user="Poshu" host="DESKTOP-RGG8DMG"/>
+    <lastopen date="2021-11-26 16:00" user="Poshu" host="DESKTOP-RGG8DMG"/>
   </section>
   <section name="files">
     <file name="Includes\General.pbi">
