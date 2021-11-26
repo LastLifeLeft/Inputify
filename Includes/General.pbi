@@ -102,7 +102,7 @@
 	EndEnumeration
 	
 	Global Dim Preferences(#_Pref_COUNT - 1)
-	Global FirstStart
+	Global FirstStart, PreferenceFile.s
 	;}
 	
 	Declare AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
@@ -166,19 +166,19 @@ Module General
 	Procedure Init()
 		Protected AppData.s = GetEnvironmentVariable("APPDATA"), CurrentDirectory.s = GetCurrentDirectory()
 		
-		If FileSize(CurrentDirectory+ "Preference.ini") > 0
-			AppData = CurrentDirectory
+		If FileSize(CurrentDirectory + "Preference.ini") > 0
+			PreferenceFile = CurrentDirectory + "Preference.ini"
 		ElseIf FileSize(AppData + "/❤x1/Inputify/Preference.ini") = -1
 			CreateDirectory(AppData + "/❤x1")
 			CreateDirectory(AppData + "/❤x1/Inputify")
 			
 			FirstStart = #True
-			AppData + "/❤x1/Inputify/"
+			PreferenceFile = AppData + "/❤x1/Inputify/Preference.ini"
 		Else
-			AppData + "/❤x1/Inputify/"
+			PreferenceFile = AppData + "/❤x1/Inputify/Preference.ini"
 		EndIf
 		
-		OpenPreferences(AppData + "Preference.ini")
+		OpenPreferences(PreferenceFile)
 		
 		PreferenceGroup("Appearance")
 		Preferences(#Pref_DarkMode) = ReadPreferenceLong("DarkMode", #Color_Mode_Dark)
@@ -212,8 +212,8 @@ Module General
 	
 	
 EndModule
-; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 175
-; FirstLine = 26
+; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
+; CursorPosition = 180
+; FirstLine = 23
 ; Folding = B93
 ; EnableXP
