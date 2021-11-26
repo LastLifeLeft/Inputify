@@ -147,7 +147,6 @@
 	Declare VectorCheck(x.d, y.d, Size.d)
 	Declare VectorPlus(x.d, y.d, Size.d)
 	
-	
 	;{ Public procedures
 	Procedure Open()
 		; Check if another instance is already running signal it
@@ -320,7 +319,7 @@
 	EndProcedure
 	
 	Procedure HandlerMenuQuit()
-		If CreatePreferences(GetEnvironmentVariable("APPDATA") + "/❤x1/Inputify/Preference.ini")
+		If CreatePreferences(General::PreferenceFile)
 			PreferenceGroup("Appearance")
 			WritePreferenceLong("DarkMode", General::Preferences(General::#Pref_DarkMode))
 			WritePreferenceLong("Scale", General::Preferences(General::#Pref_Scale))
@@ -689,8 +688,8 @@
 	EndProcedure
 	;}
 EndModule
-; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 227
-; FirstLine = 161
-; Folding = tDAAg
+; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
+; CursorPosition = 305
+; FirstLine = 87
+; Folding = tCgAg
 ; EnableXP
