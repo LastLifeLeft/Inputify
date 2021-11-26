@@ -102,17 +102,10 @@
 	EndEnumeration
 	
 	Global Dim Preferences(#_Pref_COUNT - 1)
-	
-	Preferences(#Pref_DarkMode) = #Color_Mode_Dark
-	Preferences(#Pref_Scale) = 100
-	Preferences(#Pref_Mouse) = #False
-	Preferences(#Pref_Duration) = 1200									; The time left to a window once its key has been released
-	Preferences(#Pref_Combo) = #True
-	Preferences(#Pref_CheckUpdate) = #True
+	Global FirstStart
 	;}
 	
 	Declare AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
-	Declare UpdateThread(Null)
 	Declare Init()
 EndDeclareModule
 
@@ -143,15 +136,7 @@ EndDeclareModule
 Module General
 	EnableExplicit
 	
-	Procedure AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
-		MovePathCursor(x, y + Radius, Flag)
-		
-		AddPathArc(0, Height - radius, Width, Height - radius, Radius, #PB_Path_Relative)
-		AddPathArc(Width - Radius, 0, Width - Radius, - Height, Radius, #PB_Path_Relative)
-		AddPathArc(0, Radius - Height, -Width, Radius - Height, Radius, #PB_Path_Relative)
-		AddPathArc(Radius - Width, 0, Radius - Width, Height, Radius, #PB_Path_Relative)
-		ClosePath()
-	EndProcedure
+	Declare UpdateThread(Null)
 	
 	Procedure UpdateThread(Null)
 		Protected Text.s, URL.s, HTTPRequest, LineCount, Loop
@@ -179,7 +164,41 @@ Module General
 	
 	;{ Public procedure
 	Procedure Init()
-		;Debug GetEnvironmentVariable("APPDATA")
+		Protected AppData.s = GetEnvironmentVariable("APPDATA")
+		
+		If Not OpenPreferences(AppData + "/❤x1/Inputify/Preference.ini")
+			CreateDirectory(AppData + "/❤x1")
+			CreateDirectory(AppData + "/❤x1/Inputify")
+			
+			FirstStart = #True
+		EndIf
+		
+		PreferenceGroup("Appearance")
+		Preferences(#Pref_DarkMode) = ReadPreferenceLong("DarkMode", #Color_Mode_Dark)
+		Preferences(#Pref_Scale) = ReadPreferenceLong("Scale", 100)
+		
+		PreferenceGroup("Beahvior")
+		Preferences(#Pref_Mouse) = ReadPreferenceLong("Mouse", #False)
+		Preferences(#Pref_Duration) = ReadPreferenceLong("Duration", 1200)				
+		Preferences(#Pref_Combo) = ReadPreferenceLong("Combo", #True)
+		
+		PreferenceGroup("Misc")
+		Preferences(#Pref_CheckUpdate) = ReadPreferenceLong("Update", #True)
+		
+		ClosePreferences()
+		
+		PopupWindow::SetScale(Preferences(#Pref_Scale))
+		
+	EndProcedure
+	
+	Procedure AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
+		MovePathCursor(x, y + Radius, Flag)
+		
+		AddPathArc(0, Height - radius, Width, Height - radius, Radius, #PB_Path_Relative)
+		AddPathArc(Width - Radius, 0, Width - Radius, - Height, Radius, #PB_Path_Relative)
+		AddPathArc(0, Radius - Height, -Width, Radius - Height, Radius, #PB_Path_Relative)
+		AddPathArc(Radius - Width, 0, Radius - Width, Height, Radius, #PB_Path_Relative)
+		ClosePath()
 	EndProcedure
 	;}
 	
@@ -187,6 +206,7 @@ Module General
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 129
-; Folding = B99
+; CursorPosition = 174
+; FirstLine = 19
+; Folding = B93
 ; EnableXP

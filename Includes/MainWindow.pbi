@@ -1,6 +1,37 @@
 ﻿Module MainWindow
 	EnableExplicit
 	; Private variables, structures and constants
+	;{ Notification
+	Structure NOTIFYICONDATA_ Align #PB_Structure_AlignC
+		cbSize.l
+		hwnd.i
+		uId.l
+		uFlags.l
+		uCallbackMessage.l
+		hIcon.i
+		StructureUnion
+			szTip.s{64}
+			szTipEx.s{128}
+		EndStructureUnion
+		dwState.l
+		dwStateMask.l
+		szInfo.s{256}
+		StructureUnion
+			uTimeout.l
+			uVersion.l
+		EndStructureUnion
+		szInfoTitle.s{64}
+		dwInfoFlags.l
+		guidItem.GUID
+		hBalloonIcon.i
+	EndStructure
+	
+	Global SysTrayInfo.NOTIFYICONDATA_
+		
+	#NIIF_INFO  = $1
+		
+	;}
+	
 	;{ Language
 	Enumeration 
 		#Lng_DarkMode
@@ -23,17 +54,18 @@
 		#Lng_Behavior
 		#Lng_Misc               
 		
+		#Lng_Tooltip
 		#_Lng_Count
 	EndEnumeration
 	
 	Global Dim Language.s(#_Lng_Count)
-	Language(#Lng_DarkMode)			= "Dark mode:"
-	Language(#Lng_Scale)			= "Scale:"
-	Language(#Lng_Mouse)			= "Track Mouse:"
-	Language(#Lng_Duration)			= "Block duration:"
-	Language(#Lng_Combo)			= "Combo regroupment:"
-	Language(#Lng_CheckUpdate)		= "Auto-update:"
-	Language(#Lng_About)			= "Visit ❤x1's website"
+	Language(#Lng_DarkMode)				= "Dark mode:"
+	Language(#Lng_Scale)				= "Scale:"
+	Language(#Lng_Mouse)				= "Track Mouse:"
+	Language(#Lng_Duration)				= "Block duration:"
+	Language(#Lng_Combo)				= "Combo regroupment:"
+	Language(#Lng_CheckUpdate)			= "Auto-update:"
+	Language(#Lng_About)				= "Visit ❤x1's website"
 	
 	Language(#ToolTip_DarkMode)			= "Switch between the dark and ligh theme."
 	Language(#ToolTip_Scale)			= "Changes the size of the input popup"
@@ -43,13 +75,16 @@
 	Language(#ToolTip_CheckUpdate)		= "Check update at startup."
 	Language(#ToolTip_About)			= ""
 	
-	Language(#Lng_UserInterface)	= "APPEARANCE"
-	Language(#Lng_Behavior)			= "BEHAVIOR"
-	Language(#Lng_Misc)				= "MISC"
+	Language(#Lng_UserInterface)		= "APPEARANCE"
+	Language(#Lng_Behavior)				= "BEHAVIOR"
+	Language(#Lng_Misc)					= "MISC"
+	
+	Language(#Lng_Tooltip)				= "Inputify has started, you can find it in your system tray icons!"
 	;}
 	
 	;{ Windows and gadgets
 	#Window = 0
+	#Window_SingleInstance = 1
 	
 	Enumeration ;Gadget
 		#Canvas_DarkMode
@@ -91,6 +126,7 @@
 	Global MouseHook, KeyboardHook
 	
 	; Private procedures declaration
+	Declare SystrayBalloon(Title.s,Message.s,Flags)
 	Declare CreateToggleButton(x, y, ID)
 	Declare CreateTracbar(x, y, ID)
 	Declare HandlerCloseWindow()
@@ -111,16 +147,17 @@
 	Declare VectorCheck(x.d, y.d, Size.d)
 	Declare VectorPlus(x.d, y.d, Size.d)
 	
+	
 	;{ Public procedures
 	Procedure Open()
 		; Check if another instance is already running signal it
-		Protected InstanceWindow = FindWindow_(#Null, General::#AppName + " v" + General:: #Version)
+		Protected InstanceWindow = FindWindow_(#Null, "60e272b1-eb20-4caa-9354-2142e2be78a0")
 		If InstanceWindow
 			SendMessage_(InstanceWindow, #WM_INSTANCESTART, 0, 0)
 			HandlerMenuQuit() 
 		EndIf
 		
-		WindowID = OpenWindow(#Window, 0, 0, #Appearance_Window_Width, #Appearance_Window_Height, General::#AppName + " v" + General:: #Version, #PB_Window_Invisible | #PB_Window_ScreenCentered | #PB_Window_SystemMenu)
+		WindowID = OpenWindow(#Window, 0, 0, #Appearance_Window_Width, #Appearance_Window_Height, General::#AppName, #PB_Window_Invisible | #PB_Window_ScreenCentered | #PB_Window_SystemMenu)
 		
 		If WindowID
 			; Window
@@ -178,14 +215,17 @@
 	  		BindEvent(#PB_Event_Menu, @HandlerMenuOptions(), #Window, #Menu_Options)
 	  		BindEvent(#PB_Event_Menu, @HandlerMenuQuit(), #Window, #Menu_Quit)
 	  		BindEvent(General::#Event_Update, @HandlerUpdate())
-	  		SetWindowCallback(@WindowCallback(), #Window)
+	  		
+	  		OpenWindow(#Window_SingleInstance, 0, 0, 10, 0, "60e272b1-eb20-4caa-9354-2142e2be78a0", #PB_Window_Invisible)
+	  		SetWindowCallback(@WindowCallback(), #Window_SingleInstance)
+	  		
 	  		KeyboardHook = SetWindowsHookEx_(#WH_KEYBOARD_LL, @KeyboardHook(), GetModuleHandle_(0), 0)
 	  		If General::Preferences(General::#Pref_Mouse)
 	  			MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
 	  		EndIf
 	  		
-	  		If General::Preferences(General::#Pref_CheckUpdate)
-	  			CreateThread(General::@UpdateThread(), #Null)
+	  		If General::FirstStart
+	  			SystrayBalloon(General::#AppName, Language(#Lng_Tooltip), #NIIF_USER|#NIIF_INFO )
 	  		EndIf
 	  		
 	  	Else
@@ -195,6 +235,36 @@
 	;}
 	
 	;{ Private procedures
+	Procedure SystrayBalloon(Title.s,Message.s,Flags)
+		If OSVersion() >= #PB_OS_Windows_Vista
+			SysTrayInfo\cbSize = SizeOf(NOTIFYICONDATA_)
+		ElseIf OSVersion() >= #PB_OS_Windows_XP
+			SysTrayInfo\cbSize=OffsetOf(NOTIFYICONDATA_\hBalloonIcon)
+		ElseIf OSVersion() >= #PB_OS_Windows_2000
+			SysTrayInfo\cbSize = OffsetOf(NOTIFYICONDATA_\guidItem)
+		Else
+			SysTrayInfo\cbSize = OffsetOf(NOTIFYICONDATA_\szTip) + SizeOf(NOTIFYICONDATA_\szTip)
+		EndIf
+		
+		If SysTrayInfo\cbSize
+			SysTrayInfo\uVersion = #NOTIFYICON_VERSION
+			SysTrayInfo\uCallbackMessage = #WM_NOTIFYICON
+			SysTrayInfo\uId = #Null
+			SysTrayInfo\uFlags = #NIF_INFO|#NIF_TIP
+			SysTrayInfo\uTimeout = 10000
+			SysTrayInfo\hwnd = WindowID(#Window)
+			SysTrayInfo\dwInfoFlags = Flags
+			SysTrayInfo\dwState = #NIS_SHAREDICON
+			SysTrayInfo\szInfoTitle = Title
+			SysTrayInfo\szInfo = Message
+			SysTrayInfo\hBalloonIcon = #Null
+			SysTrayInfo\szTip = General::#AppName
+			ProcedureReturn Shell_NotifyIcon_(#NIM_MODIFY, @SysTrayInfo)
+		EndIf
+		
+		ProcedureReturn #False
+	EndProcedure
+	
 	Procedure AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
 		MovePathCursor(x, y + Radius, Flag)
 		
@@ -250,9 +320,26 @@
 	EndProcedure
 	
 	Procedure HandlerMenuQuit()
+		If CreatePreferences(GetEnvironmentVariable("APPDATA") + "/❤x1/Inputify/Preference.ini")
+			PreferenceGroup("Appearance")
+			WritePreferenceLong("DarkMode", General::Preferences(General::#Pref_DarkMode))
+			WritePreferenceLong("Scale", General::Preferences(General::#Pref_Scale))
+			
+			PreferenceGroup("Beahvior")
+			WritePreferenceLong("Mouse", General::Preferences(General::#Pref_Mouse))
+			WritePreferenceLong("Duration", General::Preferences(General::#Pref_Duration))				
+			WritePreferenceLong("Combo", General::Preferences(General::#Pref_Combo))
+			
+			PreferenceGroup("Misc")
+			WritePreferenceLong("Update", General::Preferences(General::#Pref_CheckUpdate))
+			
+			ClosePreferences()
+		EndIf
+		
 		If IsSysTrayIcon(#Systray)
 			RemoveSysTrayIcon(#Systray)
 		EndIf
+		
 		End
 	EndProcedure
 	
@@ -603,7 +690,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 251
-; FirstLine = 39
-; Folding = RBIE5
+; CursorPosition = 227
+; FirstLine = 161
+; Folding = tDAAg
 ; EnableXP
