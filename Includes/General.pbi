@@ -166,12 +166,14 @@ Module General
 	Procedure Init()
 		Protected AppData.s = GetEnvironmentVariable("APPDATA")
 		
-		If Not OpenPreferences(AppData + "/❤x1/Inputify/Preference.ini")
+		If FileSize(AppData + "/❤x1/Inputify/Preference.ini") = -1
 			CreateDirectory(AppData + "/❤x1")
 			CreateDirectory(AppData + "/❤x1/Inputify")
 			
 			FirstStart = #True
 		EndIf
+		
+		OpenPreferences(AppData + "/❤x1/Inputify/Preference.ini")
 		
 		PreferenceGroup("Appearance")
 		Preferences(#Pref_DarkMode) = ReadPreferenceLong("DarkMode", #Color_Mode_Dark)
@@ -206,7 +208,7 @@ Module General
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 174
+; CursorPosition = 134
 ; FirstLine = 19
 ; Folding = B93
 ; EnableXP
