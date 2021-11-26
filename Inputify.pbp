@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.00 Alpha 5 (Windows - x64)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.00 Beta 1 (Windows - x64)">
   <section name="config">
     <options closefiles="1" openmode="0" name="Inputify"/>
   </section>
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2021-11-26 16:46" user="Poshu" host="DESKTOP-RGG8DMG"/>
+    <lastopen date="2021-11-26 17:57" user="Poshu" host="DESKTOP-RGG8DMG"/>
   </section>
   <section name="files">
     <file name="Includes\General.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="19f97951636f64d8cb96b774327acaed"/>
+      <fingerprint md5="7c8a74527485915044d53179f86efb1b"/>
     </file>
     <file name="Includes\MainWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="4cb28aff511e07180c10eb3fd8162ed1"/>
+      <fingerprint md5="f5e59b074de53d1ce114a5b09d9c8e65"/>
     </file>
     <file name="Includes\PopupWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>

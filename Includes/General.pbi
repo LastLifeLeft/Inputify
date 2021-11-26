@@ -1,7 +1,7 @@
 ﻿DeclareModule General
 	; Public variables, structures and constants
 	#AppName = "Inputify"
-	#Version = 0.1
+	#Version = 0.3
 	#Event_Update = #PB_Event_FirstCustomValue
 	
 	;{ Colors
@@ -136,8 +136,6 @@ EndDeclareModule
 Module General
 	EnableExplicit
 	
-	Declare UpdateThread(Null)
-	
 	Procedure UpdateThread(Null)
 		Protected Text.s, URL.s, HTTPRequest, LineCount, Loop
 		HTTPRequest = HTTPRequest(#PB_HTTP_Get, "https://github.com/LastLifeLeft/Inputify/releases/latest")
@@ -149,7 +147,7 @@ Module General
 			For loop = 1 To LineCount
 				If StringField(StringField(Text, loop, #CRLF$), 1, ":") = "Location"
 					URL.s = StringField(StringField(Text, loop, #CRLF$), 2, "Location:")
-					If Val(StringField(URL, CountString(URL, "/") + 1, "/")) > #Version
+					If ValF(StringField(URL, CountString(URL, "/") + 1, "/")) > #Version
 						PostEvent(#Event_Update)
 					EndIf
 					Break
@@ -196,6 +194,10 @@ Module General
 		
 		PopupWindow::SetScale(Preferences(#Pref_Scale))
 		
+		If Preferences(#Pref_CheckUpdate)
+			CreateThread(@UpdateThread(), #Null)
+		EndIf
+		
 	EndProcedure
 	
 	Procedure AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
@@ -208,12 +210,8 @@ Module General
 		ClosePath()
 	EndProcedure
 	;}
-	
-	
-	
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 180
-; FirstLine = 23
-; Folding = B93
+; CursorPosition = 211
+; Folding = 0hy
 ; EnableXP
