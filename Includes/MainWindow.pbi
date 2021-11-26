@@ -32,7 +32,7 @@
 	Language(#Lng_Mouse)			= "Track Mouse:"
 	Language(#Lng_Duration)			= "Block duration:"
 	Language(#Lng_Combo)			= "Combo regroupment:"
-	Language(#Lng_CheckUpdate)		= "Auto-update"
+	Language(#Lng_CheckUpdate)		= "Auto-update:"
 	Language(#Lng_About)			= "Visit ❤x1's website"
 	
 	Language(#ToolTip_DarkMode)			= "Switch between the dark and ligh theme."
@@ -58,7 +58,7 @@
 		#Canvas_Duration
 		#Canvas_Combo
 		#Canvas_CheckUpdate
-		#Canvas_About
+		#HyperLink_About
 		
 		#Text_UserInterface
 		#Text_Behavior
@@ -101,6 +101,7 @@
 	Declare HandlerToggle()
 	Declare HandlerTrackbar()
 	Declare HandlerUpdate()
+	Declare HandlerHyperLink()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare RedrawToggle(ID)
@@ -138,6 +139,8 @@
 			CreateTracbar(#Appearance_Window_Margin, 261, #Canvas_Duration)
 			CreateToggleButton(#Appearance_Window_Margin, 301, #Canvas_Combo)
 			CreateToggleButton(#Appearance_Window_Margin, 401, #Canvas_CheckUpdate)
+			HyperLinkGadget(#HyperLink_About, #Appearance_Window_Margin + 5, 445, #Appearance_Window_Width - 2 * #Appearance_Window_Margin, 15, Language(#Lng_About), General::FixColor($FF5E91), #PB_HyperLink_Underline)
+			BindGadgetEvent(#HyperLink_About, @HandlerHyperLink())
 			
 			SetColor()
 			
@@ -238,14 +241,15 @@
 		EndIf
 	EndProcedure
 	
+	Procedure HandlerHyperLink()
+		RunProgram("http://lastlife.net/")
+	EndProcedure
+	
 	Procedure HandlerMenuOptions()
 		HideWindow(#Window, #False, #PB_Window_ScreenCentered)
 	EndProcedure
 	
-	Procedure HandlerMenuQuit() 
-		CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_OS = #PB_OS_Windows
-			ImagePlugin::ModuleImagePluginStop()
-		CompilerEndIf
+	Procedure HandlerMenuQuit()
 		If IsSysTrayIcon(#Systray)
 			RemoveSysTrayIcon(#Systray)
 		EndIf
@@ -548,6 +552,9 @@
 		SetGadgetColor(GetGadgetData(#Canvas_CheckUpdate), #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
 		SetGadgetColor(GetGadgetData(#Canvas_CheckUpdate), #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		RedrawToggle(#Canvas_CheckUpdate)
+		
+		SetGadgetColor(#HyperLink_About, #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		SetGadgetColor(#HyperLink_About, #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 	EndProcedure
 	
 	Procedure VectorCheck(x.d, y.d, Size.d)
@@ -596,7 +603,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 184
-; FirstLine = 49
-; Folding = xhAA5
+; CursorPosition = 251
+; FirstLine = 39
+; Folding = RBIE5
 ; EnableXP

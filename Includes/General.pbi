@@ -21,6 +21,7 @@
 		#Color_Keyboard_2
 		#Color_Keyboard_3
 		#Color_Keyboard_4
+		#Color_Mouse
 		
 		#_Color_Type_COUNT
 	EndEnumeration
@@ -61,7 +62,8 @@
 	ColorScheme(#Color_Mode_Light, #Color_Keyboard_1)			= SetAlpha(255, FixColor($D7D7D7))
 	ColorScheme(#Color_Mode_Light, #Color_Keyboard_2)			= SetAlpha(255, FixColor($FFFFFF))
 	ColorScheme(#Color_Mode_Light, #Color_Keyboard_3)			= SetAlpha(255, FixColor($F5F5F5))
-	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_4)			= SetAlpha(255, FixColor($414141))
+	ColorScheme(#Color_Mode_Light, #Color_Keyboard_4)			= SetAlpha(255, FixColor($414141))
+	ColorScheme(#Color_Mode_Light, #Color_Mouse)				= SetAlpha(255, FixColor($E02727))
 	
 	ColorScheme(#Color_Mode_Dark, #Color_Type_BackCold) 		= FixColor($2F3136)
 	ColorScheme(#Color_Mode_Dark, #Color_Type_BackHot )			= FixColor($393C43)
@@ -72,13 +74,14 @@
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleOff)		= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOff)		
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleOn)			= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOn)		
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleFront)		= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleFront)		
-	ColorScheme(#Color_Mode_Dark, #Color_Type_Trackbar) 		= ColorScheme(#Color_Mode_Light, #Color_Type_Trackbar) 
+	ColorScheme(#Color_Mode_Dark, #Color_Type_Trackbar) 		= ColorScheme(#Color_Mode_Light, #Color_Type_Trackbar)
 	
 	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_0)			= SetAlpha(255, FixColor($1D1D1D))
 	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_1)			= SetAlpha(255, FixColor($353535))
 	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_2)			= SetAlpha(255, FixColor($696969))
 	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_3)			= SetAlpha(255, FixColor($595959))
 	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_4)			= SetAlpha(255, FixColor($CDCDCD))
+	ColorScheme(#Color_Mode_Dark, #Color_Mouse)					= SetAlpha(255, FixColor($CDCDCD))
 	;}
 	
 	;{ Fonts
@@ -110,6 +113,7 @@
 	
 	Declare AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
 	Declare UpdateThread(Null)
+	Declare Init()
 EndDeclareModule
 
 DeclareModule MainWindow
@@ -128,6 +132,7 @@ DeclareModule PopupWindow
 	
 	; Public procedures declaration
 	Declare Create(VKey)
+	Declare CreateMouse(VKey)
 	Declare Hide(Window)
 	Declare SetPopupOrigin(X, Y)
 	Declare ShortCut(Control, Shift, Alt, Vkey)
@@ -151,10 +156,9 @@ Module General
 	Procedure UpdateThread(Null)
 		Protected Text.s, URL.s, HTTPRequest, LineCount, Loop
 		HTTPRequest = HTTPRequest(#PB_HTTP_Get, "https://github.com/LastLifeLeft/Inputify/releases/latest")
+		
 		If HTTPRequest
-			
-			Text.s = HTTPInfo(HTTPRequest, #PB_HTTP_Headers )
-			
+			Text.s = HTTPInfo(HTTPRequest, #PB_HTTP_Headers)
 			LineCount = CountString(Text, #CRLF$)
 			
 			For loop = 1 To LineCount
@@ -166,14 +170,23 @@ Module General
 					Break
 				EndIf
 			Next
-			
 			FinishHTTP(HTTPRequest)
 		Else
 			FinishHTTP(HTTPRequest)
 		EndIf
+		
 	EndProcedure
+	
+	;{ Public procedure
+	Procedure Init()
+		;Debug GetEnvironmentVariable("APPDATA")
+	EndProcedure
+	;}
+	
+	
+	
 EndModule
 ; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 172
-; Folding = B5+
+; CursorPosition = 129
+; Folding = B99
 ; EnableXP
