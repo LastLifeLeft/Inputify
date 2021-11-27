@@ -11,7 +11,7 @@ After launch, Inputify is immediately operational. Start typing and see the resu
 When finished, right-click on the system tray icon <img> to close Inputify. Double clicking on it will give you access to the app settings.
 
 ### Feature
-- Light ![LightButton](https://raw.githubusercontent.com/LastLifeLeft/Inputify/main/Media/Icon/ButtonL.png) and Dark ![DarkButton](https://raw.githubusercontent.com/LastLifeLeft/Inputify/main/Media/Icon/ButtonD.png) mode
+- Light ![LightButton](https://raw.githubusercontent.com/LastLifeLeft/Inputify/main/Media/ButtonL.png) and Dark ![DarkButton](https://raw.githubusercontent.com/LastLifeLeft/Inputify/main/Media/ButtonD.png) mode
 - Optional mouse tracking
 - UI scaling
 - Portable mode
