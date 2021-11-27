@@ -23,4 +23,5 @@ Right-click on the Inputify system tray icon to access its Options. Hover on any
 [Forum thread on PureBasic.fr](https://www.purebasic.fr/english/viewtopic.php?t=78269)
 
 ## Acknowledgements 
-PureBasic 6 is awesome. 
+* The input design is largely inspired by [Xelu's FREE Controller Prompts](https://thoseawesomeguys.com/prompts/)
+* PureBasic 6 is awesome. 
