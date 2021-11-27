@@ -1,7 +1,7 @@
 ﻿DeclareModule General
 	; Public variables, structures and constants
 	#AppName = "Inputify"
-	#Version = 0.3
+	#Version = 0.4
 	#Event_Update = #PB_Event_FirstCustomValue
 	
 	;{ Colors
@@ -211,6 +211,6 @@ Module General
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 126
-; Folding = 9Ry
+; CursorPosition = 3
+; Folding = 0Zy
 ; EnableXP

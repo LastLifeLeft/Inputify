@@ -7,12 +7,12 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2021-11-27 06:39" user="Poshu" host="DESKTOP-RGG8DMG"/>
+    <lastopen date="2021-11-27 07:17" user="Poshu" host="DESKTOP-RGG8DMG"/>
   </section>
   <section name="files">
     <file name="Includes\General.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="ff1f7be78df82a09e44da690b30335e8"/>
+      <fingerprint md5="26b02ae434588c8c4aecb8d7a82e9cf6"/>
     </file>
     <file name="Includes\MainWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
@@ -20,7 +20,7 @@
     </file>
     <file name="Includes\PopupWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="a2716d1655cb0bfb92ecc78a117ec7db"/>
+      <fingerprint md5="48cfe49a77e8716322c3358ed4ed5c94"/>
     </file>
     <file name="Libraries\FlatMenu\FlatMenu.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+++"/>

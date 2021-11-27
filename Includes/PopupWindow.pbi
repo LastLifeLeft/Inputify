@@ -383,7 +383,7 @@
 	
 	;{ Private procedures
 	Procedure Init()
-		Protected Loop, Image
+		Protected Loop
 		
 		For Loop = 0 To $FF
 			Preprocess(Loop) = Loop / $FF
@@ -669,7 +669,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 629
-; FirstLine = 101
-; Folding = BCE5
+; CursorPosition = 385
+; FirstLine = 72
+; Folding = DCMw
 ; EnableXP
