@@ -10,7 +10,6 @@
 	EndEnumeration
 	
 	Enumeration ;Window status
-		#Born
 		#Hold
 		#Alive
 		#Dying
@@ -232,7 +231,7 @@
 	EndProcedure
 	
 	Procedure Create(VKey)
-		Protected Window, Count
+		Protected Window
 		
 		If General::Preferences(General::#Pref_Combo) And *LatestWindow And *LatestWindow\Vkey = VKey And *LatestWindow\Status < #Dying
 			Window = *LatestWindow\Window
@@ -272,14 +271,14 @@
 				AddWindowTimer(WindowList()\Window, #Timer_Movement, FrameDuration)
 			Next
 			
-			Window = OpenWindow(#PB_Any, OriginX, OriginY - Count * Window_MovementTarget, WindowWidth, WindowHeight, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess, MainWindow::WindowID)
+			Window = OpenWindow(#PB_Any, OriginX, OriginY, WindowWidth, WindowHeight, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess, MainWindow::WindowID)
 			
 			If Window
 				; Set up the window data
 				*LatestWindow = AddElement(WindowList())
 				*LatestWindow\Window = Window
 				*LatestWindow\WindowID = WindowID(Window)
-				*LatestWindow\CurrentPosition = OriginY - Count * Window_MovementTarget
+				*LatestWindow\CurrentPosition = OriginY
 				*LatestWindow\MovementTarget = *LatestWindow\CurrentPosition
 				*LatestWindow\X = OriginX
 				*LatestWindow\Status = #Hold
@@ -304,7 +303,7 @@
 				InitAlphaBlening(*LatestWindow)
 				HideWindow(Window, #False, #PB_Window_NoActivate)
 				
-				; Delay the apparition (helps for Hold)
+				; Delay the apparition to limit overlap.
 				AddWindowTimer(Window, #Timer_Apparition, #ApparitionDelay)
 			EndIf
 		EndIf
@@ -669,7 +668,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 385
-; FirstLine = 72
-; Folding = DCMw
+; CursorPosition = 280
+; FirstLine = 89
+; Folding = DKEw
 ; EnableXP
