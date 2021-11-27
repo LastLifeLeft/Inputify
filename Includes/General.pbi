@@ -1,7 +1,7 @@
 ﻿DeclareModule General
 	; Public variables, structures and constants
 	#AppName = "Inputify"
-	#Version = 0.5
+	#Version = 0.51
 	#Event_Update = #PB_Event_FirstCustomValue
 	
 	;{ Colors
@@ -181,7 +181,7 @@ Module General
 		Preferences(#Pref_DarkMode) = ReadPreferenceLong("DarkMode", #Color_Mode_Dark)
 		Preferences(#Pref_Scale) = ReadPreferenceLong("Scale", 100)
 		
-		PreferenceGroup("Beahvior")
+		PreferenceGroup("Behavior")
 		Preferences(#Pref_Mouse) = ReadPreferenceLong("Mouse", #False)
 		Preferences(#Pref_Duration) = ReadPreferenceLong("Duration", 1200)				
 		Preferences(#Pref_Combo) = ReadPreferenceLong("Combo", #True)
@@ -212,5 +212,5 @@ Module General
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
 ; CursorPosition = 3
-; Folding = 0Zy
+; Folding = 063
 ; EnableXP
