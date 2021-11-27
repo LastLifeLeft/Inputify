@@ -58,7 +58,7 @@
 	VKeyData(90)\Offset = 31
 	;}
 	
-	;{ Modifiers
+	;{ Special
 	VKeyData(16)\Text = "Shift"
 	VKeyData(16)\Width = 94
 	VKeyData(16)\Offset = 24
@@ -70,6 +70,34 @@
 	VKeyData(18)\Text = "Alt"
 	VKeyData(18)\Width = 69
 	VKeyData(18)\Offset = 24
+	
+	VKeyData(#VK_ESCAPE)\Text = "Esc"
+	VKeyData(#VK_ESCAPE)\Width = 82
+	VKeyData(#VK_ESCAPE)\Offset = 24
+	
+	VKeyData(#VK_TAB)\Text = "Tab"
+	VKeyData(#VK_TAB)\Width = 80
+	VKeyData(#VK_TAB)\Offset = 24
+	
+	VKeyData(#VK_CAPITAL)\Text = "CAPS"
+	VKeyData(#VK_CAPITAL)\Width = 110
+	VKeyData(#VK_CAPITAL)\Offset = 24
+	
+	VKeyData(13)\Text = "Return"
+	VKeyData(13)\Width = 121
+	VKeyData(13)\Offset = 24
+	
+	VKeyData(46)\Text = "Del"
+	VKeyData(46)\Width = 71
+	VKeyData(46)\Offset = 24
+	
+	VKeyData(8)\Text = "Backspace"
+	VKeyData(8)\Width = 182
+	VKeyData(8)\Offset = 24
+	
+	VKeyData(32)\Text = "Space"
+	VKeyData(32)\Width = 121
+	VKeyData(32)\Offset = 26
 	;}
 	
 	;{ Arrow
@@ -91,22 +119,6 @@
 	;}
 	
 	;{ Misc
-	VKeyData(13)\Text = "Return"
-	VKeyData(13)\Width = 121
-	VKeyData(13)\Offset = 24
-	
-	VKeyData(46)\Text = "Del"
-	VKeyData(46)\Width = 71
-	VKeyData(46)\Offset = 24
-	
-	VKeyData(8)\Text = "Backspace"
-	VKeyData(8)\Width = 182
-	VKeyData(8)\Offset = 24
-	
-	VKeyData(32)\Text = "Space"
-	VKeyData(32)\Width = 121
-	VKeyData(32)\Offset = 26
-	
 	VKeyData(186)\Text = ":"
 	VKeyData(186)\Width = 60
 	VKeyData(186)\Offset = 37
@@ -129,7 +141,7 @@
 	
 	VKeyData(191)\Text = "/"
 	VKeyData(191)\Width = 60
-	VKeyData(191)\Offset = 32
+	VKeyData(191)\Offset = 37
 	
 	VKeyData(192)\Text = "~"
 	VKeyData(192)\Width = 60
@@ -141,19 +153,19 @@
 	
 	VKeyData(220)\Text = "\"
 	VKeyData(220)\Width = 60
-	VKeyData(220)\Offset = 35
+	VKeyData(220)\Offset = 37
 	
 	VKeyData(221)\Text = "]"
 	VKeyData(221)\Width = 60
 	VKeyData(221)\Offset = 36
 	
-	VKeyData(222)\Text = ~"\""
+	VKeyData(222)\Text = ~"'"
 	VKeyData(222)\Width = 60
-	VKeyData(222)\Offset = 34
+	VKeyData(222)\Offset = 37
 	
 	VKeyData(223)\Text = "§"
 	VKeyData(223)\Width = 60
-	VKeyData(223)\Offset = 36
+	VKeyData(223)\Offset = 32
 	;}
 	
 	;{ Mouse
@@ -544,9 +556,16 @@
 		ProcedureReturn Original + Target - Ease_CubicOut(Duration - Time, Original, Target, Duration);
 	EndProcedure
 	
+	Procedure Max(a, b)
+		If a > b
+			ProcedureReturn a
+		Else
+			ProcedureReturn b
+		EndIf
+	EndProcedure
+	
 	Procedure DrawKey(VKey, *WindowData.WindowData)
 		StartVectorDrawing(ImageVectorOutput(*WindowData\OriginalImage))
-		VectorFont(General::TitleFont, 30 * Scale)
 		
 		If VKey < 5
 			SaveVectorState()
@@ -616,6 +635,17 @@
 			FillPath(#PB_Path_Winding)
 			
 		Else
+			VectorFont(General::TitleFont, 30 * Scale)
+			
+			Protected text.s = "'"
+			If Round(VectorTextWidth(text, #PB_VectorText_Visible), #PB_Round_Nearest) + 23 > 60
+				Debug Round(VectorTextWidth(text, #PB_VectorText_Visible), #PB_Round_Nearest) + 23
+				Debug 24
+			Else
+				Debug 60
+				Debug Round(((Round(VectorTextWidth(text, #PB_VectorText_Visible), #PB_Round_Nearest) + 23) - VectorTextWidth(text, #PB_VectorText_Visible)) * 0.5, #PB_Round_Nearest)
+			EndIf
+			
 			
 			General::AddPathRoundedBox((*WindowData\Offset) * Scale, 0, VKeyData(VKey)\Width * Scale, 60 * Scale, 7 * Scale)
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_0)))
@@ -655,7 +685,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 208
-; FirstLine = 66
-; Folding = BAE5
+; CursorPosition = 143
+; FirstLine = 64
+; Folding = rCEw
 ; EnableXP
