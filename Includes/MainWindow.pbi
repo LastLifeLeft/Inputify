@@ -535,7 +535,7 @@
 					EndIf
 			EndSelect
 		EndIf
-		
+		ProcedureReturn #False
 	EndProcedure
 	
 	Procedure RedrawToggle(ID)
@@ -744,7 +744,7 @@
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 741
-; FirstLine = 15
+; CursorPosition = 233
+; FirstLine = 10
 ; Folding = hCAAA-
 ; EnableXP

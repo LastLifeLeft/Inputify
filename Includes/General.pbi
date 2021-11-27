@@ -125,7 +125,6 @@ DeclareModule PopupWindow
 	
 	; Public procedures declaration
 	Declare Create(VKey)
-	Declare CreateMouse(VKey)
 	Declare Hide(Window)
 	Declare SetPopupOrigin(X, Y)
 	Declare ShortCut(Control, Shift, Alt, Vkey)
@@ -212,6 +211,6 @@ Module General
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 211
-; Folding = 0hy
+; CursorPosition = 126
+; Folding = 9Ry
 ; EnableXP

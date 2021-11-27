@@ -218,14 +218,6 @@
 	
 	Init()
 	
-	Procedure max(a, b)
-		If a > b
-			ProcedureReturn a
-		Else
-			ProcedureReturn b
-		EndIf
-	EndProcedure
-	
 	;{ Public procedures
 	Procedure AddKey(Window, VKey)
 		If VKeyData(VKey)\Width 
@@ -255,12 +247,12 @@
 			StartVectorDrawing(ImageVectorOutput(*LatestWindow\OriginalImage))
 			VectorFont(General::TitleFont, 20 * Scale)
 			
-			General::AddPathRoundedBox((*LatestWindow\Offset + 10) * Scale, 22 * Scale, 30 * Scale + VectorTextWidth("x"+*LatestWindow\Combo), 36 * Scale, 4 * Scale)
+			General::AddPathRoundedBox((*LatestWindow\Offset) * Scale, 12 * Scale, 30 * Scale + VectorTextWidth("x"+*LatestWindow\Combo), 36 * Scale, 4 * Scale)
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold)))
 			FillPath()
 			
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_4)))
-			MovePathCursor((*LatestWindow\Offset + 25) * Scale, 30 * Scale)
+			MovePathCursor((*LatestWindow\Offset + 15) * Scale, 20 * Scale)
 			DrawVectorText("x"+*LatestWindow\Combo)
 			FillPath()
 			
@@ -297,7 +289,6 @@
 				*LatestWindow\OriginalImage = CreateImage(#PB_Any, WindowWidth, WindowHeight, 32, #PB_Image_Transparent)
 				*LatestWindow\Vkey = VKey
 				*LatestWindow\Combo = 1
-				*LatestWindow\Offset + 5
 				
 				SetWindowData(Window, *LatestWindow)
 				
@@ -320,10 +311,6 @@
 		ProcedureReturn Window
 	EndProcedure
 	
-	Procedure CreateMouse(VKey)
-		
-	EndProcedure
-	
 	Procedure Hide(Window)
 		Protected *WindowData.WindowData = GetWindowData(Window)
 		
@@ -332,8 +319,8 @@
 	EndProcedure
 	
 	Procedure SetPopupOrigin(X, Y)
-		OriginX = X
-		OriginY = Y - WindowHeight
+		OriginX = X + (10 * Scale)
+		OriginY = Y - WindowHeight - (10 * Scale)
 	EndProcedure
 	
 	Procedure ShortCut(Control, Shift, Alt,Vkey)
@@ -388,8 +375,8 @@
 		Scale = NewScale / 100
 		OriginY + WindowHeight
 		WindowWidth = #Window_Width * Scale
-		WindowHeight = #Window_Height * Scale
-		Window_MovementTarget = WindowHeight + 10 * Scale
+		WindowHeight = (#Window_Height - 20) * Scale
+		Window_MovementTarget = (#Window_Height * Scale)
 		OriginY - WindowHeight
 	EndProcedure
 	;}
@@ -581,10 +568,10 @@
 		If VKey < 5
 			SaveVectorState()
 			
-			AddPathBox(10 * Scale,8 * Scale, 27 * Scale, 61 * Scale)
+			AddPathBox(0, 0, 27 * Scale, 61 * Scale)
 			ClipPath()
 			
-			MovePathCursor((*WindowData\Offset + 32) * Scale, 35 * Scale)
+			MovePathCursor((*WindowData\Offset + 27) * Scale, 27 * Scale)
 			AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
 			AddPathArc(-3 * Scale, 28 * Scale, 22 * Scale, 30 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathCurve(0, 0, 15 * Scale, 5 * Scale, 30 * Scale, 0,  #PB_Path_Relative)
@@ -593,7 +580,7 @@
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_0)))
 			StrokePath(4 * Scale)
 			
-			MovePathCursor((*WindowData\Offset + 32) * Scale, 35 * Scale)
+			MovePathCursor((*WindowData\Offset + 27) * Scale, 27 * Scale)
 			AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
 			AddPathArc(3 * Scale, -22 * Scale, 15 * Scale, -25 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathLine(13 * Scale, 0, #PB_Path_Relative)
@@ -606,12 +593,12 @@
 			RestoreVectorState()
 			SaveVectorState()
 			
-			FlipCoordinatesX(37 * Scale)
-
-			AddPathBox(10 * Scale,8 * Scale, 27 * Scale, 61 * Scale)
+			FlipCoordinatesX(27 * Scale)
+			
+			AddPathBox(0, 0, 27 * Scale, 61 * Scale)
 			ClipPath()
 			
-			MovePathCursor((*WindowData\Offset + 32) * Scale, 35 * Scale)
+			MovePathCursor((*WindowData\Offset + 27) * Scale, 27 * Scale)
 			AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
 			AddPathArc(-3 * Scale, 28 * Scale, 22 * Scale, 30 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathCurve(0, 0, 15 * Scale, 5 * Scale, 30 * Scale, 0,  #PB_Path_Relative)
@@ -620,7 +607,7 @@
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_0)))
 			StrokePath(4 * Scale)
 			
-			MovePathCursor((*WindowData\Offset + 32) * Scale, 35 * Scale)
+			MovePathCursor((*WindowData\Offset + 27) * Scale, 27 * Scale)
 			AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
 			AddPathArc(3 * Scale, -22 * Scale, 15 * Scale, -25 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathLine(13 * Scale, 0, #PB_Path_Relative)
@@ -633,38 +620,37 @@
 			RestoreVectorState()
 			SaveVectorState()
 			
-			AddPathCircle(37 * Scale, 20 * Scale, 6 * Scale)
-			AddPathCircle(37 * Scale, 27 * Scale, 6 * Scale)
-			AddPathBox(31 * Scale, 20 * Scale, 12 * Scale, 7 * Scale)
+			AddPathCircle(27 * Scale, 12 * Scale, 6 * Scale)
+			AddPathCircle(27 * Scale, 19 * Scale, 6 * Scale)
+			AddPathBox(21 * Scale, 12 * Scale, 12 * Scale, 7 * Scale)
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_0)))
 			FillPath(#PB_Path_Winding)
 			
-			
-			AddPathCircle(37 * Scale, 20 * Scale, 4 * Scale)
-			AddPathCircle(37 * Scale, 25 * Scale, 4 * Scale)
-			AddPathBox(33 * Scale, 20 * Scale, 8 * Scale, 5 * Scale)
+			AddPathCircle(27 * Scale, 12 * Scale, 4 * Scale)
+			AddPathCircle(27 * Scale, 17 * Scale, 4 * Scale)
+			AddPathBox(23 * Scale, 12 * Scale, 8 * Scale, 5 * Scale)
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_2 + 3 * Bool(VKey = #VK_MBUTTON))))
 			FillPath(#PB_Path_Winding)
 			
 		Else
 			
-			General::AddPathRoundedBox((*WindowData\Offset + 5) * Scale, 10 * Scale, VKeyData(VKey)\Width * Scale, 60 * Scale, 7 * Scale)
+			General::AddPathRoundedBox((*WindowData\Offset) * Scale, 0, VKeyData(VKey)\Width * Scale, 60 * Scale, 7 * Scale)
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_0)))
 			FillPath()
 			
-			General::AddPathRoundedBox((*WindowData\Offset + 9) * Scale, 14 * Scale, (VKeyData(VKey)\Width - 8) * Scale, 52 * Scale, 4 * Scale)
+			General::AddPathRoundedBox((*WindowData\Offset + 4) * Scale, 4 * Scale, (VKeyData(VKey)\Width - 8) * Scale, 52 * Scale, 4 * Scale)
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_1)))
 			FillPath()
 			
-			General::AddPathRoundedBox((*WindowData\Offset + 12) * Scale, 17 * Scale, (VKeyData(VKey)\Width - 14) * Scale, 46 * Scale, 2 * Scale)
+			General::AddPathRoundedBox((*WindowData\Offset + 7) * Scale, 7 * Scale, (VKeyData(VKey)\Width - 14) * Scale, 46 * Scale, 2 * Scale)
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_2)))
 			FillPath()
 			
-			General::AddPathRoundedBox((*WindowData\Offset + 15) * Scale, 20 * Scale, (VKeyData(VKey)\Width - 20) * Scale, 40 * Scale, 2 * Scale)
+			General::AddPathRoundedBox((*WindowData\Offset + 10) * Scale, 10 * Scale, (VKeyData(VKey)\Width - 20) * Scale, 40 * Scale, 2 * Scale)
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_3)))
 			FillPath()
 			
-			MovePathCursor((*WindowData\Offset + VKeyData(VKey)\Offset - 5)  * Scale, 25  * Scale)
+			MovePathCursor((*WindowData\Offset + VKeyData(VKey)\Offset - 10)  * Scale, 15  * Scale)
 			
 			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_4)))
 			DrawVectorText(VKeyData(VKey)\Text)
@@ -683,7 +669,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 343
-; FirstLine = 51
-; Folding = BkEA-
+; CursorPosition = 629
+; FirstLine = 101
+; Folding = BCE5
 ; EnableXP
