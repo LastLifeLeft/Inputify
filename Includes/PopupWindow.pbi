@@ -338,11 +338,11 @@
 	
 	Procedure ShortCut(Control, Shift, Alt,Vkey)
 		If *LatestWindow And *LatestWindow\Status < #Dying 
-			If *LatestWindow\Vkey = Control * #VK_CONTROL + (Shift - Bool(Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt - Bool(Vkey = #VK_MENU)) * #VK_MENU And *LatestWindow\Combo = 1
-				MainWindow::InputArray(Vkey) = *LatestWindow\Window
+			If *LatestWindow\Vkey = Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU And *LatestWindow\Combo = 1
 				MainWindow::InputArray(#VK_CONTROL) = #False
 				MainWindow::InputArray(#VK_SHIFT) = #False
 				MainWindow::InputArray(#VK_MENU) = #False
+				MainWindow::InputArray(Vkey) = *LatestWindow\Window
 				
 				AddKey(*LatestWindow\Window, Vkey)
 				
@@ -683,7 +683,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 383
-; FirstLine = 48
-; Folding = DkQA-
+; CursorPosition = 343
+; FirstLine = 51
+; Folding = BkEA-
 ; EnableXP
