@@ -690,20 +690,20 @@
 	
 	DataSection ;{ Languages
 		English:
-		Data.s "Dark mode:"
-		Data.s "Scale:"
-		Data.s "Track Mouse:"
-		Data.s "Block duration:"
-		Data.s "Combo regroupment:"
-		Data.s "Auto-update:"
+		Data.s "Dark mode"
+		Data.s "Scale"
+		Data.s "Track Mouse"
+		Data.s "Window duration"
+		Data.s "Combo regroupment"
+		Data.s "Auto-update"
 		Data.s "Visit ❤x1's website"
 		
-		Data.s "Switch between the dark and ligh theme."
+		Data.s "Switch between the dark and light theme"
 		Data.s "Changes the size of the input popup"
 		Data.s "Include mouse click in the tracked inputs"
-		Data.s "Change the time an input popup stay on screen"
-		Data.s "Regroup identical input as a group"
-		Data.s "Check update at startup."
+		Data.s "Change the time spent on screen"
+		Data.s "Regroup identical inputs as a group"
+		Data.s "Check update at startup"
 		
 		Data.s "APPEARANCE"
 		Data.s "BEHAVIOR"
@@ -716,20 +716,20 @@
 		Data.s "Inputify has started, you can find it in your system tray icons!"
 		
 		French:
-		Data.s "Mode sombre :"
-		Data.s "Taille :"
-		Data.s "Souris :"
-		Data.s "Durée d'affichage :"
-		Data.s "Regrouper les séries :"
-		Data.s "Surveiller les MAJ :"
+		Data.s "Mode sombre"
+		Data.s "Taille"
+		Data.s "Souris"
+		Data.s "Durée d'affichage"
+		Data.s "Regrouper les séries"
+		Data.s "Surveiller les MàJ"
 		Data.s "Aller sur le site de ❤x1"
 		
-		Data.s "Alterne entre les modes sombre et clair."
+		Data.s "Alterne entre les modes sombre et clair"
 		Data.s "Modifie la taille des inputs à l'écran"
 		Data.s "Ajoute la souris aux inputs"
 		Data.s "Change la durée d'affichage d'un input"
-		Data.s "Regroupe les séries d'inputs en un"
-		Data.s "Vérifier si une nouvelle version est disponible."
+		Data.s "Regroupe les séries d'inputs"
+		Data.s "Au démarrage, vérifie si une nouvelle version est disponible"
 		
 		Data.s "APPARENCE"
 		Data.s "COMPORTEMENT"
@@ -744,7 +744,7 @@
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 233
-; FirstLine = 10
-; Folding = hCAAA-
+; CursorPosition = 704
+; FirstLine = 25
+; Folding = hAAAg-
 ; EnableXP

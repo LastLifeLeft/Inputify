@@ -157,17 +157,9 @@
 	;}
 	
 	;{ Mouse
-	VKeyData(#VK_LBUTTON)\Text = ""
 	VKeyData(#VK_LBUTTON)\Width = 60
-	VKeyData(#VK_LBUTTON)\Offset = 27
-	
-	VKeyData(#VK_RBUTTON)\Text = ""
 	VKeyData(#VK_RBUTTON)\Width = 60
-	VKeyData(#VK_RBUTTON)\Offset = 27
-	
-	VKeyData(#VK_MBUTTON)\Text = ""
 	VKeyData(#VK_MBUTTON)\Width = 60
-	VKeyData(#VK_MBUTTON)\Offset = 27
 	;}
 	
 	;}
@@ -186,7 +178,6 @@
 		Width.l
 		Vkey.l
 		Offset.i
-		
 		Image.i
 		OriginalImage.i												; We must keep a copy of the original image for proper alphablending calculation down the line.
 		ImageID.i
@@ -223,10 +214,6 @@
 			Protected *WindowData.WindowData = GetWindowData(Window)
 			
 			DrawKey(VKey, *WindowData)
-			
-			*LatestWindow\Vkey + VKey
-			*LatestWindow\Offset + VKeyData(VKey)\Width + 5
-			InitAlphaBlening(*LatestWindow)
 		EndIf
 	EndProcedure
 	
@@ -286,21 +273,18 @@
 				*LatestWindow\Height = WindowHeight
 				*LatestWindow\Alpha = 0
 				*LatestWindow\OriginalImage = CreateImage(#PB_Any, WindowWidth, WindowHeight, 32, #PB_Image_Transparent)
-				*LatestWindow\Vkey = VKey
 				*LatestWindow\Combo = 1
+				
+				SetWindowLongPtr_(*LatestWindow\WindowID,#GWL_EXSTYLE,#WS_EX_LAYERED)
 				
 				SetWindowData(Window, *LatestWindow)
 				
 				DrawKey(VKey, *LatestWindow)
 				
-				*LatestWindow\Offset + VKeyData(VKey)\Width + 5
-				
 				StickyWindow(Window, #True)
 				BindEvent(#PB_Event_Timer, @HandlerTimer(), Window)
 				
 				; Set up the alpha blending
-				SetWindowLongPtr_(*LatestWindow\WindowID,#GWL_EXSTYLE,#WS_EX_LAYERED)
-				InitAlphaBlening(*LatestWindow)
 				HideWindow(Window, #False, #PB_Window_NoActivate)
 				
 				; Delay the apparition to limit overlap.
@@ -664,11 +648,14 @@
 		
 		*WindowData\Image = CopyImage(*WindowData\OriginalImage, #PB_Any)
 		*WindowData\ImageID = ImageID(*WindowData\Image)
+		*WindowData\Offset + VKeyData(VKey)\Width + 5
+		*WindowData\Vkey + VKey
+		InitAlphaBlening(*WindowData)
 	EndProcedure
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 280
-; FirstLine = 89
-; Folding = DKEw
+; CursorPosition = 208
+; FirstLine = 66
+; Folding = BAE5
 ; EnableXP
