@@ -337,124 +337,51 @@
 	EndProcedure
 	
 	Procedure ShortCut(Control, Shift, Alt,Vkey)
-		;TODO: Clean this mess up!
-		If Vkey = #VK_SHIFT
-			If *LatestWindow And *LatestWindow\Status < #Dying 
-				If *LatestWindow\Vkey = #VK_CONTROL And *LatestWindow\Combo = 1
-					MainWindow::InputArray(#VK_SHIFT) = MainWindow::InputArray(#VK_CONTROL)
-					MainWindow::InputArray(#VK_CONTROL) = #False
-					AddKey(*LatestWindow\Window, Vkey)
-				ElseIf *LatestWindow\Vkey = #VK_CONTROL + Vkey
-					Create(*LatestWindow\Vkey)
-					MainWindow::InputArray(#VK_SHIFT) = *LatestWindow\Window
-				Else
-					AddWindowTimer(*LatestWindow\Window, #Timer_Duration, General::Preferences(General::#Pref_Duration))
-					MainWindow::InputArray(#VK_CONTROL) = #False
-					*LatestWindow = 0
-					MainWindow::InputArray(#VK_SHIFT) = Create(#VK_CONTROL)
-					AddKey(*LatestWindow\Window, #VK_SHIFT)
-				EndIf
-			Else
-				MainWindow::InputArray(#VK_CONTROL) = #False
-				*LatestWindow = 0
-				MainWindow::InputArray(#VK_SHIFT) = Create(#VK_CONTROL)
-				AddKey(*LatestWindow\Window, #VK_SHIFT)
-			EndIf
-		ElseIf Vkey = #VK_MENU
-			If *LatestWindow And *LatestWindow\Status < #Dying 
-				If *LatestWindow\Vkey = #VK_CONTROL And *LatestWindow\Combo = 1
-					MainWindow::InputArray(#VK_MENU) = MainWindow::InputArray(#VK_CONTROL)
-					MainWindow::InputArray(#VK_CONTROL) = #False
-					AddKey(*LatestWindow\Window, Vkey)
-				ElseIf *LatestWindow\Vkey = #VK_CONTROL + Vkey
-					Create(*LatestWindow\Vkey)
-					MainWindow::InputArray(#VK_MENU) = *LatestWindow\Window
-				Else
-					AddWindowTimer(*LatestWindow\Window, #Timer_Duration, General::Preferences(General::#Pref_Duration))
-					MainWindow::InputArray(#VK_CONTROL) = #False
-					*LatestWindow = 0
-					MainWindow::InputArray(#VK_MENU) = Create(#VK_CONTROL)
-					AddKey(*LatestWindow\Window, #VK_MENU)
-				EndIf
-			Else
-				MainWindow::InputArray(#VK_CONTROL) = #False
-				*LatestWindow = 0
-				MainWindow::InputArray(#VK_MENU) = Create(#VK_CONTROL)
-				AddKey(*LatestWindow\Window, #VK_MENU)
-			EndIf
-		Else
-			If *LatestWindow And *LatestWindow\Status < #Dying 
-				If *LatestWindow\Vkey = Control * #VK_CONTROL + Shift * #VK_SHIFT + Alt * #VK_MENU And *LatestWindow\Combo = 1
-					MainWindow::InputArray(Vkey) = *LatestWindow\Window
-					MainWindow::InputArray(#VK_CONTROL) = #False
-					MainWindow::InputArray(#VK_SHIFT) = #False
-					MainWindow::InputArray(#VK_MENU) = #False
-					
-					AddKey(*LatestWindow\Window, Vkey)
-					
-				ElseIf *LatestWindow\Vkey = Control * #VK_CONTROL + Shift * #VK_SHIFT + Alt * #VK_MENU + Vkey
-					Create(*LatestWindow\Vkey)
-					MainWindow::InputArray(Vkey) = *LatestWindow\Window
-				Else
-					AddWindowTimer(*LatestWindow\Window, #Timer_Duration, General::Preferences(General::#Pref_Duration))
-					*LatestWindow = 0
-					MainWindow::InputArray(#VK_CONTROL) = #False
-					MainWindow::InputArray(#VK_SHIFT) = #False
-					MainWindow::InputArray(#VK_MENU) = #False
-					
-					If Control
-						MainWindow::InputArray(Vkey) = Create(#VK_CONTROL)
-					EndIf
-					
-					If Shift
-						If MainWindow::InputArray(Vkey)
-							AddKey(MainWindow::InputArray(Vkey), #VK_SHIFT)
-						Else
-							MainWindow::InputArray(Vkey) = Create(#VK_SHIFT)
-						EndIf
-					EndIf
-					
-					If Alt
-						If MainWindow::InputArray(Vkey)
-							AddKey(MainWindow::InputArray(Vkey), #VK_MENU)
-						Else
-							MainWindow::InputArray(Vkey) = Create(#VK_MENU)
-						EndIf
-					EndIf
-					
-					AddKey(MainWindow::InputArray(Vkey), Vkey)
-					
-				EndIf
-			Else
-				AddWindowTimer(*LatestWindow\Window, #Timer_Duration, General::Preferences(General::#Pref_Duration))
-				*LatestWindow = 0
+		If *LatestWindow And *LatestWindow\Status < #Dying 
+			If *LatestWindow\Vkey = Control * #VK_CONTROL + (Shift - Bool(Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt - Bool(Vkey = #VK_MENU)) * #VK_MENU And *LatestWindow\Combo = 1
+				MainWindow::InputArray(Vkey) = *LatestWindow\Window
 				MainWindow::InputArray(#VK_CONTROL) = #False
 				MainWindow::InputArray(#VK_SHIFT) = #False
 				MainWindow::InputArray(#VK_MENU) = #False
 				
-				If Control
-					MainWindow::InputArray(Vkey) = Create(#VK_CONTROL)
-				EndIf
+				AddKey(*LatestWindow\Window, Vkey)
 				
-				If Shift
-					If MainWindow::InputArray(Vkey)
-						AddKey(MainWindow::InputArray(Vkey), #VK_SHIFT)
-					Else
-						MainWindow::InputArray(Vkey) = Create(#VK_SHIFT)
-					EndIf
-				EndIf
+				ProcedureReturn #False
+			ElseIf *LatestWindow\Vkey = Control * #VK_CONTROL + Shift * #VK_SHIFT + Alt * #VK_MENU + Vkey
+				Create(*LatestWindow\Vkey)
+				MainWindow::InputArray(Vkey) = *LatestWindow\Window
 				
-				If Alt
-					If MainWindow::InputArray(Vkey)
-						AddKey(MainWindow::InputArray(Vkey), #VK_MENU)
-					Else
-						MainWindow::InputArray(Vkey) = Create(#VK_MENU)
-					EndIf
-				EndIf
-				
-				AddKey(MainWindow::InputArray(Vkey), Vkey)
+				ProcedureReturn #False
 			EndIf
 		EndIf
+		
+		AddWindowTimer(*LatestWindow\Window, #Timer_Duration, General::Preferences(General::#Pref_Duration))
+		*LatestWindow = 0
+		MainWindow::InputArray(#VK_CONTROL) = #False
+		MainWindow::InputArray(#VK_SHIFT) = #False
+		MainWindow::InputArray(#VK_MENU) = #False
+		
+		If Control
+			MainWindow::InputArray(Vkey) = Create(#VK_CONTROL)
+		EndIf
+		
+		If Shift
+			If MainWindow::InputArray(Vkey)
+				AddKey(MainWindow::InputArray(Vkey), #VK_SHIFT)
+			Else
+				MainWindow::InputArray(Vkey) = Create(#VK_SHIFT)
+			EndIf
+		EndIf
+		
+		If Alt
+			If MainWindow::InputArray(Vkey)
+				AddKey(MainWindow::InputArray(Vkey), #VK_MENU)
+			Else
+				MainWindow::InputArray(Vkey) = Create(#VK_MENU)
+			EndIf
+		EndIf
+		
+		AddKey(MainWindow::InputArray(Vkey), Vkey)
 	EndProcedure
 	
 	Procedure SetScale(NewScale)
@@ -756,7 +683,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 61
-; FirstLine = 3
-; Folding = BkQA-
+; CursorPosition = 383
+; FirstLine = 48
+; Folding = DkQA-
 ; EnableXP
