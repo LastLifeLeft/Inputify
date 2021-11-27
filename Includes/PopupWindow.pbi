@@ -30,193 +30,33 @@
 	
 	Global Dim VKeyData.VKeyData(255)
 	
-	;{ Numbers ( 48 to 57)
-	VKeyData(48)\Text = "0"
-	VKeyData(48)\Width = 60
-	VKeyData(48)\Offset = 32
-	VKeyData(49)\Text = "1"
-	VKeyData(49)\Width = 60
-	VKeyData(49)\Offset = 32
-	VKeyData(50)\Text = "2"
-	VKeyData(50)\Width = 60
-	VKeyData(50)\Offset = 32
-	VKeyData(51)\Text = "3"
-	VKeyData(51)\Width = 60
-	VKeyData(51)\Offset = 32
-	VKeyData(52)\Text = "4"
-	VKeyData(52)\Width = 60
-	VKeyData(52)\Offset = 32
-	VKeyData(53)\Text = "5"
-	VKeyData(53)\Width = 60
-	VKeyData(53)\Offset = 32
-	VKeyData(54)\Text = "6"
-	VKeyData(54)\Width = 60
-	VKeyData(54)\Offset = 32
-	VKeyData(55)\Text = "7"
-	VKeyData(55)\Width = 60
-	VKeyData(55)\Offset = 32
-	VKeyData(56)\Text = "8"
-	VKeyData(56)\Width = 60
-	VKeyData(56)\Offset = 32
-	VKeyData(57)\Text = "9"
-	VKeyData(57)\Width = 60
-	VKeyData(57)\Offset = 32
-	;}
-	
 	;{ Alphabet ( 65 to 90 )
-	VKeyData(65)\Text = "A"
-	VKeyData(65)\Width = 60
 	VKeyData(65)\Offset = 30
-	VKeyData(66)\Text = "B"
-	VKeyData(66)\Width = 60
 	VKeyData(66)\Offset = 30
-	VKeyData(67)\Text = "C"
-	VKeyData(67)\Width = 60
 	VKeyData(67)\Offset = 30
-	VKeyData(68)\Text = "D"
-	VKeyData(68)\Width = 60
 	VKeyData(68)\Offset = 30
-	VKeyData(69)\Text = "E"
-	VKeyData(69)\Width = 60
 	VKeyData(69)\Offset = 30
-	VKeyData(70)\Text = "F"
-	VKeyData(70)\Width = 60
 	VKeyData(70)\Offset = 31
-	VKeyData(71)\Text = "G"
-	VKeyData(71)\Width = 60
 	VKeyData(71)\Offset = 29
-	VKeyData(72)\Text = "H"
-	VKeyData(72)\Width = 60
 	VKeyData(72)\Offset = 30
-	VKeyData(73)\Text = "I"
-	VKeyData(73)\Width = 60
 	VKeyData(73)\Offset = 36
-	VKeyData(74)\Text = "J"
-	VKeyData(74)\Width = 60
 	VKeyData(74)\Offset = 32
-	VKeyData(75)\Text = "K"
-	VKeyData(75)\Width = 60
 	VKeyData(75)\Offset = 30
-	VKeyData(76)\Text = "L"
-	VKeyData(76)\Width = 60
 	VKeyData(76)\Offset = 31
-	VKeyData(77)\Text = "M"
-	VKeyData(77)\Width = 60
 	VKeyData(77)\Offset = 28
-	VKeyData(78)\Text = "N"
-	VKeyData(78)\Width = 60
 	VKeyData(78)\Offset = 30
-	VKeyData(79)\Text = "O"
-	VKeyData(79)\Width = 60
 	VKeyData(79)\Offset = 29
-	VKeyData(80)\Text = "P"
-	VKeyData(80)\Width = 60
 	VKeyData(80)\Offset = 30
-	VKeyData(81)\Text = "Q"
-	VKeyData(81)\Width = 60
 	VKeyData(81)\Offset = 29
-	VKeyData(82)\Text = "R"
-	VKeyData(82)\Width = 60
 	VKeyData(82)\Offset = 30
-	VKeyData(83)\Text = "S"
-	VKeyData(83)\Width = 60
 	VKeyData(83)\Offset = 30
-	VKeyData(84)\Text = "T"
-	VKeyData(84)\Width = 60
 	VKeyData(84)\Offset = 31
-	VKeyData(85)\Text = "U"
-	VKeyData(85)\Width = 60
 	VKeyData(85)\Offset = 30
-	VKeyData(86)\Text = "V"
-	VKeyData(86)\Width = 60
 	VKeyData(86)\Offset = 30
-	VKeyData(87)\Text = "W"
-	VKeyData(87)\Width = 60
 	VKeyData(87)\Offset = 26
-	VKeyData(88)\Text = "X"
-	VKeyData(88)\Width = 60
 	VKeyData(88)\Offset = 30
-	VKeyData(89)\Text = "Y"
-	VKeyData(89)\Width = 60
 	VKeyData(89)\Offset = 30
-	VKeyData(90)\Text = "Z"
-	VKeyData(90)\Width = 60
 	VKeyData(90)\Offset = 31
-	;}
-	
-	;{ Function keys (112 to 135)
-	VKeyData(112)\Text = "F1"
-	VKeyData(112)\Width = 78
-	VKeyData(112)\Offset = 32
-	VKeyData(113)\Text = "F2"
-	VKeyData(113)\Width = 78
-	VKeyData(113)\Offset = 32
-	VKeyData(114)\Text = "F3"
-	VKeyData(114)\Width = 78
-	VKeyData(114)\Offset = 32
-	VKeyData(115)\Text = "F4"
-	VKeyData(115)\Width = 78
-	VKeyData(115)\Offset = 32
-	VKeyData(116)\Text = "F5"
-	VKeyData(116)\Width = 78
-	VKeyData(116)\Offset = 32
-	VKeyData(117)\Text = "F6"
-	VKeyData(117)\Width = 78
-	VKeyData(117)\Offset = 32
-	VKeyData(118)\Text = "F7"
-	VKeyData(118)\Width = 78
-	VKeyData(118)\Offset = 32
-	VKeyData(119)\Text = "F8"
-	VKeyData(119)\Width = 78
-	VKeyData(119)\Offset = 32
-	VKeyData(120)\Text = "F9"
-	VKeyData(120)\Width = 78
-	VKeyData(120)\Offset = 32
-	VKeyData(121)\Text = "F10"
-	VKeyData(121)\Width = 78
-	VKeyData(121)\Offset = 24
-	VKeyData(122)\Text = "F11"
-	VKeyData(122)\Width = 78
-	VKeyData(122)\Offset = 24
-	VKeyData(123)\Text = "F12"
-	VKeyData(123)\Width = 78
-	VKeyData(123)\Offset = 24
-	VKeyData(124)\Text = "F13"
-	VKeyData(124)\Width = 78
-	VKeyData(124)\Offset = 24
-	VKeyData(125)\Text = "F14"
-	VKeyData(125)\Width = 78
-	VKeyData(125)\Offset = 24
-	VKeyData(126)\Text = "F15"
-	VKeyData(126)\Width = 78
-	VKeyData(126)\Offset = 24
-	VKeyData(127)\Text = "F16"
-	VKeyData(127)\Width = 78
-	VKeyData(127)\Offset = 24
-	VKeyData(128)\Text = "F17"
-	VKeyData(128)\Width = 78
-	VKeyData(128)\Offset = 24
-	VKeyData(129)\Text = "F18"
-	VKeyData(129)\Width = 78
-	VKeyData(129)\Offset = 24
-	VKeyData(130)\Text = "F19"
-	VKeyData(130)\Width = 78
-	VKeyData(130)\Offset = 24
-	VKeyData(131)\Text = "F20"
-	VKeyData(131)\Width = 78
-	VKeyData(131)\Offset = 24
-	VKeyData(132)\Text = "F21"
-	VKeyData(132)\Width = 78
-	VKeyData(132)\Offset = 24
-	VKeyData(133)\Text = "F22"
-	VKeyData(133)\Width = 78
-	VKeyData(133)\Offset = 24
-	VKeyData(134)\Text = "F23"
-	VKeyData(134)\Width = 78
-	VKeyData(134)\Offset = 24
-	VKeyData(135)\Text = "F24"
-	VKeyData(135)\Width = 78
-	VKeyData(135)\Offset = 24
 	;}
 	
 	;{ Modifiers
@@ -642,6 +482,29 @@
 		Image_BitmapInfo\bmiHeader\biSize = SizeOf(BITMAPINFOHEADER)
 		Image_BitmapInfo\bmiHeader\biPlanes = 1
 		Image_BitmapInfo\bmiHeader\biBitCount = 32
+		
+		For Loop = 0 To 9
+			VKeyData(48 + Loop)\Text = Str(Loop)
+			VKeyData(48 + Loop)\Width = 60
+			VKeyData(48 + Loop)\Offset = 32
+		Next
+		
+		For Loop = 1 To  9
+			VKeyData(111 + Loop)\Text = "F" + Loop
+			VKeyData(111 + Loop)\Width = 78
+			VKeyData(111 + Loop)\Offset = 32
+		Next
+		
+		For Loop = 0 To 14
+			VKeyData(121 + loop)\Text = "F" + Str(10 + Loop)
+			VKeyData(121 + loop)\Width = 78
+			VKeyData(121 + loop)\Offset = 24
+		Next
+		
+		For Loop = 65 To 90
+			VKeyData(Loop)\Text = Chr(Loop)
+			VKeyData(Loop)\Width = 60
+		Next
 	EndProcedure
 	
 	Procedure InitAlphaBlening(*WindowData.WindowData)
@@ -892,8 +755,8 @@
 	EndProcedure
 	;}
 EndModule
-; IDE Options = PureBasic 6.00 Alpha 5 (Windows - x64)
-; CursorPosition = 792
-; FirstLine = 268
-; Folding = DVDR+
+; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
+; CursorPosition = 61
+; FirstLine = 3
+; Folding = BkQA-
 ; EnableXP
