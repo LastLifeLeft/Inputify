@@ -324,7 +324,7 @@
 			WritePreferenceLong("DarkMode", General::Preferences(General::#Pref_DarkMode))
 			WritePreferenceLong("Scale", General::Preferences(General::#Pref_Scale))
 			
-			PreferenceGroup("Beahvior")
+			PreferenceGroup("Behavior")
 			WritePreferenceLong("Mouse", General::Preferences(General::#Pref_Mouse))
 			WritePreferenceLong("Duration", General::Preferences(General::#Pref_Duration))				
 			WritePreferenceLong("Combo", General::Preferences(General::#Pref_Combo))
@@ -506,7 +506,8 @@
 				EndIf
 			EndIf
 		EndIf
-		ProcedureReturn #False
+		
+		ProcedureReturn CallNextHookEx_(KeyboardHook, nCode, wParam, *p)
 	EndProcedure
 	
 	Procedure MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -535,7 +536,8 @@
 					EndIf
 			EndSelect
 		EndIf
-		ProcedureReturn #False
+		
+		ProcedureReturn CallNextHookEx_(MouseHook, nCode, wParam, *p)
 	EndProcedure
 	
 	Procedure RedrawToggle(ID)
@@ -744,7 +746,7 @@
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 704
-; FirstLine = 25
-; Folding = hAAAg-
+; CursorPosition = 326
+; FirstLine = 43
+; Folding = hCgQi-
 ; EnableXP
