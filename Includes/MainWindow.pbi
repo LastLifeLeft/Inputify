@@ -48,38 +48,21 @@
 		#ToolTip_Duration
 		#ToolTip_Combo
 		#ToolTip_CheckUpdate
-		#ToolTip_About
 		
 		#Lng_UserInterface
 		#Lng_Behavior
 		#Lng_Misc               
 		
-		#Lng_Tooltip
+		#Lng_Menu_Enable
+		#Lng_Menu_Options
+		#Lng_Menu_Quit
+		
+		#Lng_FirstStart
+		
 		#_Lng_Count
 	EndEnumeration
 	
 	Global Dim Language.s(#_Lng_Count)
-	Language(#Lng_DarkMode)				= "Dark mode:"
-	Language(#Lng_Scale)				= "Scale:"
-	Language(#Lng_Mouse)				= "Track Mouse:"
-	Language(#Lng_Duration)				= "Block duration:"
-	Language(#Lng_Combo)				= "Combo regroupment:"
-	Language(#Lng_CheckUpdate)			= "Auto-update:"
-	Language(#Lng_About)				= "Visit ❤x1's website"
-	
-	Language(#ToolTip_DarkMode)			= "Switch between the dark and ligh theme."
-	Language(#ToolTip_Scale)			= "Changes the size of the input popup"
-	Language(#ToolTip_Mouse)			= "Include mouse click in the tracked inputs"
-	Language(#ToolTip_Duration)			= "Change the time an input popup stay on screen"
-	Language(#ToolTip_Combo)			= "Regroup identical input as a group"
-	Language(#ToolTip_CheckUpdate)		= "Check update at startup."
-	Language(#ToolTip_About)			= ""
-	
-	Language(#Lng_UserInterface)		= "APPEARANCE"
-	Language(#Lng_Behavior)				= "BEHAVIOR"
-	Language(#Lng_Misc)					= "MISC"
-	
-	Language(#Lng_Tooltip)				= "Inputify has started, you can find it in your system tray icons!"
 	;}
 	
 	;{ Windows and gadgets
@@ -159,6 +142,23 @@
 		WindowID = OpenWindow(#Window, 0, 0, #Appearance_Window_Width, #Appearance_Window_Height, General::#AppName, #PB_Window_Invisible | #PB_Window_ScreenCentered | #PB_Window_SystemMenu)
 		
 		If WindowID
+			; Languageè
+			Protected cchData, lpLCData.s, Loop
+			cchData = GetLocaleInfo_(#LOCALE_USER_DEFAULT, #LOCALE_SNATIVELANGNAME, @lpLCData, 0)
+			lpLCData = Space(cchData)
+			GetLocaleInfo_(#LOCALE_USER_DEFAULT, #LOCALE_SNATIVELANGNAME, @lpLCData, cchData)
+			
+			Select lpLCData
+				Case "français"
+					Restore French:
+				Default
+					Restore English:
+			EndSelect
+			
+			For Loop = #Lng_DarkMode To #Lng_FirstStart
+				Read.s Language(Loop)
+			Next
+			
 			; Window
 			StickyWindow(#Window, #True)
 			SetGadgetFont(#PB_Default, General::TitleFont)
@@ -189,9 +189,9 @@
 	  		
 	  		; Systray popup menu
 	  		PopupMenu = FlatMenu::Create(#Window, FlatMenu::#DarkTheme)
-	  		FlatMenu::AddItem(PopupMenu, #Menu_Enabled, -1, "Enable", FlatMenu::#Toggle)
-	  		FlatMenu::AddItem(PopupMenu, #Menu_Options, -1, "Options")
-	  		FlatMenu::AddItem(PopupMenu, #Menu_Quit, -1, "Quit")
+	  		FlatMenu::AddItem(PopupMenu, #Menu_Enabled, -1, Language(#Lng_Menu_Enable), FlatMenu::#Toggle)
+	  		FlatMenu::AddItem(PopupMenu, #Menu_Options, -1, Language(#Lng_Menu_Options))
+	  		FlatMenu::AddItem(PopupMenu, #Menu_Quit, -1, Language(#Lng_Menu_Quit))
 	  		
 	  		FlatMenu::SetItemState(PopupMenu, #Menu_Enabled, #True)
 	  		
@@ -224,7 +224,7 @@
 	  		EndIf
 	  		
 	  		If General::FirstStart
-	  			SystrayBalloon(General::#AppName, Language(#Lng_Tooltip), #NIIF_USER|#NIIF_INFO )
+	  			SystrayBalloon(General::#AppName, Language(#Lng_FirstStart), #NIIF_USER|#NIIF_INFO )
 	  		EndIf
 	  		
 	  	Else
@@ -687,9 +687,64 @@
 		ProcedureReturn #PB_ProcessPureBasicEvents
 	EndProcedure
 	;}
+	
+	DataSection ;{ Languages
+		English:
+		Data.s "Dark mode:"
+		Data.s "Scale:"
+		Data.s "Track Mouse:"
+		Data.s "Block duration:"
+		Data.s "Combo regroupment:"
+		Data.s "Auto-update:"
+		Data.s "Visit ❤x1's website"
+		
+		Data.s "Switch between the dark and ligh theme."
+		Data.s "Changes the size of the input popup"
+		Data.s "Include mouse click in the tracked inputs"
+		Data.s "Change the time an input popup stay on screen"
+		Data.s "Regroup identical input as a group"
+		Data.s "Check update at startup."
+		
+		Data.s "APPEARANCE"
+		Data.s "BEHAVIOR"
+		Data.s "MISC"
+		
+		Data.s "Track inputs"
+		Data.s "Preferences"
+		Data.s "Quit"
+		
+		Data.s "Inputify has started, you can find it in your system tray icons!"
+		
+		French:
+		Data.s "Mode sombre :"
+		Data.s "Taille :"
+		Data.s "Souris :"
+		Data.s "Durée d'affichage :"
+		Data.s "Regrouper les séries :"
+		Data.s "Surveiller les MAJ :"
+		Data.s "Aller sur le site de ❤x1"
+		
+		Data.s "Alterne entre les modes sombre et clair."
+		Data.s "Modifie la taille des inputs à l'écran"
+		Data.s "Ajoute la souris aux inputs"
+		Data.s "Change la durée d'affichage d'un input"
+		Data.s "Regroupe les séries d'inputs en un"
+		Data.s "Vérifier si une nouvelle version est disponible."
+		
+		Data.s "APPARENCE"
+		Data.s "COMPORTEMENT"
+		Data.s "DIVERS"
+		
+		Data.s "Afficher les inputs"
+		Data.s "Préférences"
+		Data.s "Quitter"
+		
+		Data.s "Inputify a correctement démarré, vous pouvez le retrouver dans les icônes de la barre d'état !"
+	EndDataSection ;}
+	
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 306
-; FirstLine = 157
-; Folding = tDEAg
+; CursorPosition = 741
+; FirstLine = 15
+; Folding = hCAAA-
 ; EnableXP
