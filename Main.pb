@@ -10,4 +10,5 @@ Repeat
 	WaitWindowEvent()
 ForEver
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
+; CursorPosition = 10
 ; EnableXP

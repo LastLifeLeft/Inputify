@@ -191,6 +191,10 @@
 	VKeyData(#VK_SUBTRACT)\Text = "-"
 	VKeyData(#VK_SUBTRACT)\Width = 60
 	VKeyData(#VK_SUBTRACT)\Offset = 35
+	
+	VKeyData(#VK_DECIMAL)\Text = "."
+	VKeyData(#VK_DECIMAL)\Width = 60
+	VKeyData(#VK_DECIMAL)\Offset = 37
 	;}
 	
 	;}
@@ -691,6 +695,7 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 217
-; Folding = BEIg
+; CursorPosition = 196
+; FirstLine = 51
+; Folding = jGIg
 ; EnableXP

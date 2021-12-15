@@ -1,7 +1,7 @@
 ﻿DeclareModule General
 	; Public variables, structures and constants
 	#AppName = "Inputify"
-	#Version = 0.7
+	#Version = 0.71
 	#Event_Update = #PB_Event_FirstCustomValue
 	
 	;{ Colors
