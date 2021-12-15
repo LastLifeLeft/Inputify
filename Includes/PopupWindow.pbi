@@ -175,6 +175,24 @@
 	VKeyData(#VK_MBUTTON)\Width = 60
 	;}
 	
+	;{ Numpad
+	VKeyData(#VK_DIVIDE)\Text = "/"
+	VKeyData(#VK_DIVIDE)\Width = 60
+	VKeyData(#VK_DIVIDE)\Offset = 37
+	
+	VKeyData(#VK_MULTIPLY)\Text = "*"
+	VKeyData(#VK_MULTIPLY)\Width = 60
+	VKeyData(#VK_MULTIPLY)\Offset = 35
+	
+	VKeyData(#VK_ADD)\Text = "+"
+	VKeyData(#VK_ADD)\Width = 60
+	VKeyData(#VK_ADD)\Offset = 32
+	
+	VKeyData(#VK_SUBTRACT)\Text = "-"
+	VKeyData(#VK_SUBTRACT)\Width = 60
+	VKeyData(#VK_SUBTRACT)\Offset = 35
+	;}
+	
 	;}
 	
 	Structure WindowData
@@ -397,6 +415,11 @@
 			VKeyData(Loop)\Text = Chr(Loop)
 			VKeyData(Loop)\Width = 60
 			VKeyData(Loop)\Offset = 32
+			
+			;Numpad :
+			VKeyData(Loop + 48)\Text = Chr(Loop)
+			VKeyData(Loop + 48)\Width = 60
+			VKeyData(Loop + 48)\Offset = 32
 		Next
 		
 		For Loop = 1 To  9
@@ -668,7 +691,6 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 377
-; FirstLine = 40
-; Folding = DCEw
+; CursorPosition = 217
+; Folding = BEIg
 ; EnableXP
