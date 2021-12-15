@@ -205,15 +205,14 @@
 	  		SysTrayIconToolTip(#Systray, General::#AppName)
 	  		
 	  		; Systray popup menu
-	  		PopupMenu = FlatMenu::Create(#Window, FlatMenu::#DarkTheme)
-	  		FlatMenu::AddItem(PopupMenu, #Menu_Enabled, -1, Language(#Lng_Menu_Enable), FlatMenu::#Toggle)
-	  		FlatMenu::AddItem(PopupMenu, #Menu_Options, -1, Language(#Lng_Menu_Options))
-	  		FlatMenu::AddItem(PopupMenu, #Menu_Quit, -1, Language(#Lng_Menu_Quit))
+	  		CreatePopupMenu(0)
+	  		MenuItem(#Menu_Enabled, Language(#Lng_Menu_Enable))
+	  		MenuItem(#Menu_Options, Language(#Lng_Menu_Options))
+	  		MenuItem(#Menu_Quit, Language(#Lng_Menu_Quit))
 	  		
-	  		FlatMenu::SetItemState(PopupMenu, #Menu_Enabled, #True)
+	  		SetMenuItemState(0, #Menu_Enabled, #True)
 	  		
 	  		; Set up the popup window origin point to not interfere with the taskbar. See : https://docs.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shappbarmessage
-			;TODO : Implement support of multiple screen? I only own one, so I can't do it by myself.
 	  		Protected pData.APPBARDATA
 	  		SHAppBarMessage_(#ABM_GETTASKBARPOS, pData)
 	  		ExamineDesktops()
@@ -364,7 +363,35 @@
 	EndProcedure
 	
 	Procedure HandlerMenuEnabled()
-		Enabled = EventData()
+		Protected Loop
+		
+		Enabled = Bool( Not GetMenuItemState(0, #Menu_Enabled))
+		SetMenuItemState(0, #Menu_Enabled, Enabled)
+		
+		If Enabled 
+			KeyboardHook = SetWindowsHookEx_(#WH_KEYBOARD_LL, @KeyboardHook(), GetModuleHandle_(0), 0)
+			
+			If General::Preferences(General::#Pref_Mouse)
+				MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
+			EndIf
+			
+		Else
+			UnhookWindowsHookEx_(KeyboardHook)
+			KeyboardHook = 0
+			
+			If MouseHook
+				MouseHook = 0
+				UnhookWindowsHookEx_(MouseHook)
+			EndIf
+			
+			For Loop = 0 To 255
+				If InputArray(Loop)
+					PopupWindow::Hide(InputArray(Loop))
+					InputArray(Loop) = #False
+				EndIf
+			Next
+			
+		EndIf
 	EndProcedure
 	
 	Procedure HandlerUpdate()
@@ -407,7 +434,7 @@
 	
 	Procedure HandlerSystray()
 		If EventType() = #PB_EventType_RightClick
-			FlatMenu::Show(PopupMenu)
+			DisplayPopupMenu(0, WindowID(#Window))
 		ElseIf EventType() = #PB_EventType_LeftDoubleClick
 			HandlerMenuOptions()
 		EndIf
@@ -425,10 +452,12 @@
 					SetColor()
 				Case #Canvas_Mouse
 					If General::Preferences(General::#Pref_Mouse)
-						MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
+						If Enabled
+							MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
+						EndIf
 					Else
 						UnhookWindowsHookEx_(MouseHook)
-						
+						MouseHook = 0
 						If InputArray(#VK_LBUTTON)
 							PopupWindow::Hide(InputArray(#VK_LBUTTON))
 							InputArray(#VK_LBUTTON) = #False
@@ -904,7 +933,7 @@
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 644
-; FirstLine = 41
-; Folding = xCAAAA-
+; CursorPosition = 547
+; FirstLine = 68
+; Folding = xDAAAA-
 ; EnableXP
