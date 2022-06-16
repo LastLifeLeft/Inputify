@@ -17,5 +17,5 @@ When finished, right-click on the system tray icon <img> to close *Inputify*. Do
 - Portable mode
 
 ## Miscellaneous 
- - The input design was largely inspired by the awesome [Xelu's Free Controllers & Keyboard Prompots](https://thoseawesomeguys.com/prompts/)
- - A word of advice : don't forget *Inputify* on when you type a password while screen sharing.
+ - The input design is largely inspired by the awesome [Xelu's Free Controllers & Keyboard Prompts](https://thoseawesomeguys.com/prompts/)
+ - A word of advice : don't forget to disable *Inputify* before you type a password while screen sharing.
