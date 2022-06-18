@@ -47,11 +47,11 @@
 	
 	Global Dim ColorScheme(1, #_Color_Type_COUNT - 1)
 	
-	ColorScheme(#Color_Mode_Light, #Color_Type_BackCold) 		= FixColor($F2F3F5)
-	ColorScheme(#Color_Mode_Light, #Color_Type_BackHot )		= FixColor($D4D7DC)
-	ColorScheme(#Color_Mode_Light, #Color_Type_FrontCold)		= FixColor($6A7480)
-	ColorScheme(#Color_Mode_Light, #Color_Type_FrontHot)		= FixColor($000000)
-	ColorScheme(#Color_Mode_Light, #Color_Type_FrontDisabled)	= FixColor($DCDDDE)
+	ColorScheme(#Color_Mode_Light, #Color_Type_BackCold) 		= SetAlpha(255, FixColor($F2F3F5))
+	ColorScheme(#Color_Mode_Light, #Color_Type_BackHot )		= SetAlpha(255, FixColor($D4D7DC))
+	ColorScheme(#Color_Mode_Light, #Color_Type_FrontCold)		= SetAlpha(255, FixColor($6A7480))
+	ColorScheme(#Color_Mode_Light, #Color_Type_FrontHot)		= SetAlpha(255, FixColor($000000))
+	ColorScheme(#Color_Mode_Light, #Color_Type_FrontDisabled)	= SetAlpha(255, FixColor($DCDDDE))
 	
 	ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOff)		= SetAlpha(255, FixColor($72767D))
 	ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOn)		= SetAlpha(255, FixColor($3AA55D))
@@ -65,11 +65,11 @@
 	ColorScheme(#Color_Mode_Light, #Color_Keyboard_4)			= SetAlpha(255, FixColor($414141))
 	ColorScheme(#Color_Mode_Light, #Color_Mouse)				= SetAlpha(255, FixColor($E02727))
 	
-	ColorScheme(#Color_Mode_Dark, #Color_Type_BackCold) 		= FixColor($2F3136)
-	ColorScheme(#Color_Mode_Dark, #Color_Type_BackHot )			= FixColor($393C43)
-	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontCold)		= FixColor($8E9297)
-	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontHot)			= FixColor($FFFFFF)
-	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontDisabled)	= FixColor($4F545C)
+	ColorScheme(#Color_Mode_Dark, #Color_Type_BackCold) 		= SetAlpha(255, FixColor($2F3136))
+	ColorScheme(#Color_Mode_Dark, #Color_Type_BackHot )			= SetAlpha(255, FixColor($393C43))
+	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontCold)		= SetAlpha(255, FixColor($8E9297))
+	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontHot)			= SetAlpha(255, FixColor($FFFFFF))
+	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontDisabled)	= SetAlpha(255, FixColor($4F545C))
 	
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleOff)		= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOff)		
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleOn)			= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOn)		
@@ -134,6 +134,7 @@ EndDeclareModule
 
 Module General
 	EnableExplicit
+	UsePNGImageDecoder()
 	
 	Procedure UpdateThread(Null)
 		Protected Text.s, URL.s, HTTPRequest, LineCount, Loop
@@ -210,7 +211,8 @@ Module General
 	EndProcedure
 	;}
 EndModule
-; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 3
-; Folding = 06y
+; IDE Options = PureBasic 6.00 Beta 9 (Windows - x64)
+; CursorPosition = 67
+; FirstLine = 9
+; Folding = -6y
 ; EnableXP
