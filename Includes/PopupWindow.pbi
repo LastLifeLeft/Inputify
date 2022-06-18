@@ -293,7 +293,7 @@
 				AddWindowTimer(WindowList()\Window, #Timer_Movement, FrameDuration)
 			Next
 			
-			Window = OpenWindow(#PB_Any, OriginX, OriginY, WindowWidth, WindowHeight, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess, MainWindow::WindowID)
+			Window = OpenWindow(#PB_Any, OriginX, OriginY, WindowWidth, WindowHeight, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess | #PB_Window_NoActivate | #PB_Window_NoGadgets, MainWindow::WindowID)
 			
 			If Window
 				; Set up the window data
@@ -694,8 +694,7 @@
 	EndProcedure
 	;}
 EndModule
-; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 196
-; FirstLine = 51
-; Folding = jGIg
+; IDE Options = PureBasic 6.00 Beta 9 (Windows - x64)
+; CursorPosition = 21
+; Folding = BEIg
 ; EnableXP

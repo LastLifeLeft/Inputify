@@ -113,11 +113,11 @@
 	#WH_KEYBOARD_LL = 13
 	#WM_INSTANCESTART = 111
 	
-	Global PopupMenu
 	Global Enabled = #True
 	Global MouseOffset = -1000
 	Global MouseHook, KeyboardHook
 	Global LocationMouseHook, LocationKeyboardHook, LocationWindow, LocationText
+	Global HookButton
 	Global NewList DesktopWindow()
 	
 	; Private procedures declaration
@@ -129,6 +129,14 @@
 	Declare HandlerSystray()
 	Declare HandlerUpdate()
 	Declare HandlerHyperLink()
+	Declare Handler_Scale()
+	Declare Handler_Duration()
+	Declare Handler_DarkMode()
+	Declare Handler_Mouse()
+	Declare Handler_Combo()
+	Declare Handler_CheckUpdate()
+	Declare Handler_Timer()
+	Declare Handler_Location()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare LocationMouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -140,15 +148,16 @@
 	Procedure Open()
 		; Check if another instance is already running signal it
 		Protected InstanceWindow = FindWindow_(#Null, "60e272b1-eb20-4caa-9354-2142e2be78a0")
+		Protected cchData, lpLCData.s, Loop, Y = 81, Icon = ImageID(CatchImage(#PB_Any, ?Icon18))
+		
 		If InstanceWindow
 			SendMessage_(InstanceWindow, #WM_INSTANCESTART, 0, 0)
 			HandlerMenuQuit() 
 		EndIf
 		
 		WindowID = UITK::Window(#Window, 0, 0, #Appearance_Window_Width, #Appearance_Window_Height, General::#AppName, #PB_Window_Invisible | #PB_Window_ScreenCentered | UITK::#Window_CloseButton | UITK::#DarkMode)
+		; Language
 		
-		; Languageè
-		Protected cchData, lpLCData.s, Loop, Y = 81
 		cchData = GetLocaleInfo_(#LOCALE_USER_DEFAULT, #LOCALE_SNATIVELANGNAME, @lpLCData, 0)
 		lpLCData = Space(cchData)
 		GetLocaleInfo_(#LOCALE_USER_DEFAULT, #LOCALE_SNATIVELANGNAME, @lpLCData, cchData)
@@ -164,8 +173,8 @@
 			Read.s Language(Loop)
 		Next
 		
-		UITK::SetWindowIcon(#Window, ImageID(CatchImage(#PB_Any, ?Icon)))
-
+		UITK::SetWindowIcon(#Window, Icon)
+		
 		StickyWindow(#Window, #True)
 		
 		UITK::Label(#Text_UserInterface, #Appearance_Window_TitleMargin, 50, 200, 20, Language(#Lng_UserInterface))
@@ -177,36 +186,35 @@
 		
 		UITK::Toggle(#Canvas_DarkMode, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Canvas_DarkMode))
 		SetGadgetFont(#Canvas_DarkMode, General::OptionFont)
-		SetGadgetColor(#Canvas_DarkMode, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-		SetGadgetColor(#Canvas_DarkMode, UITK::#Color_Text_Warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		GadgetToolTip(#Canvas_DarkMode, Language(#ToolTip_DarkMode))
+		BindGadgetEvent(#Canvas_DarkMode, @Handler_DarkMode(), #PB_EventType_Change)
+		SetGadgetState(#Canvas_DarkMode, General::Preferences(General::#Pref_DarkMode))
 		
 		Y + #Appearance_Window_OptionSpacing
 		
 		UITK::Label(#Text_Scale, #Appearance_Window_Margin, Y + 5, 100, 20, Language(#Lng_Scale))
 		SetGadgetFont(#Text_Scale, General::OptionFont)
-		SetGadgetColor(#Text_Scale, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-		UITK::TrackBar(#Canvas_Scale, WindowWidth(#Window) - #Appearance_Window_Margin - 150, Y - 4, 150, 40, 25, 175, UITK::#Trackbar_ShowState)
+		UITK::TrackBar(#Canvas_Scale, WindowWidth(#Window) - #Appearance_Window_Margin - 150, Y - 4, 150, 40, 25, 150, UITK::#Trackbar_ShowState)
 		SetGadgetState(#Canvas_Scale, General::Preferences(General::#Pref_Scale) * 0.5)
 		SetGadgetAttribute(#Canvas_Scale, UITK::#Trackbar_Scale, 50)
 		SetGadgetText(#Canvas_Scale, "x")
 		AddGadgetItem(#Canvas_Scale, 25, "")
 		AddGadgetItem(#Canvas_Scale, 50, "")
-		AddGadgetItem(#Canvas_Scale, 175, "")
+		AddGadgetItem(#Canvas_Scale, 150, "")
+		BindGadgetEvent(#Canvas_Scale, @Handler_Scale(), #PB_EventType_LeftButtonUp)
 		
 		Y + #Appearance_Window_OptionSpacing + 60
 		
 		UITK::Toggle(#Canvas_Mouse, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Canvas_Mouse))
 		SetGadgetFont(#Canvas_Mouse, General::OptionFont)
-		SetGadgetColor(#Canvas_Mouse, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-		SetGadgetColor(#Canvas_Mouse, UITK::#Color_Text_warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		GadgetToolTip(#Canvas_Mouse, Language(#ToolTip_Mouse))
+		BindGadgetEvent(#Canvas_Mouse, @Handler_Mouse(), #PB_EventType_Change)
+		SetGadgetState(#Canvas_Mouse, General::Preferences(General::#Pref_Mouse))
 		
 		Y + #Appearance_Window_OptionSpacing
 		
 		UITK::Label(#Text_Duration, #Appearance_Window_Margin, Y + 5, 100, 20, Language(#Lng_Duration))
 		SetGadgetFont(#Text_Duration, General::OptionFont)
-		SetGadgetColor(#Text_Duration, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		UITK::TrackBar(#Canvas_Duration, WindowWidth(#Window) - #Appearance_Window_Margin - 150, Y - 4, 150, 40, 5, 45, UITK::#Trackbar_ShowState)
 		SetGadgetState(#Canvas_Duration, General::Preferences(General::#Pref_Duration) * 0.01)
 		SetGadgetAttribute(#Canvas_Duration, UITK::#Trackbar_Scale, 10)
@@ -214,48 +222,38 @@
 		AddGadgetItem(#Canvas_Duration, 5, "")
 		AddGadgetItem(#Canvas_Duration, 20, "")
 		AddGadgetItem(#Canvas_Duration, 45, "")
+		BindGadgetEvent(#Canvas_Duration, @Handler_Duration(), #PB_EventType_Change)
 		
 		Y + #Appearance_Window_OptionSpacing
 		
 		UITK::Toggle(#Canvas_Combo, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Canvas_Combo))
 		SetGadgetFont(#Canvas_Combo, General::OptionFont)
-		SetGadgetColor(#Canvas_Combo, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-		SetGadgetColor(#Canvas_Combo, UITK::#Color_Text_warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		GadgetToolTip(#Canvas_Combo, Language(#ToolTip_Combo))
-		
+		BindGadgetEvent(#Canvas_Combo, @Handler_Combo(), #PB_EventType_Change)
+		SetGadgetState(#Canvas_Combo, General::Preferences(General::#Pref_Combo))
 		
 		Y + #Appearance_Window_OptionSpacing + 5
 		
-		
 		UITK::Button(#Canvas_Location, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24, Language(#Lng_Location), UITK::#Border)
+		BindGadgetEvent(#Canvas_Location, @Handler_Location(), #PB_EventType_Change)
+		
 		
 		Y + #Appearance_Window_OptionSpacing + 56
 		
 		UITK::Toggle(#Canvas_CheckUpdate, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Canvas_CheckUpdate))
 		SetGadgetFont(#Canvas_CheckUpdate, General::OptionFont)
-		SetGadgetColor(#Canvas_CheckUpdate, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-		SetGadgetColor(#Canvas_CheckUpdate, UITK::#Color_Text_warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		GadgetToolTip(#Canvas_CheckUpdate, Language(#ToolTip_CheckUpdate))
+		BindGadgetEvent(#Canvas_CheckUpdate, @Handler_CheckUpdate(), #PB_EventType_Change)
+		SetGadgetState(#Canvas_CheckUpdate, General::Preferences(General::#Pref_CheckUpdate))
 		
 		Y + #Appearance_Window_OptionSpacing
-
 		
 		HyperLinkGadget(#HyperLink_About, #Appearance_Window_TitleMargin + 5, Y, #Appearance_Window_Width - 2 * #Appearance_Window_TitleMargin, 15, Language(#Lng_About), General::FixColor($FF5E91), #PB_HyperLink_Underline)
-		SetGadgetColor(#HyperLink_About, #PB_Gadget_BackColor, GetGadgetColor(#Canvas_Location, UITK::#Color_Back_Cold))
-		
-		SetGadgetColor(#HyperLink_About, #PB_Gadget_FrontColor, RGB(Red(General::ColorScheme(General::Preferences(General::#Pref_DarkMode),General::#Color_Type_FrontCold)),
-		                                                            Green(General::ColorScheme(General::Preferences(General::#Pref_DarkMode),General::#Color_Type_FrontCold)),
-		                                                            Blue(General::ColorScheme(General::Preferences(General::#Pref_DarkMode),General::#Color_Type_FrontCold))))
 		BindGadgetEvent(#HyperLink_About, @HandlerHyperLink())
-		
 		
 		SetColor()
 		
-		; Get the icon from the executable to avoid stuffing the executable with redondant data. See : https://docs.microsoft.com/en-us/previous-versions/windows/embedded/ms924847(v=msdn.10)
-		Protected nIcons = ExtractIconEx_(ProgramFilename(), -1, #Null, #Null, #Null)
-		Protected Dim phiconSmall(nIcons)
-		ExtractIconEx_(ProgramFilename(), 0, #NUL, phiconSmall(), nIcons) 
-		AddSysTrayIcon(#Systray, WindowID, phiconSmall(0))
+		AddSysTrayIcon(#Systray, WindowID, Icon)
 		SysTrayIconToolTip(#Systray, General::#AppName)
 		
 		; Systray popup menu
@@ -279,11 +277,13 @@
 		
 		; Event bindings
 		BindEvent(#PB_Event_CloseWindow, @HandlerCloseWindow(), #Window)
-		BindEvent(#PB_Event_SysTray,@HandlerSystray())
-		BindEvent(#PB_Event_Menu, @HandlerMenuEnabled(), #Window, #Menu_Enabled) ; We can't use BindMenuEvent with FlatMenu
-		BindEvent(#PB_Event_Menu, @HandlerMenuOptions(), #Window, #Menu_Options)
-		BindEvent(#PB_Event_Menu, @HandlerMenuQuit(), #Window, #Menu_Quit)
+		BindEvent(#PB_Event_SysTray, @HandlerSystray())
 		BindEvent(General::#Event_Update, @HandlerUpdate())
+		BindEvent(#PB_Event_Timer, @Handler_Timer(), #Window)
+		
+		BindMenuEvent(0, #Menu_Enabled, @HandlerMenuEnabled())
+		BindMenuEvent(0, #Menu_Options, @HandlerMenuOptions())
+		BindMenuEvent(0, #Menu_Quit, @HandlerMenuQuit())
 		
 		OpenWindow(#Window_SingleInstance, 0, 0, 10, 0, "60e272b1-eb20-4caa-9354-2142e2be78a0", #PB_Window_Invisible)
 		SetWindowCallback(@WindowCallback(), #Window_SingleInstance)
@@ -317,13 +317,17 @@
 		Plot(52, 13)
 		Plot(49, 14)
 		Plot(51, 14)
-		Box(0, 30, 101, 20, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontDisabled))
+		Box(0, 30, 101, 20, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_Trackbar))
 		Box(1, 31, 99, 18, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold))
 		StopDrawing()
 		
 		LocationText = TextGadget(#PB_Any, 1, 31, 99, 18, "x: y:", #PB_Text_Center)
-		SetGadgetColor(LocationText, #PB_Gadget_BackColor, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold))
-		SetGadgetColor(LocationText, #PB_Gadget_FrontColor, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontHot))
+		SetGadgetColor(LocationText, #PB_Gadget_BackColor, RGB(Red(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold)),
+		                                                       Green(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold)),
+		                                                       Blue(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold))))
+		SetGadgetColor(LocationText, #PB_Gadget_FrontColor, RGB(Red(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontHot)),
+		                                                       Green(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontHot)),
+		                                                       Blue(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontHot))))
 		
 		CloseGadgetList()
 		StickyWindow(LocationWindow, #True)
@@ -417,6 +421,15 @@
 		RunProgram("http://lastlife.net/")
 	EndProcedure
 	
+	Procedure Handler_Scale()
+		General::Preferences(General::#Pref_Scale) = GetGadgetState(EventGadget()) * 2
+		PopupWindow::SetScale(General::Preferences(General::#Pref_Scale))
+	EndProcedure
+	
+	Procedure Handler_Duration()
+		General::Preferences(General::#Pref_Duration) = GetGadgetState(EventGadget()) * 100
+	EndProcedure
+	
 	Procedure HandlerMenuOptions()
 		HideWindow(#Window, #False, #PB_Window_ScreenCentered)
 	EndProcedure
@@ -447,10 +460,83 @@
 	
 	Procedure HandlerSystray()
 		If EventType() = #PB_EventType_RightClick
+			HookButton = #False
 			DisplayPopupMenu(0, WindowID(#Window))
+			
 		ElseIf EventType() = #PB_EventType_LeftDoubleClick
 			HandlerMenuOptions()
 		EndIf
+	EndProcedure
+	
+	Procedure Handler_DarkMode()
+		General::Preferences(General::#Pref_DarkMode) = GetGadgetState(#Canvas_DarkMode)
+		SetColor()
+	EndProcedure
+	
+	Procedure Handler_Mouse()
+		General::Preferences(General::#Pref_Mouse) = GetGadgetState(#Canvas_Mouse)
+		
+		If General::Preferences(General::#Pref_Mouse)
+			If Enabled
+				MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
+			EndIf
+		Else
+			UnhookWindowsHookEx_(MouseHook)
+			MouseHook = 0
+			If InputArray(#VK_LBUTTON)
+				PopupWindow::Hide(InputArray(#VK_LBUTTON))
+				InputArray(#VK_LBUTTON) = #False
+			EndIf
+			
+			If InputArray(#VK_RBUTTON)
+				PopupWindow::Hide(InputArray(#VK_RBUTTON))
+				InputArray(#VK_RBUTTON) = #False
+			EndIf
+			
+			If InputArray(#VK_MBUTTON)
+				PopupWindow::Hide(InputArray(#VK_MBUTTON))
+				InputArray(#VK_MBUTTON) = #False
+			EndIf
+		EndIf
+	EndProcedure
+	
+	Procedure Handler_Combo()
+		General::Preferences(General::#Pref_Combo) = GetGadgetState(#Canvas_Combo)
+	EndProcedure
+	
+	Procedure Handler_CheckUpdate()
+		General::Preferences(General::#Pref_CheckUpdate) = GetGadgetState(#Canvas_CheckUpdate)
+	EndProcedure
+	
+	Procedure Handler_Timer()
+		RemoveWindowTimer(#Window, 0)
+		If HookButton
+			InputArray(HookButton) = PopupWindow::Create(HookButton)
+		EndIf
+	EndProcedure
+	
+	Procedure Handler_Location()
+		Protected Loop, DesktopCount
+		LocationMouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @LocationMouseHook(), GetModuleHandle_(0), 0)
+		LocationKeyboardHook = SetWindowsHookEx_(#WH_KEYBOARD_LL, @LocationKeyboardHook(), GetModuleHandle_(0), 0)
+		
+		DesktopCount = ExamineDesktops() - 1
+		
+		For Loop = 0 To DesktopCount
+			AddElement(DesktopWindow())
+			DesktopWindow() = OpenWindow(#PB_Any, DesktopX(Loop), DesktopY(Loop), DesktopWidth(Loop), DesktopHeight(Loop), "", #PB_Window_Invisible | #PB_Window_BorderLess, WindowID)
+			SetWindowColor(DesktopWindow(), $141414)
+			StickyWindow(DesktopWindow(), #True)
+			SetWindowLongPtr_(WindowID(DesktopWindow()), #GWL_EXSTYLE, #WS_EX_LAYERED)
+			SetLayeredWindowAttributes_(WindowID(DesktopWindow()), 0, 150, #LWA_ALPHA)
+			HideWindow(DesktopWindow(), #False)
+		Next
+		
+		SetGadgetText(LocationText, "x: " + Str(DesktopMouseX() - 50) + " y: " +Str(DesktopMouseY() - 12))
+		SetWindowPos_(WindowID(LocationWindow), 0, DesktopMouseX() - 50, DesktopMouseY() - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW)
+		HideWindow(LocationWindow, #False)
+		SetActiveWindow(LocationWindow)
+		ShowCursor_(#False)
 	EndProcedure
 	
 	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -514,11 +600,14 @@
 		If nCode = #HC_ACTION
 			Select wParam 
 				Case #WM_LBUTTONDOWN
-					InputArray(#VK_LBUTTON) = PopupWindow::Create(#VK_LBUTTON)
+					AddWindowTimer(#Window, 0, 1)
+					HookButton = #VK_LBUTTON
 				Case #WM_RBUTTONDOWN
-					InputArray(#VK_RBUTTON) = PopupWindow::Create(#VK_RBUTTON)
+					AddWindowTimer(#Window, 0, 1)
+					HookButton = #VK_RBUTTON
 				Case #WM_MBUTTONDOWN
-					InputArray(#VK_MBUTTON) = PopupWindow::Create(#VK_MBUTTON)
+					AddWindowTimer(#Window, 0, 1)
+					HookButton = #VK_MBUTTON
 				Case #WM_LBUTTONUP
 					If InputArray(#VK_LBUTTON)
 						PopupWindow::Hide(InputArray(#VK_LBUTTON))
@@ -581,39 +670,60 @@
 	EndProcedure
 	
 	Procedure SetColor()
-; 		SetWindowColor(#Window, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		
-; 		SetGadgetColor(#Text_UserInterface, #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(#Text_UserInterface, #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
-; 		SetGadgetColor(#Text_Behavior, #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(#Text_Behavior, #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
-; 		SetGadgetColor(#Text_Misc, #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(#Text_Misc, #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
-; 		
-; 		SetGadgetColor(GetGadgetData(#Canvas_DarkMode), #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(GetGadgetData(#Canvas_DarkMode), #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-; 		RedrawToggle(#Canvas_DarkMode)
-; 		SetGadgetColor(GetGadgetData(#Canvas_Scale), #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(GetGadgetData(#Canvas_Scale), #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-; 		RedrawTrackbar(#Canvas_Scale)
-; 		SetGadgetColor(GetGadgetData(#Canvas_Mouse), #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(GetGadgetData(#Canvas_Mouse), #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-; 		RedrawToggle(#Canvas_Mouse)
-; 		SetGadgetColor(GetGadgetData(#Canvas_Duration), #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(GetGadgetData(#Canvas_Duration), #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-; 		RedrawTrackbar(#Canvas_Duration)
-; 		SetGadgetColor(GetGadgetData(#Canvas_Location), #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(GetGadgetData(#Canvas_Location), #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-; 		RedrawButton(#Canvas_Location)
-; 		SetGadgetColor(GetGadgetData(#Canvas_Combo), #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(GetGadgetData(#Canvas_Combo), #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-; 		RedrawToggle(#Canvas_Combo)
-; 		SetGadgetColor(GetGadgetData(#Canvas_CheckUpdate), #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(GetGadgetData(#Canvas_CheckUpdate), #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-; 		RedrawToggle(#Canvas_CheckUpdate)
-; 		
-; 		SetGadgetColor(#HyperLink_About, #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(#HyperLink_About, #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		UITK::WindowSetColor(#Window, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		
+		SetGadgetColor(#Text_UserInterface, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		SetGadgetColor(#Text_UserInterface, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
+		
+		SetGadgetColor(#Text_Behavior, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		SetGadgetColor(#Text_Behavior, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
+		
+		SetGadgetColor(#Text_Misc, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		SetGadgetColor(#Text_Misc, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
+		
+		SetGadgetColor(#Canvas_DarkMode, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Canvas_DarkMode, UITK::#Color_Text_Warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Canvas_DarkMode, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		
+		SetGadgetColor(#Canvas_CheckUpdate, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Canvas_CheckUpdate, UITK::#Color_Text_warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Canvas_CheckUpdate, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		
+		SetGadgetColor(#Canvas_Combo, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Canvas_Combo, UITK::#Color_Text_warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Canvas_Combo, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		
+		SetGadgetColor(#Canvas_Mouse, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Canvas_Mouse, UITK::#Color_Text_warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Canvas_Mouse, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		
+		SetGadgetColor(#Text_Duration, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Text_Duration, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		SetGadgetColor(#Canvas_Duration, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		SetGadgetColor(#Canvas_Duration, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Canvas_Duration, UITK::#Color_Shade_Warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_Trackbar))
+		
+		SetGadgetColor(#Text_Scale, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Text_Scale, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		SetGadgetColor(#Canvas_Scale, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		SetGadgetColor(#Canvas_Scale, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Canvas_Scale, UITK::#Color_Shade_Warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_Trackbar))
+		
+		SetGadgetColor(#Canvas_Location, UITK::#Color_Back_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		SetGadgetColor(#Canvas_Location, UITK::#Color_Back_Warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackHot))
+		SetGadgetColor(#Canvas_Location, UITK::#Color_Back_Hot, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackHot))
+		SetGadgetColor(#Canvas_Location, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(#Canvas_Location, UITK::#Color_Text_Warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
+		SetGadgetColor(#Canvas_Location, UITK::#Color_Text_Hot, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
+		SetGadgetColor(#Canvas_Location, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		
+		SetGadgetColor(#HyperLink_About, #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		SetGadgetColor(#HyperLink_About, #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		
+		SetGadgetColor(#HyperLink_About, #PB_Gadget_BackColor, GetGadgetColor(#Text_UserInterface, UITK::#Color_Parent))
+		SetGadgetColor(#HyperLink_About, #PB_Gadget_FrontColor, RGB(Red(General::ColorScheme(General::Preferences(General::#Pref_DarkMode),General::#Color_Type_FrontCold)),
+		                                                            Green(General::ColorScheme(General::Preferences(General::#Pref_DarkMode),General::#Color_Type_FrontCold)),
+		                                                            Blue(General::ColorScheme(General::Preferences(General::#Pref_DarkMode),General::#Color_Type_FrontCold))))
 	EndProcedure
 	
 	Procedure WindowCallback(hWnd, Msg, wParam, lParam)
@@ -627,68 +737,43 @@
 	
 	DataSection ;{ Languages
 		English:
-		Data.s "Dark mode"
-		Data.s "Scale"
-		Data.s "Track Mouse"
-		Data.s "Window duration"
-		Data.s "Combo regroupment"
-		Data.s "Move popup origin"
-		Data.s "Auto-update"
-		Data.s "Visit ❤x1's website"
+		;MainWindow settings
+		Data.s "Dark mode", "Scale", "Track Mouse", "Window duration", "Combo regroupment", "Move popup origin", "Auto-update", "Visit ❤x1's website"
 		
-		Data.s "Switch between the dark and light theme"
-		Data.s "Changes the size of the input popup"
-		Data.s "Include mouse click in the tracked inputs"
-		Data.s "Change the time spent on screen"
-		Data.s "Regroup identical inputs as a group"
-		Data.s ""
-		Data.s "Check update at startup"
+		;MainWindow tooltips
+		Data.s "Switch between the dark and light theme", "Changes the size of the input popup", "Include mouse click in the tracked inputs", "Change the time spent on screen", "Regroup identical inputs as a group", "", "Check update at startup"
 		
-		Data.s "APPEARANCE"
-		Data.s "BEHAVIOR"
-		Data.s "MISC"
+		;Titles
+		Data.s "APPEARANCE", "BEHAVIOR", "MISC"
 		
-		Data.s "Track inputs"
-		Data.s "Preferences"
-		Data.s "Quit"
+		;Menu
+		Data.s "Track inputs", "Preferences", "Quit"
 		
 		Data.s "Inputify has started, you can find it in your system tray icons!"
 		
 		French:
-		Data.s "Mode sombre"
-		Data.s "Taille"
-		Data.s "Souris"
-		Data.s "Durée d'affichage"
-		Data.s "Regrouper les séries"
-		Data.s "Déplacer le point d'apparition"
-		Data.s "Surveiller les MàJ"
-		Data.s "Aller sur le site de ❤x1"
+		;MainWindow settings
+		Data.s "Mode sombre", "Taille", "Souris", "Durée d'affichage", "Regrouper les séries", "Déplacer le point d'apparition", "Surveiller les MàJ", "Aller sur le site de ❤x1"
 		
-		Data.s "Alterne entre les modes sombre et clair"
-		Data.s "Modifie la taille des inputs à l'écran"
-		Data.s "Ajoute la souris aux inputs"
-		Data.s "Change la durée d'affichage d'un input"
-		Data.s "Regroupe les séries d'inputs"
-		Data.s ""
-		Data.s "Au démarrage, vérifie si une nouvelle version est disponible"
+		;MainWindow tooltips
+		Data.s "Alterne entre les modes sombre et clair", "Modifie la taille des inputs à l'écran", "Ajoute la souris aux inputs", "Change la durée d'affichage d'un input", "Regroupe les séries d'inputs", "", "Au démarrage, vérifie si une nouvelle version est disponible"
 		
-		Data.s "APPARENCE"
-		Data.s "COMPORTEMENT"
-		Data.s "DIVERS"
+		;Titles
+		Data.s "APPARENCE", "COMPORTEMENT", "DIVERS"
 		
-		Data.s "Afficher les inputs"
-		Data.s "Préférences"
-		Data.s "Quitter"
+		;Menu
+		Data.s "Afficher les inputs", "Préférences", "Quitter"
 		
 		Data.s "Inputify a correctement démarré, vous pouvez le retrouver dans les icônes de la barre d'état !"
 		
-		Icon:
+		Icon18:
 		IncludeBinary "../Media/Icon/18.png"
+		
 	EndDataSection ;}
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 9 (Windows - x64)
-; CursorPosition = 128
-; FirstLine = 15
-; Folding = 6DAQ-
+; CursorPosition = 329
+; FirstLine = 240
+; Folding = 6DAAA5
 ; EnableXP
