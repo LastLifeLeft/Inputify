@@ -1,8 +1,8 @@
 ﻿DeclareModule General
 	; Public variables, structures and constants
 	#AppName = "Inputify"
-	#Version = 0.71
-	#Event_Update = #PB_Event_FirstCustomValue
+	#Version = 0.8
+	#Event_Update = UITK::#Event_FirstAvailableCustomValue
 	
 	;{ Colors
 	Enumeration ; Colors type
@@ -10,11 +10,10 @@
 		#Color_Type_BackHot 
 		#Color_Type_FrontCold
 		#Color_Type_FrontHot
-		#Color_Type_FrontDisabled
+		#Color_Type_Trackbar
 		#Color_Type_ToggleOff
 		#Color_Type_ToggleOn
 		#Color_Type_ToggleFront
-		#Color_Type_Trackbar
 		
 		#Color_Keyboard_0
 		#Color_Keyboard_1
@@ -47,16 +46,15 @@
 	
 	Global Dim ColorScheme(1, #_Color_Type_COUNT - 1)
 	
-	ColorScheme(#Color_Mode_Light, #Color_Type_BackCold) 		= FixColor($F2F3F5)
-	ColorScheme(#Color_Mode_Light, #Color_Type_BackHot )		= FixColor($D4D7DC)
-	ColorScheme(#Color_Mode_Light, #Color_Type_FrontCold)		= FixColor($6A7480)
-	ColorScheme(#Color_Mode_Light, #Color_Type_FrontHot)		= FixColor($000000)
-	ColorScheme(#Color_Mode_Light, #Color_Type_FrontDisabled)	= FixColor($DCDDDE)
+	ColorScheme(#Color_Mode_Light, #Color_Type_BackCold) 		= SetAlpha(255, FixColor($F2F3F5))
+	ColorScheme(#Color_Mode_Light, #Color_Type_BackHot )		= SetAlpha(255, FixColor($D4D7DC))
+	ColorScheme(#Color_Mode_Light, #Color_Type_FrontCold)		= SetAlpha(255, FixColor($6A7480))
+	ColorScheme(#Color_Mode_Light, #Color_Type_FrontHot)		= SetAlpha(255, FixColor($000000))
+	ColorScheme(#Color_Mode_Light, #Color_Type_Trackbar)		= SetAlpha(255, FixColor($CCCDCE))
 	
 	ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOff)		= SetAlpha(255, FixColor($72767D))
 	ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOn)		= SetAlpha(255, FixColor($3AA55D))
 	ColorScheme(#Color_Mode_Light, #Color_Type_ToggleFront)		= SetAlpha(255, FixColor($FFFFFF))
-	ColorScheme(#Color_Mode_Light, #Color_Type_Trackbar) 		= SetAlpha(255, FixColor($5765F2))
 	
 	ColorScheme(#Color_Mode_Light, #Color_Keyboard_0)			= SetAlpha(255, FixColor($404040))
 	ColorScheme(#Color_Mode_Light, #Color_Keyboard_1)			= SetAlpha(255, FixColor($D7D7D7))
@@ -65,16 +63,15 @@
 	ColorScheme(#Color_Mode_Light, #Color_Keyboard_4)			= SetAlpha(255, FixColor($414141))
 	ColorScheme(#Color_Mode_Light, #Color_Mouse)				= SetAlpha(255, FixColor($E02727))
 	
-	ColorScheme(#Color_Mode_Dark, #Color_Type_BackCold) 		= FixColor($2F3136)
-	ColorScheme(#Color_Mode_Dark, #Color_Type_BackHot )			= FixColor($393C43)
-	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontCold)		= FixColor($8E9297)
-	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontHot)			= FixColor($FFFFFF)
-	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontDisabled)	= FixColor($4F545C)
+	ColorScheme(#Color_Mode_Dark, #Color_Type_BackCold) 		= SetAlpha(255, FixColor($2F3136))
+	ColorScheme(#Color_Mode_Dark, #Color_Type_BackHot )			= SetAlpha(255, FixColor($393C43))
+	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontCold)		= SetAlpha(255, FixColor($8E9297))
+	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontHot)			= SetAlpha(255, FixColor($FFFFFF))
+	ColorScheme(#Color_Mode_Dark, #Color_Type_Trackbar)			= SetAlpha(255, FixColor($4F545C))
 	
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleOff)		= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOff)		
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleOn)			= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOn)		
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleFront)		= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleFront)		
-	ColorScheme(#Color_Mode_Dark, #Color_Type_Trackbar) 		= ColorScheme(#Color_Mode_Light, #Color_Type_Trackbar)
 	
 	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_0)			= SetAlpha(255, FixColor($1D1D1D))
 	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_1)			= SetAlpha(255, FixColor($353535))
@@ -122,7 +119,6 @@ EndDeclareModule
 DeclareModule PopupWindow
 	; Public variables, structures and constants
 	
-	
 	; Public procedures declaration
 	Declare Create(VKey)
 	Declare Hide(Window)
@@ -134,6 +130,7 @@ EndDeclareModule
 
 Module General
 	EnableExplicit
+	UsePNGImageDecoder()
 	
 	Procedure UpdateThread(Null)
 		Protected Text.s, URL.s, HTTPRequest, LineCount, Loop
@@ -163,7 +160,7 @@ Module General
 	Procedure Init()
 		Protected AppData.s = GetEnvironmentVariable("APPDATA"), CurrentDirectory.s = GetCurrentDirectory()
 		
-		If FileSize(CurrentDirectory + "Preference.ini") > 0
+		If FileSize(CurrentDirectory + "Preference.ini") > 0 Or LCase(ProgramParameter()) = "-portable"
 			PreferenceFile = CurrentDirectory + "Preference.ini"
 		ElseIf FileSize(AppData + "/❤x1/Inputify/Preference.ini") = -1
 			CreateDirectory(AppData + "/❤x1")
@@ -210,7 +207,7 @@ Module General
 	EndProcedure
 	;}
 EndModule
-; IDE Options = PureBasic 6.00 Beta 1 (Windows - x64)
-; CursorPosition = 3
+; IDE Options = PureBasic 6.00 Beta 9 (Windows - x64)
+; CursorPosition = 120
 ; Folding = 06y
 ; EnableXP
