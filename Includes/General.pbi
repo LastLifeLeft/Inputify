@@ -1,7 +1,7 @@
 ﻿DeclareModule General
 	; Public variables, structures and constants
 	#AppName = "Inputify"
-	#Version = 0.8
+	#Version = 0.9
 	#Event_Update = UITK::#Event_FirstAvailableCustomValue
 	
 	;{ Colors
@@ -194,6 +194,8 @@ Module General
 			CreateThread(@UpdateThread(), #Null)
 		EndIf
 		
+		InitJoystick()
+		
 	EndProcedure
 	
 	Procedure AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
@@ -207,7 +209,7 @@ Module General
 	EndProcedure
 	;}
 EndModule
-; IDE Options = PureBasic 6.00 Beta 9 (Windows - x64)
-; CursorPosition = 120
-; Folding = 06y
+; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
+; CursorPosition = 3
+; Folding = 063
 ; EnableXP
