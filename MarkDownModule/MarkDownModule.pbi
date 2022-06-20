@@ -21,6 +21,7 @@
 ;
 
 ;{ ===== MIT License =====
+;{ ===== MIT License =====
 ;
 ; Copyright (c) 2019 Thorsten Hoeppner
 ;
@@ -122,7 +123,7 @@
 ; XIncludeFile "NamedPipeModule.pbi"
 
 ; ***** If no PDF is required, this line can be commented out. *****
-;CompilerIf Not Defined(PDF, #PB_Module) : XIncludeFile "pbPDFModule.pbi" : CompilerEndIf
+; CompilerIf Not Defined(PDF, #PB_Module) : XIncludeFile "pbPDFModule.pbi" : CompilerEndIf
 
 
 DeclareModule MarkDown
@@ -131,13 +132,13 @@ DeclareModule MarkDown
 	#ModuleEx = 20041700
 	
 	#Enable_Gadget      = #True
-	#Enable_Requester   = #True
-	#Enable_Tooltips    = #True
-	#Enable_HelpWindow  = #True
+	#Enable_Requester   = #False
+	#Enable_Tooltips    = #False
+	#Enable_HelpWindow  = #False
 	#Enable_CreateHelp  = #False
-	#Enable_Emoji       = #True
-	#Enable_ExportHTML  = #True
-	#Enable_DrawCanvas  = #True
+	#Enable_Emoji       = #False
+	#Enable_ExportHTML  = #False
+	#Enable_DrawCanvas  = #False
 	
 	;- ===========================================================================
 	;-   DeclareModule - Constants
@@ -8027,7 +8028,7 @@ Module MarkDown
 			If MarkDown()\Type = #Requester
 				Box_(0, 0, MarkDown()\Area\Width, MarkDown()\Area\Height - 30, BackColor)
 			Else
-				Box_(0, 0, MarkDown()\Area\Width + 1, MarkDown()\Area\Height + 2, BackColor) ; BackColor
+				Box_(0, 0, OutputWidth(), OutputHeight(), BackColor) ; BackColor
 			EndIf 
 			;}
 			
@@ -8902,13 +8903,10 @@ Module MarkDown
 							MarkDown()\EventLabel = LTrim(MarkDown()\EventValue, "#")
 						EndIf  
 						
-						PostEvent(#Event_Gadget,    MarkDown()\Window\Num, MarkDown()\CanvasNum, #EventType_Link)
-						PostEvent(#PB_Event_Gadget, MarkDown()\Window\Num, MarkDown()\CanvasNum, #EventType_Link)
-						
 						MarkDown()\Link()\State = #False
 						
 						Draw_()
-						
+						RunProgram(MarkDown()\EventValue)
 						ProcedureReturn #True
 					EndIf
 				EndIf
@@ -8949,6 +8947,7 @@ Module MarkDown
 	EndProcedure
 	
 	Procedure _MouseMoveHandler()
+		
 		Define.i X, Y, dX, dY, Backwards, Forwards, Thumb, CursorPos
 		Define.s ToolTip$
 		Define.i GNum = EventGadget()
@@ -9017,7 +9016,6 @@ Module MarkDown
 		CompilerEndIf
 		
 		If FindMapElement(MarkDown(), Str(GNum))
-			
 			dX = GetGadgetAttribute(MarkDown()\CanvasNum, #PB_Canvas_MouseX)
 			dY = GetGadgetAttribute(MarkDown()\CanvasNum, #PB_Canvas_MouseY)
 			
@@ -10316,10 +10314,6 @@ Module MarkDown
 							BindEvent(#PB_Event_SizeWindow, @_ResizeWindowHandler(), MarkDown()\Window\Num)
 						EndIf
 					EndIf ;}
-					
-					If IsWindow(MarkDown()\Window\Num)
-						BindEvent(#PB_Event_CloseWindow, @_CloseWindowHandler(), MarkDown()\Window\Num)
-					EndIf
 					
 					AddWindowTimer(MarkDown()\Window\Num, #AutoScrollTimer, #Frequency)
 					BindEvent(#PB_Event_Timer, @_AutoScroll(), MarkDown()\Window\Num)
@@ -12536,11 +12530,10 @@ CompilerEndIf
 
 EndModule
 
-; IDE Options = PureBasic 6.00 Beta 9 (Windows - x64)
-; CursorPosition = 423
-; FirstLine = 65
-; Folding = QAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAw
-; Markers = 5021
+; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
+; CursorPosition = 8030
+; FirstLine = 525
+; Folding = jCABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAkAAAAAAAAAECAAAAIAgAAAgAAAAAAAAAAAAAAAAAg
 ; Optimizer
 ; EnableXP
 ; DPIAware

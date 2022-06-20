@@ -114,6 +114,7 @@
 		
 		#Container_About
 		#ContainerCorner_About
+		#MarkDown
 		
 		#Container_Controller
 		#ContainerCorner_Controller
@@ -138,6 +139,7 @@
 	#Appearance_TrackBar_Lenght = 220
 	#Appearance_LeftPanel_Width = 285
 	#Appearance_LeftPanel_ItemHeight = 50
+	#Appearance_MarkDown_Margin = 90
 	#Appearance_Window_ItemWidth = #Appearance_Window_Width - #Appearance_LeftPanel_Width - 2 * #Appearance_Window_Margin
 	
 	#Appearance_Option_Width = #Appearance_Window_Width - 2 *#Appearance_Window_TitleMargin
@@ -153,7 +155,7 @@
 	Global HookButton, Dim CornerImage(1)
 	Global NewList DesktopWindow()
 	
-	; Private procedures declaration
+	;{ Private procedures declaration
 	Declare SystrayBalloon(Title.s,Message.s,Flags)
 	Declare HandlerCloseWindow()
 	Declare HandlerMenuEnabled()
@@ -171,6 +173,7 @@
 	Declare Handler_Timer()
 	Declare Handler_Location()
 	Declare Handler_LeftPanel()
+	Declare Handler_Radio()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare LocationMouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -178,6 +181,7 @@
 	Declare SetColor()
 	Declare WindowCallback(hWnd, Msg, wParam, lParam)
 	Declare VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State)
+	;}
 	
 	;{ Public procedures
 	Procedure Open()
@@ -211,6 +215,7 @@
 		WindowID = UITK::Window(#Window, 0, 0, #Appearance_Window_Width, #Appearance_Window_Height, General::#AppName, #PB_Window_Invisible | #PB_Window_ScreenCentered | UITK::#Window_CloseButton | UITK::#DarkMode)
 		UITK::WindowSetColor(#Window, UITK::#Color_Parent, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder))
 		StickyWindow(#Window, #True)
+		DisableWindow(#Window, #True)
 		;}
 		
 		;{ Corner images
@@ -269,16 +274,18 @@
 		
 		Y + #Appearance_Window_OptionSpacing
 		
-		UITK::Label(#Text_Scale, #Appearance_Window_Margin, Y, 200, 20, Language(#Lng_Scale))
-		SetGadgetFont(#Text_Scale, General::OptionFont)
 		UITK::TrackBar(#Trackbar_Scale, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 40, 25, 150, UITK::#Trackbar_ShowState)
 		SetGadgetState(#Trackbar_Scale, General::Preferences(General::#Pref_Scale) * 0.5)
+		GadgetToolTip(#Trackbar_Scale, Language(#ToolTip_Scale))
 		SetGadgetAttribute(#Trackbar_Scale, UITK::#Trackbar_Scale, 50)
 		SetGadgetText(#Trackbar_Scale, "x")
 		AddGadgetItem(#Trackbar_Scale, 25, "")
 		AddGadgetItem(#Trackbar_Scale, 50, "")
 		AddGadgetItem(#Trackbar_Scale, 150, "")
 		BindGadgetEvent(#Trackbar_Scale, @Handler_Scale(), #PB_EventType_LeftButtonUp)
+		UITK::Label(#Text_Scale, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth - GadgetWidth(#Trackbar_Scale), 20, Language(#Lng_Scale))
+		SetGadgetFont(#Text_Scale, General::OptionFont)
+		GadgetToolTip(#Text_Scale, Language(#ToolTip_Scale))
 		
 		Y + #Appearance_Window_TitleSpacing
 		
@@ -289,20 +296,24 @@
 		
 		UITK::Radio(#Radio_Dark, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_DarkTheme), "Color Theme", UITK::#HAlignCenter)
 		SetGadgetFont(#Radio_Dark, General::OptionFont)
+		BindGadgetEvent(#Radio_Dark, @Handler_Radio(), #PB_EventType_Change)
 		Y + #Appearance_Window_OptionSpacing
 		
 		UITK::Radio(#Radio_Light, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_LightTheme), "Color Theme", UITK::#HAlignCenter)
 		SetGadgetFont(#Radio_Light, General::OptionFont)
+		BindGadgetEvent(#Radio_Light, @Handler_Radio(), #PB_EventType_Change)
 		Y + #Appearance_Window_OptionSpacing
 		
 		UITK::Radio(#Radio_Pink, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_PinkTheme), "Color Theme", UITK::#HAlignCenter)
 		SetGadgetFont(#Radio_Pink, General::OptionFont)
+		BindGadgetEvent(#Radio_Pink, @Handler_Radio(), #PB_EventType_Change)
 		Y + #Appearance_Window_OptionSpacing
 		
 		UITK::Radio(#Radio_Blue, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_BlueTheme), "Color Theme", UITK::#HAlignCenter)
 		SetGadgetFont(#Radio_Blue, General::OptionFont)
+		BindGadgetEvent(#Radio_Blue, @Handler_Radio(), #PB_EventType_Change)
 		
-		SetGadgetState(#Radio_Dark, #True)
+		SetGadgetState(#Radio_Dark + General::Preferences(General::#Pref_KeyColor), #True)
 		
 		CloseGadgetList() ;}
 		
@@ -342,9 +353,8 @@
 		
 		Y + #Appearance_Window_OptionSpacing
 		
-		UITK::Label(#Text_Duration, #Appearance_Window_Margin, Y, 200, 20, Language(#Lng_Duration))
-		SetGadgetFont(#Text_Duration, General::OptionFont)
 		UITK::TrackBar(#Trackbar_Duration, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 40, 5, 45, UITK::#Trackbar_ShowState)
+		GadgetToolTip(#Trackbar_Duration, Language(#ToolTip_Duration))
 		SetGadgetState(#Trackbar_Duration, General::Preferences(General::#Pref_Duration) * 0.01)
 		SetGadgetAttribute(#Trackbar_Duration, UITK::#Trackbar_Scale, 10)
 		SetGadgetText(#Trackbar_Duration, "s")
@@ -352,6 +362,9 @@
 		AddGadgetItem(#Trackbar_Duration, 20, "")
 		AddGadgetItem(#Trackbar_Duration, 45, "")
 		BindGadgetEvent(#Trackbar_Duration, @Handler_Duration(), #PB_EventType_Change)
+		UITK::Label(#Text_Duration, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth - GadgetWidth(#Trackbar_Duration), 20, Language(#Lng_Duration))
+		SetGadgetFont(#Text_Duration, General::OptionFont)
+		GadgetToolTip(#Text_Duration, Language(#ToolTip_Duration))
 		
 		Y + #Appearance_Window_OptionSpacing
 		
@@ -378,8 +391,6 @@
 		HideGadget(#Container_Controller, #True)
 		ImageGadget(#ContainerCorner_Controller, 0, 0, 5, 5, 0)
 		
-		
-		
 		CloseGadgetList()
 		;}
 		
@@ -387,14 +398,29 @@
 		ContainerGadget(#Container_About, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
 		HideGadget(#Container_About, #True)
 		ImageGadget(#ContainerCorner_About, 0, 0, 5, 5, 0)
+		Protected Text$
+		Text$ = "### About Inputify ###" + #LF$
+		Text$ + "Thank you for using my program!  " + #LF$
+		Text$ + ""+ #LF$
+		Text$ + ~"*Inputify* is free and open source, check it on [GitHub](https://github.com/LastLifeLeft/Inputify).  " + #LF$
+		Text$ + ~"It has been developped with love and care by [❤x1](https://lastlife.net/ \"Why not check on my other projects?\"), but there is more than likely some bugs still lurking in the shadows. Don't be shy if you spot one: I welcome every bug report and suggestion!  "+ #LF$
+		Text$ + ""+ #LF$
+		Text$ + "### Libraries and licences ###" + #LF$
+		Text$ + "*Inputify* is distributed under ___Creative Commons Attribution Share Alike 4.0___."+ #LF$
+		Text$ + ""+ #LF$
+		Text$ + "It would not have been possible without some excellent open source softwares :"+ #LF$
+		Text$ + "- [UITK](https://github.com/LastLifeLeft/UI-Toolkit) By ❤x1, under CC BY SA."+#LF$
+		Text$ + "- [MarkDown Gadget](https://www.purebasic.fr/english/viewtopic.php?t=74307) by Thorsten Hoeppner, under MIT."+#LF$
+		Text$ + "- [libpng](http://www.libpng.org/pub/png/libpng.html) under its own licence."+#LF$
+		Text$ + ""+ #LF$
+		Text$ + "### Miscellaneous ###" + #LF$
+		Text$ + "- The input design is largely inspired by the awesome [Xelu's Free Controllers & Keyboard Prompts](https://thoseawesomeguys.com/prompts/)."+#LF$
+		Text$ + "- A word of advice : don't forget to disable *Inputify* before you type a password while screen sharing."+#LF$
 		
-		
-		
+		MarkDown::Gadget(#MarkDown, #Appearance_MarkDown_Margin, 10, #Appearance_Window_Width - #Appearance_LeftPanel_Width - #Appearance_MarkDown_Margin * 2, GadgetHeight(#Container_About) - 20, MarkDown::#Borderless)
+		MarkDown::SetText(#MarkDown, Text$)
+		MarkDown::SetFont(#MarkDown, "Segoe UI", 10)
 		CloseGadgetList()
-		
-; 		HyperLinkGadget(#HyperLink_Website, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 15, Language(#Lng_Website), General::FixColor($FF5E91), #PB_HyperLink_Underline)
-; 		BindGadgetEvent(#HyperLink_Website, @HandlerHyperLink())
-; 		HideGadget(#Container_Behavior, #True)
 		;}
 		
 		;{ Systray
@@ -425,7 +451,6 @@
 		BindEvent(#PB_Event_CloseWindow, @HandlerCloseWindow(), #Window)
 		BindEvent(#PB_Event_SysTray, @HandlerSystray())
 		BindEvent(General::#Event_Update, @HandlerUpdate())
-		BindEvent(#PB_Event_Timer, @Handler_Timer(), #Window)
 		
 		BindMenuEvent(0, #Menu_Enabled, @HandlerMenuEnabled())
 		BindMenuEvent(0, #Menu_Options, @HandlerMenuOptions())
@@ -475,10 +500,12 @@
 		SetGadgetColor(LocationText, #PB_Gadget_FrontColor, RGB(Red(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontHot)),
 		                                                       Green(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontHot)),
 		                                                       Blue(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontHot))))
+		StickyWindow(LocationWindow, #True)
+		BindEvent(#PB_Event_Timer, @Handler_Timer(), LocationWindow)
+		DisableWindow(LocationWindow, #True)
 		;}
 		
 		SetColor()
-		StickyWindow(LocationWindow, #True)
 	EndProcedure
 	;}
 	
@@ -524,6 +551,7 @@
 	EndProcedure
 	
 	Procedure HandlerCloseWindow()
+		DisableWindow(#Window, #True)
 		HideWindow(#Window, #True)
 	EndProcedure
 	
@@ -595,6 +623,7 @@
 	EndProcedure
 	
 	Procedure HandlerMenuOptions()
+		DisableWindow(#Window, #False)
 		HideWindow(#Window, #False, #PB_Window_ScreenCentered)
 	EndProcedure
 	
@@ -603,6 +632,7 @@
 			PreferenceGroup("Appearance")
 			WritePreferenceLong("DarkMode", General::Preferences(General::#Pref_DarkMode))
 			WritePreferenceLong("Scale", General::Preferences(General::#Pref_Scale))
+			WritePreferenceLong("InputColor", General::Preferences(General::#Pref_KeyColor))
 			
 			PreferenceGroup("Behavior")
 			WritePreferenceLong("Mouse", General::Preferences(General::#Pref_Mouse))
@@ -673,7 +703,7 @@
 	EndProcedure
 	
 	Procedure Handler_Timer()
-		RemoveWindowTimer(#Window, 0)
+		RemoveWindowTimer(LocationWindow, 0)
 		If HookButton
 			InputArray(HookButton) = PopupWindow::Create(HookButton)
 		EndIf
@@ -701,6 +731,8 @@
 		HideWindow(LocationWindow, #False)
 		SetActiveWindow(LocationWindow)
 		ShowCursor_(#False)
+		
+		DisableWindow(LocationWindow, #False)
 	EndProcedure
 	
 	Procedure Handler_LeftPanel()
@@ -729,6 +761,10 @@
 				HideGadget(#Container_About, #True)
 				HideGadget(#Container_Controller, #False)
 		EndSelect
+	EndProcedure
+	
+	Procedure Handler_Radio()
+		General::Preferences(General::#Pref_KeyColor) = EventGadget() - #Radio_Dark
 	EndProcedure
 	
 	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -792,13 +828,13 @@
 		If nCode = #HC_ACTION
 			Select wParam 
 				Case #WM_LBUTTONDOWN
-					AddWindowTimer(#Window, 0, 1)
+					AddWindowTimer(LocationWindow, 0, 1)
 					HookButton = #VK_LBUTTON
 				Case #WM_RBUTTONDOWN
-					AddWindowTimer(#Window, 0, 1)
+					AddWindowTimer(LocationWindow, 0, 1)
 					HookButton = #VK_RBUTTON
 				Case #WM_MBUTTONDOWN
-					AddWindowTimer(#Window, 0, 1)
+					AddWindowTimer(LocationWindow, 0, 1)
 					HookButton = #VK_MBUTTON
 				Case #WM_LBUTTONUP
 					If InputArray(#VK_LBUTTON)
@@ -831,6 +867,7 @@
 		ClearList(DesktopWindow())
 		
 		HideWindow(LocationWindow, #True)
+		DisableWindow(LocationWindow, #True)
  		ShowCursor_(#True)
 	EndMacro
 	
@@ -894,6 +931,8 @@
 	EndMacro
 	
 	Procedure SetColor()
+		SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #False, 0)
+		
 		SetContainerColor(#Container_Appearance)
 		SetContainerColor(#Container_Behavior)
 		SetContainerColor(#Container_Controller)
@@ -938,14 +977,14 @@
 		SetGadgetColor(#Button_Location, UITK::#Color_Text_Warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
 		SetGadgetColor(#Button_Location, UITK::#Color_Text_Hot, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
 		SetGadgetColor(#Button_Location, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		
-; 		SetGadgetColor(#HyperLink_Website, #PB_Gadget_BackColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-; 		SetGadgetColor(#HyperLink_Website, #PB_Gadget_FrontColor, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-; 		
-; 		SetGadgetColor(#HyperLink_Website, #PB_Gadget_BackColor, GetGadgetColor(#Button_Location, UITK::#Color_Parent))
-; 		SetGadgetColor(#HyperLink_Website, #PB_Gadget_FrontColor, RGB(Red(General::ColorScheme(General::Preferences(General::#Pref_DarkMode),General::#Color_Type_FrontCold)),
-; 		                                                            Green(General::ColorScheme(General::Preferences(General::#Pref_DarkMode),General::#Color_Type_FrontCold)),
-; 		                                                            Blue(General::ColorScheme(General::Preferences(General::#Pref_DarkMode),General::#Color_Type_FrontCold))))
+		
+		MarkDown::SetColor(#MarkDown, MarkDown::#Color_Back, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		MarkDown::SetColor(#MarkDown, MarkDown::#Color_Front, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
+		MarkDown::SetColor(#MarkDown, MarkDown::#Color_Link, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		MarkDown::SetColor(#MarkDown, MarkDown::#Color_HighlightLink, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		
+		SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #True, 0)
+		RedrawWindow_(GadgetID(#Container_Appearance), 0, 0, #RDW_ERASE | #RDW_INVALIDATE) 
 	EndProcedure
 	
 	Procedure WindowCallback(hWnd, Msg, wParam, lParam)
@@ -995,10 +1034,10 @@
 	DataSection ;{ Languages
 		English:
 		;MainWindow settings
-		Data.s "Dark mode", "Input scale", "Track Mouse", "Window duration", "Combo regroupment", "Move popup origin", "Auto-update", "Visit ❤x1's website", "Input color"
+		Data.s "Dark mode", "Input scale", "Track Mouse", "Popup duration", "Combo regroupment", "Move popup origin", "Auto-update", "Visit ❤x1's website", "Input color"
 		
 		;MainWindow tooltips
-		Data.s "Switch between the dark and light theme", "Changes the size of the input popup", "Include mouse click in the tracked inputs", "Change the time spent on screen", "Regroup identical inputs as a group", "Enable the tracking altogether.", "Check update at startup"
+		Data.s "Switch between the dark and light theme", "Changes the size of the input popup", "Include mouse click in the tracked inputs", "Change the time spent on screen by an input popup", "Regroup identical inputs as a group", "Enable the tracking altogether.", "Check update at startup"
 		
 		;Titles
 		Data.s "Appearance", "Behavior", "About", "Controller", "General", "Input", "Misc"
@@ -1035,8 +1074,7 @@
 	EndDataSection ;}
 	
 EndModule
-; IDE Options = PureBasic 6.00 Beta 9 (Windows - x64)
-; CursorPosition = 898
-; FirstLine = 264
-; Folding = 0BGCAACA6
+; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
+; CursorPosition = 146
+; Folding = BAAAAAAAA-
 ; EnableXP

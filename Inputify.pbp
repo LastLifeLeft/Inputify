@@ -7,32 +7,32 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2022-06-19 22:19" user="❤x1" host="MONSTRO"/>
+    <lastopen date="2022-06-20 17:42" user="Poshu" host="MONSTRO"/>
   </section>
   <section name="files">
     <file name="Includes\General.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="302950cc87ecfdcedf8a71c684d65458"/>
+      <fingerprint md5="b63a9af7f749d1ac68e9467885bafb86"/>
     </file>
     <file name="Includes\MainWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="25e80e02e6f97c7883aea27ef5b78e0e"/>
+      <fingerprint md5="ba94de178e78bf1b212f1f1f1c679fa7"/>
     </file>
     <file name="Includes\PopupWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="9b3c82091effa7c9b184237ab705a016"/>
+      <fingerprint md5="a557046fdab1a872347e870826bbd246"/>
     </file>
     <file name="Main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
       <fingerprint md5="310205eb281da7428a1353743a9c55d9"/>
     </file>
-    <file name="UI-Toolkit\Library\UI-Toolkit.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+++"/>
-      <fingerprint md5="bdcede4e4d08729b77153cc2882057ed"/>
-    </file>
     <file name="MarkDownModule\MarkDownModule.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
-      <fingerprint md5="70429ccda47d087d1e65d9b1460a2fc9"/>
+      <fingerprint md5="67e64c8c0c954f6387b3b18944b5c9a8"/>
+    </file>
+    <file name="UI-Toolkit\Library\UI-Toolkit.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+++"/>
+      <fingerprint md5="f67ffc0bc14852f0429f66689c60ea0a"/>
     </file>
   </section>
   <section name="targets">

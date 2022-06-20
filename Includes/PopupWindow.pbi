@@ -269,10 +269,10 @@
 			VectorFont(General::TitleFont, 20 * Scale)
 			
 			General::AddPathRoundedBox((*LatestWindow\Offset) * Scale, 12 * Scale, 30 * Scale + VectorTextWidth("x"+*LatestWindow\Combo), 36 * Scale, 4 * Scale)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold)))
+			VectorSourceColor(General::SetAlpha(255, General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_3)))
 			FillPath()
 			
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_4)))
+			VectorSourceColor(General::SetAlpha(255, General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_4)))
 			MovePathCursor((*LatestWindow\Offset + 15) * Scale, 20 * Scale)
 			DrawVectorText("x"+*LatestWindow\Combo)
 			FillPath()
@@ -294,6 +294,7 @@
 			Next
 			
 			Window = OpenWindow(#PB_Any, OriginX, OriginY, WindowWidth, WindowHeight, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess | #PB_Window_NoActivate | #PB_Window_NoGadgets, MainWindow::WindowID)
+			DisableWindow(Window, #True)
 			
 			If Window
 				; Set up the window data
@@ -358,6 +359,14 @@
 				
 				ProcedureReturn #False
 			EndIf
+		Else
+			Create(Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU)
+			MainWindow::InputArray(#VK_CONTROL) = #False
+			MainWindow::InputArray(#VK_SHIFT) = #False
+			MainWindow::InputArray(#VK_MENU) = #False
+			MainWindow::InputArray(Vkey) = *LatestWindow\Window
+			AddKey(*LatestWindow\Window, Vkey)
+			ProcedureReturn #False
 		EndIf
 		
 		AddWindowTimer(*LatestWindow\Window, #Timer_Duration, General::Preferences(General::#Pref_Duration))
@@ -597,9 +606,9 @@
 			AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
 			AddPathArc(-3 * Scale, 28 * Scale, 22 * Scale, 30 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathCurve(0, 0, 15 * Scale, 5 * Scale, 30 * Scale, 0,  #PB_Path_Relative)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_2)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_2))
 			FillPath(#PB_Path_Preserve)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_0)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_0))
 			StrokePath(4 * Scale)
 			
 			MovePathCursor((*WindowData\Offset + 27) * Scale, 27 * Scale)
@@ -607,9 +616,9 @@
 			AddPathArc(3 * Scale, -22 * Scale, 15 * Scale, -25 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathLine(13 * Scale, 0, #PB_Path_Relative)
 			ClosePath()
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_2 + 3 * Bool(VKey = #VK_LBUTTON))))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_2 + 3 * Bool(VKey = #VK_LBUTTON)))
 			FillPath(#PB_Path_Preserve)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_0)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_0))
 			StrokePath(4 * Scale)
 			
 			RestoreVectorState()
@@ -624,9 +633,9 @@
 			AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
 			AddPathArc(-3 * Scale, 28 * Scale, 22 * Scale, 30 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathCurve(0, 0, 15 * Scale, 5 * Scale, 30 * Scale, 0,  #PB_Path_Relative)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_2)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_2))
 			FillPath(#PB_Path_Preserve)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_0)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_0))
 			StrokePath(4 * Scale)
 			
 			MovePathCursor((*WindowData\Offset + 27) * Scale, 27 * Scale)
@@ -634,9 +643,9 @@
 			AddPathArc(3 * Scale, -22 * Scale, 15 * Scale, -25 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathLine(13 * Scale, 0, #PB_Path_Relative)
 			ClosePath()
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_2 + 3 * Bool(VKey = #VK_RBUTTON))))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_2 + 3 * Bool(VKey = #VK_RBUTTON)))
 			FillPath(#PB_Path_Preserve)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_0)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_0))
 			StrokePath(4 * Scale)
 			
 			RestoreVectorState()
@@ -645,37 +654,37 @@
 			AddPathCircle(27 * Scale, 12 * Scale, 6 * Scale)
 			AddPathCircle(27 * Scale, 19 * Scale, 6 * Scale)
 			AddPathBox(21 * Scale, 12 * Scale, 12 * Scale, 7 * Scale)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_0)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_0))
 			FillPath(#PB_Path_Winding)
 			
 			AddPathCircle(27 * Scale, 12 * Scale, 4 * Scale)
 			AddPathCircle(27 * Scale, 17 * Scale, 4 * Scale)
 			AddPathBox(23 * Scale, 12 * Scale, 8 * Scale, 5 * Scale)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_2 + 3 * Bool(VKey = #VK_MBUTTON))))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_2 + 3 * Bool(VKey = #VK_MBUTTON)))
 			FillPath(#PB_Path_Winding)
 			
 		Else
 			VectorFont(General::TitleFont, 30 * Scale)
 			
 			General::AddPathRoundedBox((*WindowData\Offset) * Scale, 0, VKeyData(VKey)\Width * Scale, 60 * Scale, 7 * Scale)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_0)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_0))
 			FillPath()
 			
 			General::AddPathRoundedBox((*WindowData\Offset + 4) * Scale, 4 * Scale, (VKeyData(VKey)\Width - 8) * Scale, 52 * Scale, 4 * Scale)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_1)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_1))
 			FillPath()
 			
 			General::AddPathRoundedBox((*WindowData\Offset + 7) * Scale, 7 * Scale, (VKeyData(VKey)\Width - 14) * Scale, 46 * Scale, 2 * Scale)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_2)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_2))
 			FillPath()
 			
 			General::AddPathRoundedBox((*WindowData\Offset + 10) * Scale, 10 * Scale, (VKeyData(VKey)\Width - 20) * Scale, 40 * Scale, 2 * Scale)
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_3)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_3))
 			FillPath()
 			
 			MovePathCursor((*WindowData\Offset + VKeyData(VKey)\Offset - 10)  * Scale, 15  * Scale)
 			
-			VectorSourceColor(General::SetAlpha(255, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Keyboard_4)))
+			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_KeyColor), General::#Color_Keyboard_4))
 			DrawVectorText(VKeyData(VKey)\Text)
 			
 			FillPath()
@@ -694,8 +703,7 @@
 	EndProcedure
 	;}
 EndModule
-; IDE Options = PureBasic 6.00 Beta 9 (Windows - x64)
-; CursorPosition = 677
-; FirstLine = 114
-; Folding = BEIw
+; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
+; CursorPosition = 20
+; Folding = BEIg
 ; EnableXP
