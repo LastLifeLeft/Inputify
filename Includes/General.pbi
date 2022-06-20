@@ -1,7 +1,7 @@
 ﻿DeclareModule General
 	; Public variables, structures and constants
 	#AppName = "Inputify"
-	#Version = 0.8
+	#Version = 0.9
 	#Event_Update = UITK::#Event_FirstAvailableCustomValue
 	
 	;{ Colors
@@ -15,6 +15,10 @@
 		#Color_Type_ToggleOn
 		#Color_Type_ToggleFront
 		
+		#_Color_Type_COUNT
+	EndEnumeration
+	
+	Enumeration ; Key colors
 		#Color_Keyboard_0
 		#Color_Keyboard_1
 		#Color_Keyboard_2
@@ -22,7 +26,14 @@
 		#Color_Keyboard_4
 		#Color_Mouse
 		
-		#_Color_Type_COUNT
+		#_KeyColor_Type_COUNT
+	EndEnumeration
+	
+	Enumeration ; Color scheme name
+		#Scheme_Dark
+		#Scheme_Light
+		#Scheme_Pink
+		#Scheme_Blue
 	EndEnumeration
 	
 	#Color_Mode_Light = 0
@@ -45,6 +56,7 @@
 	CompilerEndIf
 	
 	Global Dim ColorScheme(1, #_Color_Type_COUNT - 1)
+	Global Dim KeyScheme(3, #_KeyColor_Type_COUNT - 1)
 	
 	ColorScheme(#Color_Mode_Light, #Color_Type_BackCold) 		= SetAlpha(255, FixColor($F2F3F5))
 	ColorScheme(#Color_Mode_Light, #Color_Type_BackHot )		= SetAlpha(255, FixColor($D4D7DC))
@@ -56,13 +68,6 @@
 	ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOn)		= SetAlpha(255, FixColor($3AA55D))
 	ColorScheme(#Color_Mode_Light, #Color_Type_ToggleFront)		= SetAlpha(255, FixColor($FFFFFF))
 	
-	ColorScheme(#Color_Mode_Light, #Color_Keyboard_0)			= SetAlpha(255, FixColor($404040))
-	ColorScheme(#Color_Mode_Light, #Color_Keyboard_1)			= SetAlpha(255, FixColor($D7D7D7))
-	ColorScheme(#Color_Mode_Light, #Color_Keyboard_2)			= SetAlpha(255, FixColor($FFFFFF))
-	ColorScheme(#Color_Mode_Light, #Color_Keyboard_3)			= SetAlpha(255, FixColor($F5F5F5))
-	ColorScheme(#Color_Mode_Light, #Color_Keyboard_4)			= SetAlpha(255, FixColor($414141))
-	ColorScheme(#Color_Mode_Light, #Color_Mouse)				= SetAlpha(255, FixColor($E02727))
-	
 	ColorScheme(#Color_Mode_Dark, #Color_Type_BackCold) 		= SetAlpha(255, FixColor($2F3136))
 	ColorScheme(#Color_Mode_Dark, #Color_Type_BackHot )			= SetAlpha(255, FixColor($393C43))
 	ColorScheme(#Color_Mode_Dark, #Color_Type_FrontCold)		= SetAlpha(255, FixColor($8E9297))
@@ -73,12 +78,34 @@
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleOn)			= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleOn)		
 	ColorScheme(#Color_Mode_Dark, #Color_Type_ToggleFront)		= ColorScheme(#Color_Mode_Light, #Color_Type_ToggleFront)		
 	
-	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_0)			= SetAlpha(255, FixColor($1D1D1D))
-	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_1)			= SetAlpha(255, FixColor($353535))
-	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_2)			= SetAlpha(255, FixColor($696969))
-	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_3)			= SetAlpha(255, FixColor($595959))
-	ColorScheme(#Color_Mode_Dark, #Color_Keyboard_4)			= SetAlpha(255, FixColor($CDCDCD))
-	ColorScheme(#Color_Mode_Dark, #Color_Mouse)					= SetAlpha(255, FixColor($CDCDCD))
+	KeyScheme(#Scheme_Dark, #Color_Keyboard_0)					= SetAlpha(255, FixColor($1D1D1D))
+	KeyScheme(#Scheme_Dark, #Color_Keyboard_1)					= SetAlpha(255, FixColor($353535))
+	KeyScheme(#Scheme_Dark, #Color_Keyboard_2)					= SetAlpha(255, FixColor($696969))
+	KeyScheme(#Scheme_Dark, #Color_Keyboard_3)					= SetAlpha(255, FixColor($595959))
+	KeyScheme(#Scheme_Dark, #Color_Keyboard_4)					= SetAlpha(255, FixColor($CDCDCD))
+	KeyScheme(#Scheme_Dark, #Color_Mouse)						= SetAlpha(255, FixColor($CDCDCD))
+	                                                
+	KeyScheme(#Scheme_Light, #Color_Keyboard_0)					= SetAlpha(255, FixColor($404040))
+	KeyScheme(#Scheme_Light, #Color_Keyboard_1)					= SetAlpha(255, FixColor($D7D7D7))
+	KeyScheme(#Scheme_Light, #Color_Keyboard_2)					= SetAlpha(255, FixColor($FFFFFF))
+	KeyScheme(#Scheme_Light, #Color_Keyboard_3)					= SetAlpha(255, FixColor($F5F5F5))
+	KeyScheme(#Scheme_Light, #Color_Keyboard_4)					= SetAlpha(255, FixColor($414141))
+	KeyScheme(#Scheme_Light, #Color_Mouse)						= SetAlpha(255, FixColor($E02727))
+	                                                
+	KeyScheme(#Scheme_Pink, #Color_Keyboard_0)					= SetAlpha(255, FixColor($e0218a))
+	KeyScheme(#Scheme_Pink, #Color_Keyboard_1)					= SetAlpha(255, FixColor($ed5c9b))
+	KeyScheme(#Scheme_Pink, #Color_Keyboard_2)					= SetAlpha(255, FixColor($f7b9d7))
+	KeyScheme(#Scheme_Pink, #Color_Keyboard_3)					= SetAlpha(255, FixColor($f18dbc))
+	KeyScheme(#Scheme_Pink, #Color_Keyboard_4)					= SetAlpha(255, FixColor($FFFFFF))
+	KeyScheme(#Scheme_Pink, #Color_Mouse)						= SetAlpha(255, FixColor($ed5c9b))
+	                                                
+	KeyScheme(#Scheme_Blue, #Color_Keyboard_0)					= SetAlpha(255, FixColor($2153DF))
+	KeyScheme(#Scheme_Blue, #Color_Keyboard_1)					= SetAlpha(255, FixColor($5C71EC))
+	KeyScheme(#Scheme_Blue, #Color_Keyboard_2)					= SetAlpha(255, FixColor($B8C4F6))
+	KeyScheme(#Scheme_Blue, #Color_Keyboard_3)					= SetAlpha(255, FixColor($8C9FF0))
+	KeyScheme(#Scheme_Blue, #Color_Keyboard_4)					= SetAlpha(255, FixColor($FFFFFF))
+	KeyScheme(#Scheme_Blue, #Color_Mouse)						= SetAlpha(255, FixColor($5C71EC))
+	
 	;}
 	
 	;{ Fonts
@@ -94,6 +121,7 @@
 		#Pref_Duration
 		#Pref_Combo
 		#Pref_CheckUpdate
+		#Pref_KeyColor
 		
 		#_Pref_COUNT
 	EndEnumeration
@@ -162,13 +190,12 @@ Module General
 		
 		If FileSize(CurrentDirectory + "Preference.ini") > 0 Or LCase(ProgramParameter()) = "-portable"
 			PreferenceFile = CurrentDirectory + "Preference.ini"
-		ElseIf FileSize(AppData + "/❤x1/Inputify/Preference.ini") = -1
-			CreateDirectory(AppData + "/❤x1")
-			CreateDirectory(AppData + "/❤x1/Inputify")
-			
-			FirstStart = #True
-			PreferenceFile = AppData + "/❤x1/Inputify/Preference.ini"
 		Else
+			If FileSize(AppData + "/❤x1/Inputify/Preference.ini") = -1
+				CreateDirectory(AppData + "/❤x1")
+				CreateDirectory(AppData + "/❤x1/Inputify")
+				FirstStart = #True
+			EndIf
 			PreferenceFile = AppData + "/❤x1/Inputify/Preference.ini"
 		EndIf
 		
@@ -177,6 +204,7 @@ Module General
 		PreferenceGroup("Appearance")
 		Preferences(#Pref_DarkMode) = ReadPreferenceLong("DarkMode", #Color_Mode_Dark)
 		Preferences(#Pref_Scale) = ReadPreferenceLong("Scale", 100)
+		Preferences(#Pref_KeyColor) = ReadPreferenceLong("InputColor", #Scheme_Dark)
 		
 		PreferenceGroup("Behavior")
 		Preferences(#Pref_Mouse) = ReadPreferenceLong("Mouse", #False)
@@ -194,6 +222,8 @@ Module General
 			CreateThread(@UpdateThread(), #Null)
 		EndIf
 		
+		InitJoystick()
+		
 	EndProcedure
 	
 	Procedure AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
@@ -207,7 +237,8 @@ Module General
 	EndProcedure
 	;}
 EndModule
-; IDE Options = PureBasic 6.00 Beta 9 (Windows - x64)
-; CursorPosition = 120
-; Folding = 06y
+; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
+; CursorPosition = 73
+; FirstLine = 31
+; Folding = 86w
 ; EnableXP
