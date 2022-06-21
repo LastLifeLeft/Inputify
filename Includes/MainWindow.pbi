@@ -36,7 +36,7 @@
 	Enumeration 
 		#Lng_DarkMode
 		#Lng_Scale
-		#Lng_Mouse
+		#Lng_TrackMouse
 		#Lng_Duration
 		#Lng_Combo
 		#Lng_Location
@@ -60,7 +60,7 @@
 		#Lng_Input
 		#Lng_Misc
 		
-		#Lng_Menu_Enable
+		#Lng_TrackKeyboard
 		#Lng_Menu_Options
 		#Lng_Menu_Quit
 		
@@ -70,6 +70,8 @@
 		#Lng_DarkTheme
 		#Lng_BlueTheme
 		#Lng_PinkTheme
+		
+		#Lng_Markdown
 		
 		#_Lng_Count
 	EndEnumeration
@@ -84,8 +86,8 @@
 	Enumeration ;Gadget
 		#Toggle_DarkMode
 		#Trackbar_Scale
-		#Toggle_TrackInput
-		#Toggle_Mouse
+		#Toggle_TrackKeyboard
+		#Toggle_TrackMouse
 		#Trackbar_Duration
 		#Toggle_Combo
 		#Button_Location
@@ -123,7 +125,8 @@
 	#Systray = 0
 	
 	Enumeration ;Menu ID
-		#Menu_Enabled
+		#Menu_KeyboardTracking
+		#Menu_MouseTracking
 		#Menu_Options
 		#Menu_Quit
 	EndEnumeration		
@@ -148,26 +151,24 @@
 	#WH_KEYBOARD_LL = 13
 	#WM_INSTANCESTART = 111
 	
-	Global Enabled = #True
-	Global MouseOffset = -1000
-	Global MouseHook, KeyboardHook
-	Global LocationMouseHook, LocationKeyboardHook, LocationWindow, LocationText
-	Global HookButton, Dim CornerImage(1)
-	Global NewList DesktopWindow()
+	Global MouseHook, MouseHook_Button, KeyboardHook
+	Global LocationMouseHook, LocationKeyboardHook, LocationInformationWindow, LocationInformationText
+	Global Dim CornerImage(1)
+	Global NewList LocationInformationWindows()
 	
 	;{ Private procedures declaration
 	Declare SystrayBalloon(Title.s,Message.s,Flags)
-	Declare HandlerCloseWindow()
-	Declare HandlerMenuEnabled()
-	Declare HandlerMenuOptions()
-	Declare HandlerMenuQuit()
-	Declare HandlerSystray()
-	Declare HandlerUpdate()
-	Declare HandlerHyperLink()
+	Declare Handler_CloseWindow()
+	Declare Handler_TrackKeyboard()
+	Declare Handler_MenuOptions()
+	Declare Handler_MenuQuit()
+	Declare Handler_Systray()
+	Declare Handler_Update()
+	Declare Handler_HyperLink()
 	Declare Handler_Scale()
 	Declare Handler_Duration()
 	Declare Handler_DarkMode()
-	Declare Handler_Mouse()
+	Declare Handler_TrackMouse()
 	Declare Handler_Combo()
 	Declare Handler_CheckUpdate()
 	Declare Handler_Timer()
@@ -183,7 +184,7 @@
 	Declare VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State)
 	;}
 	
-	;{ Public procedures
+	;Public procedures
 	Procedure Open()
 		; Check if another instance is already running signal it
 		Protected InstanceWindow = FindWindow_(#Null, "60e272b1-eb20-4caa-9354-2142e2be78a0")
@@ -191,7 +192,7 @@
 		
 		If InstanceWindow
 			SendMessage_(InstanceWindow, #WM_INSTANCESTART, 0, 0)
-			HandlerMenuQuit() 
+			Handler_MenuQuit() 
 		EndIf
 		
 		;{ Language
@@ -313,7 +314,7 @@
 		SetGadgetFont(#Radio_Blue, General::OptionFont)
 		BindGadgetEvent(#Radio_Blue, @Handler_Radio(), #PB_EventType_Change)
 		
-		SetGadgetState(#Radio_Dark + General::Preferences(General::#Pref_KeyColor), #True)
+		SetGadgetState(#Radio_Dark + General::Preferences(General::#Pref_InputColor), #True)
 		
 		CloseGadgetList() ;}
 		
@@ -329,19 +330,19 @@
 		
 		Y + 31
 		
-		UITK::Toggle(#Toggle_TrackInput, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Lng_Menu_Enable))
-		SetGadgetFont(#Toggle_TrackInput, General::OptionFont)
-		GadgetToolTip(#Toggle_TrackInput, Language(#ToolTip_TrackInput))
-		BindGadgetEvent(#Toggle_TrackInput, @HandlerMenuEnabled(), #PB_EventType_Change)
-		SetGadgetState(#Toggle_TrackInput, General::Preferences(Enabled))
+		UITK::Toggle(#Toggle_TrackKeyboard, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Lng_TrackKeyboard))
+		SetGadgetFont(#Toggle_TrackKeyboard, General::OptionFont)
+		GadgetToolTip(#Toggle_TrackKeyboard, Language(#ToolTip_TrackInput))
+		BindGadgetEvent(#Toggle_TrackKeyboard, @Handler_TrackKeyboard(), #PB_EventType_Change)
+		SetGadgetState(#Toggle_TrackKeyboard, General::Preferences(General::#Pref_Keyboard))
 		
 		Y + #Appearance_Window_OptionSpacing
 		
-		UITK::Toggle(#Toggle_Mouse, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Lng_Mouse))
-		SetGadgetFont(#Toggle_Mouse, General::OptionFont)
-		GadgetToolTip(#Toggle_Mouse, Language(#ToolTip_Mouse))
-		BindGadgetEvent(#Toggle_Mouse, @Handler_Mouse(), #PB_EventType_Change)
-		SetGadgetState(#Toggle_Mouse, General::Preferences(General::#Pref_Mouse))
+		UITK::Toggle(#Toggle_TrackMouse, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Lng_TrackMouse))
+		SetGadgetFont(#Toggle_TrackMouse, General::OptionFont)
+		GadgetToolTip(#Toggle_TrackMouse, Language(#ToolTip_Mouse))
+		BindGadgetEvent(#Toggle_TrackMouse, @Handler_TrackMouse(), #PB_EventType_Change)
+		SetGadgetState(#Toggle_TrackMouse, General::Preferences(General::#Pref_TrackMouse))
 		
 		Y + #Appearance_Window_OptionSpacing
 		
@@ -398,27 +399,9 @@
 		ContainerGadget(#Container_About, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
 		HideGadget(#Container_About, #True)
 		ImageGadget(#ContainerCorner_About, 0, 0, 5, 5, 0)
-		Protected Text$
-		Text$ = "### About Inputify ###" + #LF$
-		Text$ + "Thank you for using my program!  " + #LF$
-		Text$ + ""+ #LF$
-		Text$ + ~"*Inputify* is free and open source, check it on [GitHub](https://github.com/LastLifeLeft/Inputify).  " + #LF$
-		Text$ + ~"It has been developped with love and care by [❤x1](https://lastlife.net/ \"Why not check on my other projects?\"), but there is more than likely some bugs still lurking in the shadows. Don't be shy if you spot one: I welcome every bug report and suggestion!  "+ #LF$
-		Text$ + ""+ #LF$
-		Text$ + "### Libraries and licences ###" + #LF$
-		Text$ + "*Inputify* is distributed under ___Creative Commons Attribution Share Alike 4.0___."+ #LF$
-		Text$ + ""+ #LF$
-		Text$ + "It would not have been possible without some excellent open source softwares :"+ #LF$
-		Text$ + "- [UITK](https://github.com/LastLifeLeft/UI-Toolkit) By ❤x1, under CC BY SA."+#LF$
-		Text$ + "- [MarkDown Gadget](https://www.purebasic.fr/english/viewtopic.php?t=74307) by Thorsten Hoeppner, under MIT."+#LF$
-		Text$ + "- [libpng](http://www.libpng.org/pub/png/libpng.html) under its own licence."+#LF$
-		Text$ + ""+ #LF$
-		Text$ + "### Miscellaneous ###" + #LF$
-		Text$ + "- The input design is largely inspired by the awesome [Xelu's Free Controllers & Keyboard Prompts](https://thoseawesomeguys.com/prompts/)."+#LF$
-		Text$ + "- A word of advice : don't forget to disable *Inputify* before you type a password while screen sharing."+#LF$
 		
 		MarkDown::Gadget(#MarkDown, #Appearance_MarkDown_Margin, 10, #Appearance_Window_Width - #Appearance_LeftPanel_Width - #Appearance_MarkDown_Margin * 2, GadgetHeight(#Container_About) - 20, MarkDown::#Borderless)
-		MarkDown::SetText(#MarkDown, Text$)
+		MarkDown::SetText(#MarkDown, Language(#Lng_Markdown))
 		MarkDown::SetFont(#MarkDown, "Segoe UI", 10)
 		CloseGadgetList()
 		;}
@@ -428,11 +411,15 @@
 		SysTrayIconToolTip(#Systray, General::#AppName)
 		
 		CreatePopupMenu(0)
-		MenuItem(#Menu_Enabled, Language(#Lng_Menu_Enable))
+		MenuItem(#Menu_KeyboardTracking, Language(#Lng_TrackKeyboard))
+		MenuItem(#Menu_MouseTracking, Language(#Lng_TrackMouse))
+		MenuBar()
 		MenuItem(#Menu_Options, Language(#Lng_Menu_Options))
+		MenuBar()
 		MenuItem(#Menu_Quit, Language(#Lng_Menu_Quit))
 		
-		SetMenuItemState(0, #Menu_Enabled, #True)
+		SetMenuItemState(0, #Menu_KeyboardTracking, General::Preferences(General::#Pref_Keyboard))
+		SetMenuItemState(0, #Menu_MouseTracking, General::Preferences(General::#Pref_TrackMouse))
 		;}
 		
 		;{ Set up the popup window origin point to not interfere with the taskbar. See : https://docs.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shappbarmessage
@@ -448,19 +435,23 @@
 		;}
 		
 		;{ Event bindings
-		BindEvent(#PB_Event_CloseWindow, @HandlerCloseWindow(), #Window)
-		BindEvent(#PB_Event_SysTray, @HandlerSystray())
-		BindEvent(General::#Event_Update, @HandlerUpdate())
+		BindEvent(#PB_Event_CloseWindow, @Handler_CloseWindow(), #Window)
+		BindEvent(#PB_Event_SysTray, @Handler_Systray())
+		BindEvent(General::#Event_Update, @Handler_Update())
 		
-		BindMenuEvent(0, #Menu_Enabled, @HandlerMenuEnabled())
-		BindMenuEvent(0, #Menu_Options, @HandlerMenuOptions())
-		BindMenuEvent(0, #Menu_Quit, @HandlerMenuQuit())
+		BindMenuEvent(0, #Menu_KeyboardTracking, @Handler_TrackKeyboard())
+		BindMenuEvent(0, #Menu_MouseTracking, @Handler_TrackMouse())
+		BindMenuEvent(0, #Menu_Options, @Handler_MenuOptions())
+		BindMenuEvent(0, #Menu_Quit, @Handler_MenuQuit())
 		
 		OpenWindow(#Window_SingleInstance, 0, 0, 10, 0, "60e272b1-eb20-4caa-9354-2142e2be78a0", #PB_Window_Invisible)
 		SetWindowCallback(@WindowCallback(), #Window_SingleInstance)
 		
-		KeyboardHook = SetWindowsHookEx_(#WH_KEYBOARD_LL, @KeyboardHook(), GetModuleHandle_(0), 0)
-		If General::Preferences(General::#Pref_Mouse)
+		If General::Preferences(General::#Pref_Keyboard)
+			KeyboardHook = SetWindowsHookEx_(#WH_KEYBOARD_LL, @KeyboardHook(), GetModuleHandle_(0), 0)
+		EndIf
+		
+		If General::Preferences(General::#Pref_TrackMouse)
 			MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
 		EndIf
 		
@@ -470,9 +461,9 @@
 		;}
 		
 		;{ Create the location selector window (it works but it's very hacky, there has to be a proper solution): 
-		LocationWindow = OpenWindow(#PB_Any, 0, 0, 101, 50, "", #PB_Window_Invisible | #PB_Window_BorderLess, WindowID)
-		SetWindowLong_(WindowID(LocationWindow), #GWL_EXSTYLE, GetWindowLong_(WindowID(LocationWindow), #GWL_EXSTYLE) | #WS_EX_LAYERED)
-		SetLayeredWindowAttributes_(WindowID(LocationWindow), $FF00FF, 255, #LWA_COLORKEY)
+		LocationInformationWindow = OpenWindow(#PB_Any, 0, 0, 101, 50, "", #PB_Window_Invisible | #PB_Window_BorderLess, WindowID)
+		SetWindowLong_(WindowID(LocationInformationWindow), #GWL_EXSTYLE, GetWindowLong_(WindowID(LocationInformationWindow), #GWL_EXSTYLE) | #WS_EX_LAYERED)
+		SetLayeredWindowAttributes_(WindowID(LocationInformationWindow), $FF00FF, 255, #LWA_COLORKEY)
 		
 		StartDrawing(CanvasOutput(CanvasGadget(#PB_Any, 0, 0, 101, 50, #PB_Canvas_Container)))
 		Box(0, 0, 101, 30, $FF00FF)
@@ -493,21 +484,20 @@
 		Box(1, 31, 99, 18, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold))
 		StopDrawing()
 		
-		LocationText = TextGadget(#PB_Any, 1, 31, 99, 18, "x: y:", #PB_Text_Center)
-		SetGadgetColor(LocationText, #PB_Gadget_BackColor, RGB(Red(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold)),
+		LocationInformationText = TextGadget(#PB_Any, 1, 31, 99, 18, "x: y:", #PB_Text_Center)
+		SetGadgetColor(LocationInformationText, #PB_Gadget_BackColor, RGB(Red(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold)),
 		                                                       Green(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold)),
 		                                                       Blue(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold))))
-		SetGadgetColor(LocationText, #PB_Gadget_FrontColor, RGB(Red(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontHot)),
+		SetGadgetColor(LocationInformationText, #PB_Gadget_FrontColor, RGB(Red(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontHot)),
 		                                                       Green(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontHot)),
 		                                                       Blue(General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_FrontHot))))
-		StickyWindow(LocationWindow, #True)
-		BindEvent(#PB_Event_Timer, @Handler_Timer(), LocationWindow)
-		DisableWindow(LocationWindow, #True)
+		StickyWindow(LocationInformationWindow, #True)
+		BindEvent(#PB_Event_Timer, @Handler_Timer(), LocationInformationWindow)
+		DisableWindow(LocationInformationWindow, #True)
 		;}
 		
 		SetColor()
 	EndProcedure
-	;}
 	
 	;{ Private procedures
 	Procedure SystrayBalloon(Title.s,Message.s,Flags)
@@ -540,58 +530,24 @@
 		ProcedureReturn #False
 	EndProcedure
 	
-	Procedure AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
-		MovePathCursor(x, y + Radius, Flag)
-		
-		AddPathArc(0, Height - radius, Width, Height - radius, Radius, #PB_Path_Relative)
-		AddPathArc(Width - Radius, 0, Width - Radius, - Height, Radius, #PB_Path_Relative)
-		AddPathArc(0, Radius - Height, -Width, Radius - Height, Radius, #PB_Path_Relative)
-		AddPathArc(Radius - Width, 0, Radius - Width, Height, Radius, #PB_Path_Relative)
-		ClosePath()
-	EndProcedure
-	
-	Procedure HandlerCloseWindow()
+	Procedure Handler_CloseWindow()
 		DisableWindow(#Window, #True)
 		HideWindow(#Window, #True)
 	EndProcedure
 	
-	Procedure HandlerMenuEnabled()
+	Procedure Handler_TrackKeyboard()
 		Protected Loop
 		
-		Enabled = Bool( Not GetMenuItemState(0, #Menu_Enabled))
-		SetGadgetState(#Toggle_TrackInput, Enabled)
-		SetMenuItemState(0, #Menu_Enabled, Enabled)
+		General::Preferences(General::#Pref_Keyboard) = Bool(Not General::Preferences(General::#Pref_Keyboard))
+		SetGadgetState(#Toggle_TrackKeyboard, General::Preferences(General::#Pref_Keyboard))
+		SetMenuItemState(0, #Menu_KeyboardTracking, General::Preferences(General::#Pref_Keyboard))
 		
-		If Enabled 
+		If General::Preferences(General::#Pref_Keyboard) 
 			KeyboardHook = SetWindowsHookEx_(#WH_KEYBOARD_LL, @KeyboardHook(), GetModuleHandle_(0), 0)
-			
-			If General::Preferences(General::#Pref_Mouse)
-				MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
-			EndIf
 			
 		Else
 			UnhookWindowsHookEx_(KeyboardHook)
 			KeyboardHook = 0
-			
-			If MouseHook
-				UnhookWindowsHookEx_(MouseHook)
-				MouseHook = 0
-				
-				If InputArray(#VK_LBUTTON)
-					PopupWindow::Hide(InputArray(#VK_LBUTTON))
-					InputArray(#VK_LBUTTON) = #False
-				EndIf
-				
-				If InputArray(#VK_RBUTTON)
-					PopupWindow::Hide(InputArray(#VK_RBUTTON))
-					InputArray(#VK_RBUTTON) = #False
-				EndIf
-				
-				If InputArray(#VK_MBUTTON)
-					PopupWindow::Hide(InputArray(#VK_MBUTTON))
-					InputArray(#VK_MBUTTON) = #False
-				EndIf
-			EndIf
 			
 			For Loop = 0 To 255
 				If InputArray(Loop)
@@ -603,13 +559,13 @@
 		EndIf
 	EndProcedure
 	
-	Procedure HandlerUpdate()
+	Procedure Handler_Update()
 		If MessageRequester(General::#AppName, ~"A new version is available!\nDo you want to download it?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
 			RunProgram("https://github.com/LastLifeLeft/Inputify/releases/latest")
 		EndIf
 	EndProcedure
 	
-	Procedure HandlerHyperLink()
+	Procedure Handler_HyperLink()
 		RunProgram("http://lastlife.net/")
 	EndProcedure
 	
@@ -622,20 +578,21 @@
 		General::Preferences(General::#Pref_Duration) = GetGadgetState(EventGadget()) * 100
 	EndProcedure
 	
-	Procedure HandlerMenuOptions()
+	Procedure Handler_MenuOptions()
 		DisableWindow(#Window, #False)
 		HideWindow(#Window, #False, #PB_Window_ScreenCentered)
 	EndProcedure
 	
-	Procedure HandlerMenuQuit()
+	Procedure Handler_MenuQuit()
 		If CreatePreferences(General::PreferenceFile)
 			PreferenceGroup("Appearance")
 			WritePreferenceLong("DarkMode", General::Preferences(General::#Pref_DarkMode))
 			WritePreferenceLong("Scale", General::Preferences(General::#Pref_Scale))
-			WritePreferenceLong("InputColor", General::Preferences(General::#Pref_KeyColor))
+			WritePreferenceLong("InputColor", General::Preferences(General::#Pref_InputColor))
 			
 			PreferenceGroup("Behavior")
-			WritePreferenceLong("Mouse", General::Preferences(General::#Pref_Mouse))
+			WritePreferenceLong("Keyboard", General::Preferences(General::#Pref_Keyboard))
+			WritePreferenceLong("Mouse", General::Preferences(General::#Pref_TrackMouse))
 			WritePreferenceLong("Duration", General::Preferences(General::#Pref_Duration))				
 			WritePreferenceLong("Combo", General::Preferences(General::#Pref_Combo))
 			
@@ -652,13 +609,13 @@
 		End
 	EndProcedure
 	
-	Procedure HandlerSystray()
+	Procedure Handler_Systray()
 		If EventType() = #PB_EventType_RightClick
-			HookButton = #False
+			MouseHook_Button = #False
 			DisplayPopupMenu(0, WindowID(#Window))
 			
 		ElseIf EventType() = #PB_EventType_LeftDoubleClick
-			HandlerMenuOptions()
+			Handler_MenuOptions()
 		EndIf
 	EndProcedure
 	
@@ -667,13 +624,13 @@
 		SetColor()
 	EndProcedure
 	
-	Procedure Handler_Mouse()
-		General::Preferences(General::#Pref_Mouse) = GetGadgetState(#Toggle_Mouse)
+	Procedure Handler_TrackMouse()
+		General::Preferences(General::#Pref_TrackMouse) = Bool(Not General::Preferences(General::#Pref_TrackMouse))
+		SetGadgetState(#Toggle_TrackMouse, General::Preferences(General::#Pref_TrackMouse))
+		SetMenuItemState(0, #Menu_MouseTracking, General::Preferences(General::#Pref_TrackMouse))
 		
-		If General::Preferences(General::#Pref_Mouse)
-			If Enabled
-				MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
-			EndIf
+		If General::Preferences(General::#Pref_TrackMouse)
+			MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
 		Else
 			UnhookWindowsHookEx_(MouseHook)
 			MouseHook = 0
@@ -703,9 +660,9 @@
 	EndProcedure
 	
 	Procedure Handler_Timer()
-		RemoveWindowTimer(LocationWindow, 0)
-		If HookButton
-			InputArray(HookButton) = PopupWindow::Create(HookButton)
+		RemoveWindowTimer(LocationInformationWindow, 0)
+		If MouseHook_Button
+			InputArray(MouseHook_Button) = PopupWindow::Create(MouseHook_Button)
 		EndIf
 	EndProcedure
 	
@@ -717,22 +674,22 @@
 		DesktopCount = ExamineDesktops() - 1
 		
 		For Loop = 0 To DesktopCount
-			AddElement(DesktopWindow())
-			DesktopWindow() = OpenWindow(#PB_Any, DesktopX(Loop), DesktopY(Loop), DesktopWidth(Loop), DesktopHeight(Loop), "", #PB_Window_Invisible | #PB_Window_BorderLess, WindowID)
-			SetWindowColor(DesktopWindow(), $141414)
-			StickyWindow(DesktopWindow(), #True)
-			SetWindowLongPtr_(WindowID(DesktopWindow()), #GWL_EXSTYLE, #WS_EX_LAYERED)
-			SetLayeredWindowAttributes_(WindowID(DesktopWindow()), 0, 150, #LWA_ALPHA)
-			HideWindow(DesktopWindow(), #False)
+			AddElement(LocationInformationWindows())
+			LocationInformationWindows() = OpenWindow(#PB_Any, DesktopX(Loop), DesktopY(Loop), DesktopWidth(Loop), DesktopHeight(Loop), "", #PB_Window_Invisible | #PB_Window_BorderLess, WindowID)
+			SetWindowColor(LocationInformationWindows(), $141414)
+			StickyWindow(LocationInformationWindows(), #True)
+			SetWindowLongPtr_(WindowID(LocationInformationWindows()), #GWL_EXSTYLE, #WS_EX_LAYERED)
+			SetLayeredWindowAttributes_(WindowID(LocationInformationWindows()), 0, 150, #LWA_ALPHA)
+			HideWindow(LocationInformationWindows(), #False)
 		Next
 		
-		SetGadgetText(LocationText, "x: " + Str(DesktopMouseX() - 50) + " y: " +Str(DesktopMouseY() - 12))
-		SetWindowPos_(WindowID(LocationWindow), 0, DesktopMouseX() - 50, DesktopMouseY() - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW)
-		HideWindow(LocationWindow, #False)
-		SetActiveWindow(LocationWindow)
+		SetGadgetText(LocationInformationText, "x: " + Str(DesktopMouseX() - 50) + " y: " +Str(DesktopMouseY() - 12))
+		SetWindowPos_(WindowID(LocationInformationWindow), 0, DesktopMouseX() - 50, DesktopMouseY() - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW)
+		HideWindow(LocationInformationWindow, #False)
+		SetActiveWindow(LocationInformationWindow)
 		ShowCursor_(#False)
 		
-		DisableWindow(LocationWindow, #False)
+		DisableWindow(LocationInformationWindow, #False)
 	EndProcedure
 	
 	Procedure Handler_LeftPanel()
@@ -764,7 +721,7 @@
 	EndProcedure
 	
 	Procedure Handler_Radio()
-		General::Preferences(General::#Pref_KeyColor) = EventGadget() - #Radio_Dark
+		General::Preferences(General::#Pref_InputColor) = EventGadget() - #Radio_Dark
 	EndProcedure
 	
 	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -828,14 +785,14 @@
 		If nCode = #HC_ACTION
 			Select wParam 
 				Case #WM_LBUTTONDOWN
-					AddWindowTimer(LocationWindow, 0, 1)
-					HookButton = #VK_LBUTTON
+					AddWindowTimer(LocationInformationWindow, 0, 1)
+					MouseHook_Button = #VK_LBUTTON
 				Case #WM_RBUTTONDOWN
-					AddWindowTimer(LocationWindow, 0, 1)
-					HookButton = #VK_RBUTTON
+					AddWindowTimer(LocationInformationWindow, 0, 1)
+					MouseHook_Button = #VK_RBUTTON
 				Case #WM_MBUTTONDOWN
-					AddWindowTimer(LocationWindow, 0, 1)
-					HookButton = #VK_MBUTTON
+					AddWindowTimer(LocationInformationWindow, 0, 1)
+					MouseHook_Button = #VK_MBUTTON
 				Case #WM_LBUTTONUP
 					If InputArray(#VK_LBUTTON)
 						PopupWindow::Hide(InputArray(#VK_LBUTTON))
@@ -861,13 +818,13 @@
 		UnhookWindowsHookEx_(LocationMouseHook)
 		UnhookWindowsHookEx_(LocationKeyboardHook)
 		
-		ForEach DesktopWindow()
-			CloseWindow(DesktopWindow())
+		ForEach LocationInformationWindows()
+			CloseWindow(LocationInformationWindows())
 		Next
-		ClearList(DesktopWindow())
+		ClearList(LocationInformationWindows())
 		
-		HideWindow(LocationWindow, #True)
-		DisableWindow(LocationWindow, #True)
+		HideWindow(LocationInformationWindow, #True)
+		DisableWindow(LocationInformationWindow, #True)
  		ShowCursor_(#True)
 	EndMacro
 	
@@ -880,8 +837,8 @@
 				Case #WM_RBUTTONDOWN
 					QuitPopupPlacement
 				Case #WM_MOUSEMOVE
-					SetGadgetText(LocationText, "x: " + Str(*p\pt\x - 50) + " y: " +Str(*p\pt\y - 12))
-					SetWindowPos_(WindowID(LocationWindow), 0, *p\pt\x - 50, *p\pt\y - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW)
+					SetGadgetText(LocationInformationText, "x: " + Str(*p\pt\x - 50) + " y: " +Str(*p\pt\y - 12))
+					SetWindowPos_(WindowID(LocationInformationWindow), 0, *p\pt\x - 50, *p\pt\y - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW)
 					ProcedureReturn #False
 			EndSelect
 		EndIf
@@ -954,8 +911,8 @@
 		SetToggleAppearance(#Toggle_DarkMode)
 		SetToggleAppearance(#Toggle_CheckUpdate)
 		SetToggleAppearance(#Toggle_Combo)
-		SetToggleAppearance(#Toggle_TrackInput)
-		SetToggleAppearance(#Toggle_Mouse)
+		SetToggleAppearance(#Toggle_TrackKeyboard)
+		SetToggleAppearance(#Toggle_TrackMouse)
 		
 		SetRadioAppearance(#Radio_Dark)
 		SetRadioAppearance(#Radio_Light)
@@ -989,7 +946,7 @@
 	
 	Procedure WindowCallback(hWnd, Msg, wParam, lParam)
 		If Msg = #WM_INSTANCESTART
-			HandlerMenuOptions()
+			Handler_MenuOptions()
 		EndIf
 		
 		ProcedureReturn #PB_ProcessPureBasicEvents
@@ -1028,45 +985,46 @@
 ; 		EndIf
 		
 	EndProcedure
-	
 	;}
 	
 	DataSection ;{ Languages
 		English:
-		;MainWindow settings
-		Data.s "Dark mode", "Input scale", "Track Mouse", "Popup duration", "Combo regroupment", "Move popup origin", "Auto-update", "Visit ❤x1's website", "Input color"
-		
-		;MainWindow tooltips
-		Data.s "Switch between the dark and light theme", "Changes the size of the input popup", "Include mouse click in the tracked inputs", "Change the time spent on screen by an input popup", "Regroup identical inputs as a group", "Enable the tracking altogether.", "Check update at startup"
-		
-		;Titles
-		Data.s "Appearance", "Behavior", "About", "Controller", "General", "Input", "Misc"
-		
-		;Menu
-		Data.s "Track inputs", "Preferences", "Quit"
-		
-		Data.s "Inputify has started, you can find it in your system tray icons!"
-		
-		;Themes
-		Data.s "Light theme", "Dark theme", "Blue theme", "Pink theme"
+		Data.s "Dark mode", "Input scale", "Track mouse inputs", "Popup duration", "Combo regroupment", "Move popup origin", "Auto-update", "Visit ❤x1's website", "Input color", "Switch between the dark and light theme",
+		       "Changes the size of the input popup", "Include mouse click in the tracked inputs", "Change the time spent on screen by an input popup", "Regroup identical inputs as a group", "Enable the tracking altogether.", "Check update at startup",
+		       "Appearance", "Behavior", "About", "Controller", "General", "Input", "Misc", "Track keyboard inputs", "Preferences", "Quit", "Inputify has started, you can find it in your system tray icons!",
+		       "Light theme", "Dark theme", "Blue theme", "Pink theme"
+		; About markdown :
+		Data.s "### About Inputify ###" + #LF$ +
+		       "Thank you for using my program!  " + #LF$ + #LF$ +
+		       ~"*Inputify* is free and open source, check it on [GitHub](https://github.com/LastLifeLeft/Inputify).  " + #LF$ +
+		       ~"It has been developped with love and care by [❤x1](https://lastlife.net/ \"Why not check on my other projects?\"), but there is more than likely some bugs still lurking in the shadows. Don't be shy if you spot one: I welcome every bug report and suggestion!  " + #LF$ + #LF$ +
+		       "### Libraries and licences ###" + #LF$ +
+		       "*Inputify* is distributed under __Creative Commons Attribution Share Alike 4.0__." + #LF$ + #LF$ +
+		       "It would not have been possible without some excellent open source softwares :" + #LF$ +
+		       "- [UITK](https://github.com/LastLifeLeft/UI-Toolkit) By ❤x1, under CC BY SA." + #LF$ +
+		       "- [MarkDown Gadget](https://www.purebasic.fr/english/viewtopic.php?t=74307) by Thorsten Hoeppner, under MIT." + #LF$ +
+		       "- [libpng](http://www.libpng.org/pub/png/libpng.html) under its own licence." + #LF$ + #LF$ + "### Miscellaneous ###" + #LF$ +
+		       "- The input design is largely inspired by the awesome [Xelu's Free Controllers & Keyboard Prompts](https://thoseawesomeguys.com/prompts/)." + #LF$ +
+		       "- A word of advice : don't forget to disable *Inputify* before you type a password while screen sharing."
 		
 		French:
-		;MainWindow settings
-		Data.s "Mode sombre", "Taille", "Souris", "Durée d'affichage", "Regrouper les séries", "Déplacer le point d'apparition", "Surveiller les MàJ", "Aller sur le site de ❤x1", "Input color"
-		
-		;MainWindow tooltips
-		Data.s "Alterne entre les modes sombre et clair", "Modifie la taille des inputs à l'écran", "Ajoute la souris aux inputs", "Change la durée d'affichage d'un input", "Regroupe les séries d'inputs", "", "Au démarrage, vérifie si une nouvelle version est disponible"
-		
-		;Titles
-		Data.s "Apparence", "Comportement", "Divers", "Manette", "Général", "Input", "Misc"
-		
-		;Menu
-		Data.s "Afficher les inputs", "Préférences", "Quitter"
-		
-		Data.s "Inputify a correctement démarré, vous pouvez le retrouver dans les icônes de la barre d'état !"
-		
-		;Themes
-		Data.s "Clair", "Sombre", "Bleu", "Rose"
+		Data.s "Dark mode", "Input scale", "Track mouse inputs", "Popup duration", "Combo regroupment", "Move popup origin", "Auto-update", "Visit ❤x1's website", "Input color", "Switch between the dark and light theme",
+		       "Changes the size of the input popup", "Include mouse click in the tracked inputs", "Change the time spent on screen by an input popup", "Regroup identical inputs as a group", "Enable the tracking altogether.", "Check update at startup",
+		       "Appearance", "Behavior", "About", "Controller", "General", "Input", "Misc", "Track keyboard inputs", "Preferences", "Quit", "Inputify has started, you can find it in your system tray icons!",
+		       "Light theme", "Dark theme", "Blue theme", "Pink theme"
+		; About markdown :
+		Data.s "### About Inputify ###" + #LF$ +
+		       "Thank you for using my program!  " + #LF$ + #LF$ +
+		       ~"*Inputify* is free and open source, check it on [GitHub](https://github.com/LastLifeLeft/Inputify).  " + #LF$ +
+		       ~"It has been developped with love and care by [❤x1](https://lastlife.net/ \"Why not check on my other projects?\"), but there is more than likely some bugs still lurking in the shadows. Don't be shy if you spot one: I welcome every bug report and suggestion!  " + #LF$ + #LF$ +
+		       "### Libraries and licences ###" + #LF$ +
+		       "*Inputify* is distributed under __Creative Commons Attribution Share Alike 4.0__." + #LF$ + #LF$ +
+		       "It would not have been possible without some excellent open source softwares :" + #LF$ +
+		       "- [UITK](https://github.com/LastLifeLeft/UI-Toolkit) By ❤x1, under CC BY SA." + #LF$ +
+		       "- [MarkDown Gadget](https://www.purebasic.fr/english/viewtopic.php?t=74307) by Thorsten Hoeppner, under MIT." + #LF$ +
+		       "- [libpng](http://www.libpng.org/pub/png/libpng.html) under its own licence." + #LF$ + #LF$ + "### Miscellaneous ###" + #LF$ +
+		       "- The input design is largely inspired by the awesome [Xelu's Free Controllers & Keyboard Prompts](https://thoseawesomeguys.com/prompts/)." + #LF$ +
+		       "- A word of advice : don't forget to disable *Inputify* before you type a password while screen sharing."
 		
 		Icon18:
 		IncludeBinary "../Media/Icon/18.png"
@@ -1075,6 +1033,6 @@
 	
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
-; CursorPosition = 146
-; Folding = BAAAAAAAA-
+; CursorPosition = 400
+; Folding = BAAAAAAAw
 ; EnableXP
