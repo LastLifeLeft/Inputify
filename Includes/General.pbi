@@ -226,8 +226,7 @@ Module General
 		
 	EndProcedure
 EndModule
-; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
-; CursorPosition = 209
-; FirstLine = 1
-; Folding = 60+
+; IDE Options = PureBasic 6.00 LTS (Windows - x64)
+; CursorPosition = 135
+; Folding = 669
 ; EnableXP

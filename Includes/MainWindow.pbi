@@ -41,7 +41,6 @@
 		#Lng_Combo
 		#Lng_Location
 		#Lng_CheckUpdate
-		#Lng_Website
 		#Lng_InputColor
 		
 		#ToolTip_DarkMode
@@ -1001,8 +1000,7 @@
 	EndDataSection ;}
 	
 EndModule
-; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
-; CursorPosition = 995
-; FirstLine = 64
-; Folding = BBECAAAA5
+; IDE Options = PureBasic 6.00 LTS (Windows - x64)
+; CursorPosition = 184
+; Folding = BCEAAAAA5
 ; EnableXP

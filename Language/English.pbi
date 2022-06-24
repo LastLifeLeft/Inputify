@@ -1,4 +1,4 @@
-﻿Data.s "Dark mode", "Input scale", "Track mouse inputs", "Popup duration", "Combo regroupment", "Move popup origin", "Auto-update", "Visit ❤x1's website", "Input color", "Switch between the dark and light theme",
+﻿Data.s "Dark mode", "Input scale", "Track mouse inputs", "Popup duration", "Combo regroupment", "Move popup origin", "Auto-update", "Input color", "Switch between the dark and light theme",
        "Changes the size of the input popup", "Include mouse click in the tracked inputs", "Change the time spent on screen by an input popup", "Regroup identical inputs as a group", "Enable the tracking altogether.", "Check update at startup",
        "Appearance", "Behavior", "About", "Controller", "General", "Input", "Misc", "Track keyboard inputs", "Preferences", "Quit", "Inputify has started, you can find it in your system tray icons!",
        "Light theme", "Dark theme", "Blue theme", "Pink theme"
@@ -15,6 +15,6 @@ Data.s "### About Inputify ###" + #LF$ +
        "- [libpng](http://www.libpng.org/pub/png/libpng.html) under its own licence." + #LF$ + #LF$ + "### Miscellaneous ###" + #LF$ +
        "- The input design is largely inspired by the awesome [Xelu's Free Controllers & Keyboard Prompts](https://thoseawesomeguys.com/prompts/)." + #LF$ +
        "- A word of advice : don't forget to disable *Inputify* before you type a password while screen sharing."
-; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
-; CursorPosition = 16
+; IDE Options = PureBasic 6.00 LTS (Windows - x64)
+; CursorPosition = 9
 ; EnableXP
