@@ -117,11 +117,12 @@
 	Enumeration
 		#Pref_DarkMode
 		#Pref_Scale
-		#Pref_Mouse
+		#Pref_TrackMouse
+		#Pref_Keyboard
 		#Pref_Duration
 		#Pref_Combo
 		#Pref_CheckUpdate
-		#Pref_KeyColor
+		#Pref_InputColor
 		
 		#_Pref_COUNT
 	EndEnumeration
@@ -130,7 +131,6 @@
 	Global FirstStart, PreferenceFile.s
 	;}
 	
-	Declare AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
 	Declare Init()
 EndDeclareModule
 
@@ -184,7 +184,6 @@ Module General
 		
 	EndProcedure
 	
-	;{ Public procedure
 	Procedure Init()
 		Protected AppData.s = GetEnvironmentVariable("APPDATA"), CurrentDirectory.s = GetCurrentDirectory()
 		
@@ -204,10 +203,11 @@ Module General
 		PreferenceGroup("Appearance")
 		Preferences(#Pref_DarkMode) = ReadPreferenceLong("DarkMode", #Color_Mode_Dark)
 		Preferences(#Pref_Scale) = ReadPreferenceLong("Scale", 100)
-		Preferences(#Pref_KeyColor) = ReadPreferenceLong("InputColor", #Scheme_Dark)
+		Preferences(#Pref_InputColor) = ReadPreferenceLong("InputColor", #Scheme_Dark)
 		
 		PreferenceGroup("Behavior")
-		Preferences(#Pref_Mouse) = ReadPreferenceLong("Mouse", #False)
+		Preferences(#Pref_Keyboard) = ReadPreferenceLong("Keyboard", #True)
+		Preferences(#Pref_TrackMouse) = ReadPreferenceLong("Mouse", #False)
 		Preferences(#Pref_Duration) = ReadPreferenceLong("Duration", 1200)				
 		Preferences(#Pref_Combo) = ReadPreferenceLong("Combo", #True)
 		
@@ -225,20 +225,8 @@ Module General
 		InitJoystick()
 		
 	EndProcedure
-	
-	Procedure AddPathRoundedBox(x.d, y.d, Width, Height, Radius, Flag = #PB_Path_Default)
-		MovePathCursor(x, y + Radius, Flag)
-		
-		AddPathArc(0, Height - radius, Width, Height - radius, Radius, #PB_Path_Relative)
-		AddPathArc(Width - Radius, 0, Width - Radius, - Height, Radius, #PB_Path_Relative)
-		AddPathArc(0, Radius - Height, -Width, Radius - Height, Radius, #PB_Path_Relative)
-		AddPathArc(Radius - Width, 0, Radius - Width, Height, Radius, #PB_Path_Relative)
-		ClosePath()
-	EndProcedure
-	;}
 EndModule
-; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
-; CursorPosition = 73
-; FirstLine = 31
-; Folding = 86w
+; IDE Options = PureBasic 6.00 LTS (Windows - x64)
+; CursorPosition = 135
+; Folding = 669
 ; EnableXP
