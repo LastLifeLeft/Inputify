@@ -1183,56 +1183,6 @@ Module MarkDown
 		
 	CompilerEndIf
 	
-	CompilerIf Defined(ModuleEx, #PB_Module)
-		
-		Procedure.i GetGadgetWindow()
-			ProcedureReturn ModuleEx::GetGadgetWindow()
-		EndProcedure
-		
-	CompilerElse  
-		
-		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
-			; Thanks to mk-soft
-			Import ""
-				PB_Object_EnumerateStart(PB_Objects)
-				PB_Object_EnumerateNext( PB_Objects, *ID.Integer )
-				PB_Object_EnumerateAbort( PB_Objects )
-				PB_Window_Objects.i
-				PB_Gadget_Objects.i
-			EndImport
-		CompilerElse
-			ImportC ""
-				PB_Object_EnumerateStart( PB_Objects )
-				PB_Object_EnumerateNext( PB_Objects, *ID.Integer )
-				PB_Object_EnumerateAbort( PB_Objects )
-				PB_Window_Objects.i
-				PB_Gadget_Objects.i
-			EndImport
-		CompilerEndIf
-		
-		Procedure.i GetGadgetWindow()
-			; Thanks to mk-soft
-			Define.i WindowID, Window, Result = #PB_Default
-			
-			WindowID = UseGadgetList(0)
-			
-			PB_Object_EnumerateStart(PB_Window_Objects)
-			
-			While PB_Object_EnumerateNext(PB_Window_Objects, @Window)
-				If WindowID = WindowID(Window)
-					Result = Window
-					Break
-				EndIf
-			Wend
-			
-			PB_Object_EnumerateAbort(PB_Window_Objects)
-			
-			ProcedureReturn Result
-		EndProcedure
-		
-	CompilerEndIf	
-	
-	
 	Procedure.i dpiX(Num.i)
 		ProcedureReturn DesktopScaledX(Num)
 	EndProcedure
@@ -10277,7 +10227,7 @@ Module MarkDown
 					MarkDown()\CanvasNum = GNum
 					
 					If WindowNum = #PB_Default
-						MarkDown()\Window\Num = GetGadgetWindow()
+						MarkDown()\Window\Num = UITK::CurrentWindow()
 					Else
 						MarkDown()\Window\Num = WindowNum
 					EndIf
@@ -12530,10 +12480,9 @@ CompilerEndIf
 
 EndModule
 
-; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
-; CursorPosition = 8030
-; FirstLine = 525
-; Folding = jCABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAkAAAAAAAAAECAAAAIAgAAAgAAAAAAAAAAAAAAAAAg
+; IDE Options = PureBasic 6.00 LTS (Windows - x64)
+; CursorPosition = 21
+; Folding = AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+
 ; Optimizer
 ; EnableXP
 ; DPIAware
