@@ -96,6 +96,16 @@
 		#Radio_Light
 		#Radio_Pink
 		#Radio_Blue
+		#Radio_Custom
+		#CustomColor0
+		#CustomColor1
+		#CustomColor2
+		#CustomColor3
+		#CustomColor4
+		#CustomColor5
+		#SubContainer_Appearance
+		#Scrollbar_Appearance
+		#Scrollarea_Appearance
 		
 		#Title_UserInterface
 		#Title_InputColor
@@ -133,8 +143,8 @@
 	
 	;{ Appearance
 	#Appearance_Window_Width = 1000
-	#Appearance_Window_Height = 580
-	#Appearance_Window_Margin = 140
+	#Appearance_Window_Height = 570
+	#Appearance_Window_Margin = 135
 	#Appearance_Window_TitleMargin = #Appearance_Window_Margin - 20
 	#Appearance_Window_OptionSpacing = 45
 	#Appearance_Window_TitleSpacing = #Appearance_Window_OptionSpacing + 15
@@ -143,6 +153,8 @@
 	#Appearance_LeftPanel_ItemHeight = 50
 	#Appearance_MarkDown_Margin = 90
 	#Appearance_Window_ItemWidth = #Appearance_Window_Width - #Appearance_LeftPanel_Width - 2 * #Appearance_Window_Margin
+	#Appearance_Corner_Size = 5
+	#Appearance_Scrollbar_Size = 7
 	
 	#Appearance_Option_Width = #Appearance_Window_Width - 2 *#Appearance_Window_TitleMargin
 	;}
@@ -154,6 +166,7 @@
 	Global LocationMouseHook, LocationKeyboardHook, LocationInformationWindow, LocationInformationText
 	Global Dim CornerImage(1)
 	Global NewList LocationInformationWindows()
+	Global *ScrollBar_Event_Manager
 	
 	;{ Private procedures declaration
 	Declare SystrayBalloon(Title.s,Message.s,Flags)
@@ -172,8 +185,11 @@
 	Declare Handler_CheckUpdate()
 	Declare Handler_Timer()
 	Declare Handler_Location()
+	Declare Handler_Wheel_Appearance()
 	Declare Handler_LeftPanel()
 	Declare Handler_Radio()
+	Declare Handler_ScrollArea_Appearance()
+	Declare Handler_ScrollBar_Appearance()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare LocationMouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -181,6 +197,14 @@
 	Declare SetColor()
 	Declare WindowCallback(hWnd, Msg, wParam, lParam)
 	Declare VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State)
+	Macro CustomColor(Gadget)
+		CanvasGadget(Gadget, 158 + (Gadget - #CustomColor0) * 48, 8, 39, 22)
+		SetGadgetAttribute(Gadget, #PB_Canvas_Cursor, #PB_Cursor_Hand)
+		StartDrawing(CanvasOutput(Gadget))
+		Box(1,1, 37, 20, General::KeyScheme(General::#Scheme_Custom, Gadget - #CustomColor0))
+		StopDrawing()
+	EndMacro
+	
 	;}
 	
 	;Public procedures
@@ -190,6 +214,9 @@
 		Protected cchData, lpLCData.s, Loop, Y, Icon = ImageID(CatchImage(#PB_Any, ?Icon18))
 		
 		If InstanceWindow
+			CompilerIf #PB_Compiler_Debugger
+				MessageRequester("Inputify", "Another instance is already running")
+			CompilerEndIf
 			SendMessage_(InstanceWindow, #WM_INSTANCESTART, 0, 0)
 			Handler_MenuQuit() 
 		EndIf
@@ -212,10 +239,11 @@
 		;}
 		
 		;{ Window
-		WindowID = UITK::Window(#Window, 0, 0, #Appearance_Window_Width, #Appearance_Window_Height, General::#AppName, #PB_Window_Invisible | #PB_Window_ScreenCentered | UITK::#Window_CloseButton | UITK::#DarkMode)
+		WindowID = UITK::Window(#Window, 0, 0, #Appearance_Window_Width, #Appearance_Window_Height, General::#AppName, UITK::#Window_Invisible | UITK::#Window_ScreenCentered | UITK::#HAlignLeft | UITK::#Window_CloseButton | UITK::#DarkMode)
 		UITK::WindowSetColor(#Window, UITK::#Color_Parent, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder))
 		StickyWindow(#Window, #True)
 		DisableWindow(#Window, #True)
+		UITK::SetWindowIcon(#Window, Icon)
 		;}
 		
 		;{ Corner images
@@ -246,8 +274,7 @@
 		SetGadgetAttribute(#VList_Menu, UITK::#Attribute_ItemHeight, #Appearance_LeftPanel_ItemHeight)
  		SetGadgetColor(#VList_Menu, UITK::#Color_Shade_Cold, General::SetAlpha(255, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder)))
  		AddGadgetItem(#VList_Menu, -1, Language(#Lng_General))
- 		AddGadgetItem(#VList_Menu, -1, Language(#Lng_Behavior))
-;  		AddGadgetItem(#VList_Menu, -1, Language(#Lng_Controller))
+ 		AddGadgetItem(#VList_Menu, -1, Language(#Lng_Behavior)) 
  		AddGadgetItem(#VList_Menu, -1, Language(#Lng_About))
  		SetGadgetState(#VList_Menu, 0)
  		ResizeGadget(#VList_Menu, #PB_Ignore, (WindowHeight(#Window) - 30 - (#Appearance_LeftPanel_ItemHeight * CountGadgetItems(#VList_Menu))) * 0.5, #PB_Ignore, #PB_Ignore)
@@ -256,75 +283,17 @@
  		
  		;{ Appearance 
 		ContainerGadget(#Container_Appearance, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
-		ImageGadget(#ContainerCorner_Appearance, 0, 0, 5, 5, 0)
-		UITK::SetWindowIcon(#Window, Icon)
+		ImageGadget(#ContainerCorner_Appearance, 0, 0, #Appearance_Corner_Size, #Appearance_Corner_Size, 0)
 		
-		Y = 117
+		ContainerGadget(#SubContainer_Appearance, #Appearance_Corner_Size, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width - #Appearance_Corner_Size - #Appearance_Scrollbar_Size - 4, WindowHeight(#Window) - 30)
+		ScrollAreaGadget(#Scrollarea_Appearance, 0, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width + 40, WindowHeight(#Window) + 10, #Appearance_Window_Width - #Appearance_LeftPanel_Width - 40, 780, 50, #PB_ScrollArea_BorderLess)
+		BindGadgetEvent(#Scrollarea_Appearance, @Handler_ScrollArea_Appearance())
 		
-		UITK::Label(#Title_UserInterface, #Appearance_Window_TitleMargin, Y, 200, 20, Language(#Lng_UserInterface))
-		SetGadgetFont(#Title_UserInterface, General::TitleFont)
+		Y = 60
 		
-		Y + 31
-		
-		UITK::Toggle(#Toggle_DarkMode, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Lng_DarkMode))
-		SetGadgetFont(#Toggle_DarkMode, General::OptionFont)
-		GadgetToolTip(#Toggle_DarkMode, Language(#ToolTip_DarkMode))
-		BindGadgetEvent(#Toggle_DarkMode, @Handler_DarkMode(), #PB_EventType_Change)
-		SetGadgetState(#Toggle_DarkMode, General::Preferences(General::#Pref_DarkMode))
-		
-		Y + #Appearance_Window_OptionSpacing
-		
-		UITK::TrackBar(#Trackbar_Scale, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 40, 25, 150, UITK::#Trackbar_ShowState)
-		SetGadgetState(#Trackbar_Scale, General::Preferences(General::#Pref_Scale) * 0.5)
-		GadgetToolTip(#Trackbar_Scale, Language(#ToolTip_Scale))
-		SetGadgetAttribute(#Trackbar_Scale, UITK::#Trackbar_Scale, 50)
-		SetGadgetText(#Trackbar_Scale, "x")
-		AddGadgetItem(#Trackbar_Scale, 25, "")
-		AddGadgetItem(#Trackbar_Scale, 50, "")
-		AddGadgetItem(#Trackbar_Scale, 150, "")
-		BindGadgetEvent(#Trackbar_Scale, @Handler_Scale(), #PB_EventType_LeftButtonUp)
-		UITK::Label(#Text_Scale, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth - GadgetWidth(#Trackbar_Scale), 20, Language(#Lng_Scale))
-		SetGadgetFont(#Text_Scale, General::OptionFont)
-		GadgetToolTip(#Text_Scale, Language(#ToolTip_Scale))
-		
-		Y + #Appearance_Window_TitleSpacing
-		
-		UITK::Label(#Title_InputColor, #Appearance_Window_TitleMargin, Y, 200, 20, Language(#Lng_InputColor))
-		SetGadgetFont(#Title_InputColor, General::TitleFont)
-		
-		Y + #Appearance_Window_OptionSpacing - 8
-		
-		UITK::Radio(#Radio_Dark, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_DarkTheme), "Color Theme", UITK::#HAlignCenter)
-		SetGadgetFont(#Radio_Dark, General::OptionFont)
-		BindGadgetEvent(#Radio_Dark, @Handler_Radio(), #PB_EventType_Change)
-		Y + #Appearance_Window_OptionSpacing
-		
-		UITK::Radio(#Radio_Light, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_LightTheme), "Color Theme", UITK::#HAlignCenter)
-		SetGadgetFont(#Radio_Light, General::OptionFont)
-		BindGadgetEvent(#Radio_Light, @Handler_Radio(), #PB_EventType_Change)
-		Y + #Appearance_Window_OptionSpacing
-		
-		UITK::Radio(#Radio_Pink, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_PinkTheme), "Color Theme", UITK::#HAlignCenter)
-		SetGadgetFont(#Radio_Pink, General::OptionFont)
-		BindGadgetEvent(#Radio_Pink, @Handler_Radio(), #PB_EventType_Change)
-		Y + #Appearance_Window_OptionSpacing
-		
-		UITK::Radio(#Radio_Blue, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_BlueTheme), "Color Theme", UITK::#HAlignCenter)
-		SetGadgetFont(#Radio_Blue, General::OptionFont)
-		BindGadgetEvent(#Radio_Blue, @Handler_Radio(), #PB_EventType_Change)
-		
-		SetGadgetState(#Radio_Dark + General::Preferences(General::#Pref_InputColor), #True)
-		
-		CloseGadgetList() ;}
-		
-		;{ Behavior
-		ContainerGadget(#Container_Behavior, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
-		HideGadget(#Container_Behavior, #True)
-		ImageGadget(#ContainerCorner_Behavior, 0, 0, 5, 5, 0)
-		
-		Y = 125
-		
-		UITK::Label(#Title_Input, #Appearance_Window_TitleMargin, Y, 200, 20, Language(#Lng_Input))
+		UITK::Label(#Title_Input, #Appearance_Window_TitleMargin, Y, 200, 20, "Behavior")
+; 		BindGadgetEvent(#Title_Input, @Handler_Wheel_Appearance(), #PB_EventType_MouseWheel)
+		BindEvent(#PB_Event_Gadget, @Handler_Wheel_Appearance(), #Window, #PB_All, #PB_All)
 		SetGadgetFont(#Title_Input, General::TitleFont)
 		
 		Y + 31
@@ -353,7 +322,7 @@
 		
 		Y + #Appearance_Window_OptionSpacing
 		
-		UITK::TrackBar(#Trackbar_Duration, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 40, 5, 45, UITK::#Trackbar_ShowState)
+		UITK::TrackBar(#Trackbar_Duration, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 5, 45, UITK::#Trackbar_ShowState)
 		GadgetToolTip(#Trackbar_Duration, Language(#ToolTip_Duration))
 		SetGadgetState(#Trackbar_Duration, General::Preferences(General::#Pref_Duration) * 0.01)
 		SetGadgetAttribute(#Trackbar_Duration, UITK::#Trackbar_Scale, 10)
@@ -366,6 +335,35 @@
 		SetGadgetFont(#Text_Duration, General::OptionFont)
 		GadgetToolTip(#Text_Duration, Language(#ToolTip_Duration))
 		
+		Y + #Appearance_Window_TitleSpacing
+		
+		
+		UITK::Label(#Title_UserInterface, #Appearance_Window_TitleMargin, Y, 200, 20, Language(#Lng_UserInterface))
+		SetGadgetFont(#Title_UserInterface, General::TitleFont)
+		
+		Y + 31
+		
+; 		UITK::Toggle(#Toggle_DarkMode, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Lng_DarkMode))
+; 		SetGadgetFont(#Toggle_DarkMode, General::OptionFont)
+; 		GadgetToolTip(#Toggle_DarkMode, Language(#ToolTip_DarkMode))
+; 		BindGadgetEvent(#Toggle_DarkMode, @Handler_DarkMode(), #PB_EventType_Change)
+; 		SetGadgetState(#Toggle_DarkMode, General::Preferences(General::#Pref_DarkMode))
+; 		
+; 		Y + #Appearance_Window_OptionSpacing
+		
+		UITK::TrackBar(#Trackbar_Scale, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 25, 150, UITK::#Trackbar_ShowState)
+		SetGadgetState(#Trackbar_Scale, General::Preferences(General::#Pref_Scale) * 0.5)
+		GadgetToolTip(#Trackbar_Scale, Language(#ToolTip_Scale))
+		SetGadgetAttribute(#Trackbar_Scale, UITK::#Trackbar_Scale, 50)
+		SetGadgetText(#Trackbar_Scale, "x")
+		AddGadgetItem(#Trackbar_Scale, 25, "")
+		AddGadgetItem(#Trackbar_Scale, 50, "")
+		AddGadgetItem(#Trackbar_Scale, 150, "")
+		BindGadgetEvent(#Trackbar_Scale, @Handler_Scale(), #PB_EventType_LeftButtonUp)
+		UITK::Label(#Text_Scale, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth - GadgetWidth(#Trackbar_Scale), 20, Language(#Lng_Scale))
+		SetGadgetFont(#Text_Scale, General::OptionFont)
+		GadgetToolTip(#Text_Scale, Language(#ToolTip_Scale))
+		
 		Y + #Appearance_Window_OptionSpacing
 		
 		UITK::Button(#Button_Location, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24, Language(#Lng_Location), UITK::#Border)
@@ -373,23 +371,79 @@
 		
 		Y + #Appearance_Window_TitleSpacing
 		
-		UITK::Label(#Title_Misc, #Appearance_Window_TitleMargin, Y, 200, 20, Language(#Lng_Misc))
-		SetGadgetFont(#Title_Misc, General::TitleFont)
+		UITK::Label(#Title_InputColor, #Appearance_Window_TitleMargin, Y, 200, 20, Language(#Lng_InputColor))
+		SetGadgetFont(#Title_InputColor, General::TitleFont)
 		
-		Y + 31
+		Y + #Appearance_Window_OptionSpacing - 8
 		
-		UITK::Toggle(#Toggle_CheckUpdate, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Lng_CheckUpdate))
-		SetGadgetFont(#Toggle_CheckUpdate, General::OptionFont)
-		GadgetToolTip(#Toggle_CheckUpdate, Language(#ToolTip_CheckUpdate))
-		BindGadgetEvent(#Toggle_CheckUpdate, @Handler_CheckUpdate(), #PB_EventType_Change)
-		SetGadgetState(#Toggle_CheckUpdate, General::Preferences(General::#Pref_CheckUpdate))
+		UITK::Radio(#Radio_Dark, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_DarkTheme), "Color Theme", UITK::#HAlignCenter)
+		SetGadgetFont(#Radio_Dark, General::OptionFont)
+		BindGadgetEvent(#Radio_Dark, @Handler_Radio(), #PB_EventType_Change)
+		Y + #Appearance_Window_OptionSpacing
 		
+		UITK::Radio(#Radio_Light, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_LightTheme), "Color Theme", UITK::#HAlignCenter)
+		SetGadgetFont(#Radio_Light, General::OptionFont)
+		BindGadgetEvent(#Radio_Light, @Handler_Radio(), #PB_EventType_Change)
+		Y + #Appearance_Window_OptionSpacing
+		
+		UITK::Radio(#Radio_Pink, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_PinkTheme), "Color Theme", UITK::#HAlignCenter)
+		SetGadgetFont(#Radio_Pink, General::OptionFont)
+		BindGadgetEvent(#Radio_Pink, @Handler_Radio(), #PB_EventType_Change)
+		Y + #Appearance_Window_OptionSpacing
+		
+		UITK::Radio(#Radio_Blue, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, Language(#Lng_BlueTheme), "Color Theme", UITK::#HAlignCenter)
+		SetGadgetFont(#Radio_Blue, General::OptionFont)
+		BindGadgetEvent(#Radio_Blue, @Handler_Radio(), #PB_EventType_Change)
+		Y + #Appearance_Window_OptionSpacing
+		
+		UITK::Radio(#Radio_Custom, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 38, "Custom theme", "Color Theme", UITK::#HAlignCenter | UITK::#Container)
+		SetGadgetFont(#Radio_Custom, General::OptionFont)
+		BindGadgetEvent(#Radio_Custom, @Handler_Radio(), #PB_EventType_Change)
+		
+		SetGadgetState(#Radio_Dark + General::Preferences(General::#Pref_InputColor), #True)
+		
+		CustomColor(#CustomColor0)
+		CustomColor(#CustomColor1)
+		CustomColor(#CustomColor2)
+		CustomColor(#CustomColor3)
+		CustomColor(#CustomColor4)
+		CustomColor(#CustomColor5)
+		
+		CloseGadgetList()
+ 		CloseGadgetList()
+ 		CloseGadgetList()
+		UITK::ScrollBar(#Scrollbar_Appearance, #Appearance_Window_Width - #Appearance_LeftPanel_Width - 4 - #Appearance_Scrollbar_Size, 4, #Appearance_Scrollbar_Size, WindowHeight(#Window) - 30 - 2 * 4, 0, 780, WindowHeight(#Window) + 10, UITK::#Gadget_Vertical | UITK::#DarkMode)
+		BindGadgetEvent(#Scrollbar_Appearance, @Handler_ScrollBar_Appearance(), #PB_EventType_Change)
+		SetGadgetAttribute(#Scrollbar_Appearance, UITK::#ScrollBar_ScrollStep, 50)
+		
+		CloseGadgetList() ;}
+		
+		;{ Behavior
+		ContainerGadget(#Container_Behavior, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
+		HideGadget(#Container_Behavior, #True)
+		ImageGadget(#ContainerCorner_Behavior, 0, 0, 5, 5, 0)
+; 		
+; 		Y = 120
+; 		
+; 	
+; 		
+; 		UITK::Label(#Title_Misc, #Appearance_Window_TitleMargin, Y, 200, 20, Language(#Lng_Misc))
+; 		SetGadgetFont(#Title_Misc, General::TitleFont)
+; 		
+; 		Y + 31
+; 		
+; 		UITK::Toggle(#Toggle_CheckUpdate, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Lng_CheckUpdate))
+; 		SetGadgetFont(#Toggle_CheckUpdate, General::OptionFont)
+; 		GadgetToolTip(#Toggle_CheckUpdate, Language(#ToolTip_CheckUpdate))
+; 		BindGadgetEvent(#Toggle_CheckUpdate, @Handler_CheckUpdate(), #PB_EventType_Change)
+; 		SetGadgetState(#Toggle_CheckUpdate, General::Preferences(General::#Pref_CheckUpdate))
+; 		
 		CloseGadgetList() ;}
 		
 		;{ Controller
 		ContainerGadget(#Container_Controller, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
 		HideGadget(#Container_Controller, #True)
-		ImageGadget(#ContainerCorner_Controller, 0, 0, 5, 5, 0)
+		ImageGadget(#ContainerCorner_Controller, 0, 0, #Appearance_Corner_Size, #Appearance_Corner_Size, 0)
 		
 		CloseGadgetList()
 		;}
@@ -494,6 +548,9 @@
 		BindEvent(#PB_Event_Timer, @Handler_Timer(), LocationInformationWindow)
 		DisableWindow(LocationInformationWindow, #True)
 		;}
+		
+		; Get the scrollbar event manager adress :
+		*ScrollBar_Event_Manager = UITK::SubClassFunction(#Scrollbar_Appearance, UITK::#SubClass_EventHandler, #Null)
 		
 		SetColor()
 	EndProcedure
@@ -691,19 +748,43 @@
 		DisableWindow(LocationInformationWindow, #False)
 	EndProcedure
 	
+	Procedure Handler_Wheel_Appearance()
+		Protected Event.UITK::Event, Gadget
+		If EventType() = #PB_EventType_MouseWheel
+			Select GetGadgetState(#VList_Menu)
+				Case 0 ; Popup
+					Gadget = EventGadget()
+					If Gadget <> #Scrollbar_Appearance
+						Event\EventType	= UITK::#MouseWheel
+						Event\Param = GetGadgetAttribute(Gadget, #PB_Canvas_WheelDelta)
+						
+						CallFunctionFast(*ScrollBar_Event_Manager, PeekI(IsGadget(#Scrollbar_Appearance) + 8), Event) ; PeekI(IsGadget(#Scrollbar_Appearance) + 8) is a dirty hack to get the UITK gadget adress. This should be changed once the UITK API is finalized
+					EndIf
+				Case 1 ; Overlay
+					
+			EndSelect
+		EndIf
+	EndProcedure
+	
 	Procedure Handler_LeftPanel()
 		Select GetGadgetState(#VList_Menu)
-			Case 0 ; Appearance
+			Case 0 ; Popup
 				HideGadget(#Container_Appearance, #False)
 				HideGadget(#Container_Behavior, #True)
 				HideGadget(#Container_About, #True)
 				HideGadget(#Container_Controller, #True)
 				
-			Case 1 ; Behavior
+			Case 1 ; Overlay
 				HideGadget(#Container_Behavior, #False)
 				HideGadget(#Container_Appearance, #True)
 				HideGadget(#Container_About, #True)
 				HideGadget(#Container_Controller, #True)
+				
+; 			Case 2; Controller
+; 				HideGadget(#Container_Behavior, #True)
+; 				HideGadget(#Container_Appearance, #True)
+; 				HideGadget(#Container_About, #True)
+; 				HideGadget(#Container_Controller, #False)
 				
 			Case 2 ; About
 				HideGadget(#Container_Behavior, #True)
@@ -711,16 +792,21 @@
 				HideGadget(#Container_About, #False)
 				HideGadget(#Container_Controller, #True)
 				
-			Case 3; Controller
-				HideGadget(#Container_Behavior, #True)
-				HideGadget(#Container_Appearance, #True)
-				HideGadget(#Container_About, #True)
-				HideGadget(#Container_Controller, #False)
 		EndSelect
 	EndProcedure
 	
 	Procedure Handler_Radio()
 		General::Preferences(General::#Pref_InputColor) = EventGadget() - #Radio_Dark
+	EndProcedure
+	
+	Procedure Handler_ScrollArea_Appearance()
+		If EventType() = 0
+			SetGadgetState(#Scrollbar_Appearance, GetGadgetAttribute(#Scrollarea_Appearance, #PB_ScrollArea_Y))
+		EndIf
+	EndProcedure
+	
+	Procedure Handler_ScrollBar_Appearance()
+		SetGadgetAttribute(#Scrollarea_Appearance, #PB_ScrollArea_Y, GetGadgetState(#Scrollbar_Appearance))
 	EndProcedure
 	
 	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -890,6 +976,8 @@
 		SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #False, 0)
 		
 		SetContainerColor(#Container_Appearance)
+		SetContainerColor(#SubContainer_Appearance)
+		SetContainerColor(#Scrollarea_Appearance)
 		SetContainerColor(#Container_Behavior)
 		SetContainerColor(#Container_Controller)
 		SetContainerColor(#Container_About)
@@ -902,13 +990,13 @@
 		SetTitleAppearance(#Title_InputColor)
 		SetTitleAppearance(#Title_UserInterface)
 		SetTitleAppearance(#Title_Input)
-		SetTitleAppearance(#Title_Misc)
+; 		SetTitleAppearance(#Title_Misc)
 		
 		SetTextAppearance(#Text_Scale)
 		SetTextAppearance(#Text_Duration)
 		
-		SetToggleAppearance(#Toggle_DarkMode)
-		SetToggleAppearance(#Toggle_CheckUpdate)
+; 		SetToggleAppearance(#Toggle_DarkMode)
+; 		SetToggleAppearance(#Toggle_CheckUpdate)
 		SetToggleAppearance(#Toggle_Combo)
 		SetToggleAppearance(#Toggle_TrackKeyboard)
 		SetToggleAppearance(#Toggle_TrackMouse)
@@ -917,6 +1005,7 @@
 		SetRadioAppearance(#Radio_Light)
 		SetRadioAppearance(#Radio_Pink)
 		SetRadioAppearance(#Radio_Blue)
+		SetRadioAppearance(#Radio_Custom)
 		
 		SetGadgetColor(#Trackbar_Duration, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
 		SetGadgetColor(#Trackbar_Duration, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
@@ -986,7 +1075,7 @@
 	EndProcedure
 	;}
 	
-	DataSection ;{ Languages
+	DataSection
 		
 		English:
 		IncludeFile "../Language/English.pbi"
@@ -997,10 +1086,11 @@
 		Icon18:
 		IncludeBinary "../Media/Icon/18.png"
 		
-	EndDataSection ;}
+	EndDataSection
 	
 EndModule
 ; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 184
-; Folding = BCEAAAAA5
+; CursorPosition = 404
+; FirstLine = 247
+; Folding = 6HCIAAQAg9
 ; EnableXP

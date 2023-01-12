@@ -1,6 +1,6 @@
-﻿Data.s "Dark mode", "Input scale", "Track mouse inputs", "Popup duration", "Combo regroupment", "Move popup origin", "Auto-update", "Input color", "Switch between the dark and light theme",
-       "Changes the size of the input popup", "Include mouse click in the tracked inputs", "Change the time spent on screen by an input popup", "Regroup identical inputs as a group", "Enable the tracking altogether.", "Check update at startup",
-       "Appearance", "Behavior", "About", "Controller", "General", "Input", "Misc", "Track keyboard inputs", "Preferences", "Quit", "Inputify has started, you can find it in your system tray icons!",
+﻿Data.s "Dark mode", "Input scale", "Track mouse inputs", "Popup duration", "Combo regroupment", "Move popup position", "Auto-update", "Input color",
+       "Switch between the dark and light theme", "Changes the size of the input popup", "Include mouse click in the tracked inputs", "Change the time spent on screen by an input popup", "Regroup identical inputs as a group", "Enable the tracking altogether.", "Check update at startup",
+       "Popup", "Overlay", "About", "Overlay", "General", "Input", "Misc", "Track keyboard inputs", "Preferences", "Quit", "Inputify has started, you can find it in your system tray icons!",
        "Light theme", "Dark theme", "Blue theme", "Pink theme"
 ; About markdown :
 Data.s "### About Inputify ###" + #LF$ +
@@ -16,5 +16,4 @@ Data.s "### About Inputify ###" + #LF$ +
        "- The input design is largely inspired by the awesome [Xelu's Free Controllers & Keyboard Prompts](https://thoseawesomeguys.com/prompts/)." + #LF$ +
        "- A word of advice : don't forget to disable *Inputify* before you type a password while screen sharing."
 ; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 9
 ; EnableXP
