@@ -344,34 +344,37 @@
 	EndProcedure
 	
 	Procedure ShortCut(Control, Shift, Alt,Vkey)
-		If *LatestWindow And *LatestWindow\Status < #Dying 
-			If *LatestWindow\Vkey = Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU And *LatestWindow\Combo = 1
+		If *LatestWindow And *LatestWindow\Status < #Dying
+			If (General::Preferences(General::#Pref_Combo) Or (*LatestWindow And *LatestWindow\Vkey = Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU)) ; Yeah, unreadable condition (╯°□°）╯︵ ┻━┻
+				If *LatestWindow\Vkey = Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU And *LatestWindow\Combo = 1
+					MainWindow::InputArray(#VK_CONTROL) = #False
+					MainWindow::InputArray(#VK_SHIFT) = #False
+					MainWindow::InputArray(#VK_MENU) = #False
+					MainWindow::InputArray(Vkey) = *LatestWindow\Window
+					
+					AddKey(*LatestWindow\Window, Vkey)
+					
+					ProcedureReturn #False
+				ElseIf *LatestWindow\Vkey = Control * #VK_CONTROL + Shift * #VK_SHIFT + Alt * #VK_MENU + Vkey
+					Create(*LatestWindow\Vkey)
+					MainWindow::InputArray(Vkey) = *LatestWindow\Window
+					
+					ProcedureReturn #False
+				EndIf
+			ElseIf Not (*LatestWindow\Vkey > Control * #VK_CONTROL + Shift * #VK_SHIFT + Alt * #VK_MENU)
+				Create(Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU)
 				MainWindow::InputArray(#VK_CONTROL) = #False
 				MainWindow::InputArray(#VK_SHIFT) = #False
 				MainWindow::InputArray(#VK_MENU) = #False
 				MainWindow::InputArray(Vkey) = *LatestWindow\Window
-				
 				AddKey(*LatestWindow\Window, Vkey)
-				
 				ProcedureReturn #False
-			ElseIf *LatestWindow\Vkey = Control * #VK_CONTROL + Shift * #VK_SHIFT + Alt * #VK_MENU + Vkey
-				Create(*LatestWindow\Vkey)
-				MainWindow::InputArray(Vkey) = *LatestWindow\Window
-				
-				ProcedureReturn #False
+			Else
+				AddWindowTimer(*LatestWindow\Window, #Timer_Duration, General::Preferences(General::#Pref_Duration))
+				*LatestWindow = 0
 			EndIf
-		Else
-			Create(Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU)
-			MainWindow::InputArray(#VK_CONTROL) = #False
-			MainWindow::InputArray(#VK_SHIFT) = #False
-			MainWindow::InputArray(#VK_MENU) = #False
-			MainWindow::InputArray(Vkey) = *LatestWindow\Window
-			AddKey(*LatestWindow\Window, Vkey)
-			ProcedureReturn #False
 		EndIf
 		
-		AddWindowTimer(*LatestWindow\Window, #Timer_Duration, General::Preferences(General::#Pref_Duration))
-		*LatestWindow = 0
 		MainWindow::InputArray(#VK_CONTROL) = #False
 		MainWindow::InputArray(#VK_SHIFT) = #False
 		MainWindow::InputArray(#VK_MENU) = #False
@@ -704,7 +707,7 @@
 	EndProcedure
 	;}
 EndModule
-; IDE Options = PureBasic 6.00 Beta 10 (Windows - x64)
-; CursorPosition = 705
-; Folding = BAAA-
+; IDE Options = PureBasic 6.00 LTS (Windows - x64)
+; CursorPosition = 363
+; Folding = BIEA-
 ; EnableXP

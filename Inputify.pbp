@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2023-01-12 23:01" user="♥x1" host="PINOCCHIO"/>
+    <lastopen date="2023-01-13 10:59" user="♥x1" host="PINOCCHIO"/>
   </section>
   <section name="files">
     <file name="Includes\General.pbi">
@@ -20,11 +20,11 @@
     </file>
     <file name="Includes\MainWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="49ec65cc20a59eaa303cbc55b62621b2"/>
+      <fingerprint md5="3ab4b2363cfd15d7692780bd6fb8a956"/>
     </file>
     <file name="Includes\PopupWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="cc8f3d32ebbdfda98e6dce7652b41f7a"/>
+      <fingerprint md5="a13ebecb238555d492aca447db7d047e"/>
     </file>
     <file name="Main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
