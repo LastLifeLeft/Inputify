@@ -81,6 +81,7 @@
 	;{ Windows and gadgets
 	#Window = 0
 	#Window_SingleInstance = 1
+	#Window_ColorChoice = 2
 	
 	Enumeration ;Gadget
 		#Toggle_DarkMode
@@ -129,6 +130,9 @@
 		
 		#Container_Controller
 		#ContainerCorner_Controller
+		
+		#Container_ColorChoice
+		#ColorPicker_ColorChoice
 	EndEnumeration
 	
 	#Systray = 0
@@ -156,6 +160,9 @@
 	#Appearance_Corner_Size = 5
 	#Appearance_Scrollbar_Size = 7
 	
+	#Appearance_ColorChoice_Width = 200
+	#Appearance_ColorChoice_Height = 245
+	
 	#Appearance_Option_Width = #Appearance_Window_Width - 2 *#Appearance_Window_TitleMargin
 	;}
 	
@@ -164,9 +171,10 @@
 	
 	Global MouseHook, MouseHook_Button, KeyboardHook
 	Global LocationMouseHook, LocationKeyboardHook, LocationInformationWindow, LocationInformationText
+	Global KeepColorChoice = -1
 	Global Dim CornerImage(1)
 	Global NewList LocationInformationWindows()
-	Global *ScrollBar_Event_Manager
+	Global *ScrollBar_Event_Manager, *Radio_Event_Manager
 	
 	;{ Private procedures declaration
 	Declare SystrayBalloon(Title.s,Message.s,Flags)
@@ -190,6 +198,9 @@
 	Declare Handler_Radio()
 	Declare Handler_ScrollArea_Appearance()
 	Declare Handler_ScrollBar_Appearance()
+	Declare Handler_CustomColor()
+	Declare Handler_CustomColorWindow_Timer()
+	Declare Handler_CustomColorWindow()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare LocationMouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -203,6 +214,7 @@
 		StartDrawing(CanvasOutput(Gadget))
 		Box(1,1, 37, 20, General::KeyScheme(General::#Scheme_Custom, Gadget - #CustomColor0))
 		StopDrawing()
+		BindGadgetEvent(Gadget, @Handler_CustomColor())
 	EndMacro
 	
 	;}
@@ -551,6 +563,17 @@
 		
 		; Get the scrollbar event manager adress :
 		*ScrollBar_Event_Manager = UITK::SubClassFunction(#Scrollbar_Appearance, UITK::#SubClass_EventHandler, #Null)
+		*Radio_Event_Manager = UITK::SubClassFunction(#Radio_Custom, UITK::#SubClass_EventHandler, #Null)
+		
+		;{ Custom color selection window
+		UITK::Window(#Window_ColorChoice, 0, 0, #Appearance_ColorChoice_Width, #Appearance_ColorChoice_Height, "Color picker", UITK::#Window_Invisible | UITK::#Window_ScreenCentered | UITK::#DarkMode, WindowID)
+		OpenWindow(#Window_ColorChoice, 0, 0, #Appearance_ColorChoice_Width, #Appearance_ColorChoice_Height, "", #PB_Window_BorderLess | #PB_Window_Invisible, WindowID)
+		ContainerGadget(#Container_ColorChoice, 1, 1, #Appearance_ColorChoice_Width - 2, #Appearance_ColorChoice_Height - 2, #PB_Container_BorderLess)
+		UITK::ColorPicker(#ColorPicker_ColorChoice, 5, 5, #Appearance_ColorChoice_Width - 9, #Appearance_ColorChoice_Height - 10)
+		BindEvent(#PB_Event_DeactivateWindow, @Handler_CustomColorWindow(), #Window_ColorChoice)
+		BindEvent(#PB_Event_Timer, @Handler_CustomColorWindow_Timer(), #Window_ColorChoice)
+		;}
+		
 		
 		SetColor()
 	EndProcedure
@@ -809,6 +832,43 @@
 		SetGadgetAttribute(#Scrollarea_Appearance, #PB_ScrollArea_Y, GetGadgetState(#Scrollbar_Appearance))
 	EndProcedure
 	
+	Procedure Handler_CustomColor()
+		Protected Event.UITK::Event, Gadget
+		
+		Select EventType()
+			Case #PB_EventType_LeftButtonDown
+				If Not GetGadgetState(#Radio_Custom)
+					Event\EventType = UITK::#LeftClick
+					CallFunctionFast(*Radio_Event_Manager, PeekI(IsGadget(#Radio_Custom) + 8), Event)
+				EndIf
+				
+				Gadget = EventGadget()
+				
+				SetGadgetState(#ColorPicker_ColorChoice, General::KeyScheme(General::#Scheme_Custom, Gadget - #CustomColor0))
+				ResizeWindow(#Window_ColorChoice, GadgetX(Gadget, #PB_Gadget_ScreenCoordinate) - 81, GadgetY(Gadget, #PB_Gadget_ScreenCoordinate) - WindowHeight(#Window_ColorChoice) - 15, #PB_Ignore, #PB_Ignore)
+				KeepColorChoice + 1
+				HideWindow(#Window_ColorChoice, #False)
+				
+			Case #PB_EventType_MouseEnter, #PB_EventType_MouseMove
+				Event\EventType = UITK::#MouseEnter
+				CallFunctionFast(*Radio_Event_Manager, PeekI(IsGadget(#Radio_Custom) + 8), Event)
+		EndSelect
+	EndProcedure
+	
+	Procedure Handler_CustomColorWindow_Timer()
+		RemoveWindowTimer(#Window_ColorChoice, 1)
+		If KeepColorChoice
+			SetActiveWindow(#Window_ColorChoice)
+		Else
+			HideWindow(#Window_ColorChoice, #True)
+		EndIf
+		KeepColorChoice - 1
+	EndProcedure
+	
+	Procedure Handler_CustomColorWindow()
+		AddWindowTimer(#Window_ColorChoice, 1, 50)
+	EndProcedure
+	
 	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 		If nCode = #HC_ACTION
 			If (*p\vkCode = #VK_LCONTROL Or *p\vkCode = #VK_RCONTROL)
@@ -1029,7 +1089,11 @@
 		MarkDown::SetColor(#MarkDown, MarkDown::#Color_HighlightLink, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		
 		SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #True, 0)
-		RedrawWindow_(GadgetID(#Container_Appearance), 0, 0, #RDW_ERASE | #RDW_INVALIDATE) 
+		RedrawWindow_(GadgetID(#Container_Appearance), 0, 0, #RDW_ERASE | #RDW_INVALIDATE)
+		
+		SetGadgetColor(#Container_ColorChoice, #PB_Gadget_BackColor, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder))
+		SetGadgetColor(#ColorPicker_ColorChoice, UITK::#Color_Parent, General::SetAlpha(255, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder)))
+		SetWindowColor(#Window_ColorChoice, GetGadgetColor(#Radio_Blue, UITK::#Color_Text_Cold))
 	EndProcedure
 	
 	Procedure WindowCallback(hWnd, Msg, wParam, lParam)
@@ -1090,7 +1154,7 @@
 	
 EndModule
 ; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 841
-; FirstLine = 217
-; Folding = 6HAIAAQCg9
+; CursorPosition = 838
+; FirstLine = 234
+; Folding = 6SAYAAAMAA-
 ; EnableXP
