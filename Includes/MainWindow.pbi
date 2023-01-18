@@ -132,7 +132,11 @@
 		#ContainerCorner_Controller
 		
 		#Container_ColorChoice
+		#Container_ColorChoice_Splitter
 		#ColorPicker_ColorChoice
+; 		#Toggle_ColorChoice
+		#Canvas_ColorChoice
+; 		#Title_ColorChoice
 	EndEnumeration
 	
 	#Systray = 0
@@ -160,8 +164,9 @@
 	#Appearance_Corner_Size = 5
 	#Appearance_Scrollbar_Size = 7
 	
-	#Appearance_ColorChoice_Width = 200
-	#Appearance_ColorChoice_Height = 245
+	#Appearance_ColorPicker_Width = 200
+	#Appearance_ColorChoice_Height = 275
+	#Appearance_ColorChoice_Width = 480
 	
 	#Appearance_Option_Width = #Appearance_Window_Width - 2 *#Appearance_Window_TitleMargin
 	;}
@@ -171,7 +176,7 @@
 	
 	Global MouseHook, MouseHook_Button, KeyboardHook
 	Global LocationMouseHook, LocationKeyboardHook, LocationInformationWindow, LocationInformationText
-	Global KeepColorChoice = -1
+	Global KeepColorChoice = -1, CurrentColorChoice
 	Global Dim CornerImage(1)
 	Global NewList LocationInformationWindows()
 	Global *ScrollBar_Event_Manager, *Radio_Event_Manager
@@ -201,6 +206,7 @@
 	Declare Handler_CustomColor()
 	Declare Handler_CustomColorWindow_Timer()
 	Declare Handler_CustomColorWindow()
+	Declare Handler_ColorPicker()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare LocationMouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -208,6 +214,7 @@
 	Declare SetColor()
 	Declare WindowCallback(hWnd, Msg, wParam, lParam)
 	Declare VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State)
+	Declare RedrawPreview()
 	Macro CustomColor(Gadget)
 		CanvasGadget(Gadget, 158 + (Gadget - #CustomColor0) * 48, 8, 39, 22)
 		SetGadgetAttribute(Gadget, #PB_Canvas_Cursor, #PB_Cursor_Hand)
@@ -561,19 +568,29 @@
 		DisableWindow(LocationInformationWindow, #True)
 		;}
 		
-		; Get the scrollbar event manager adress :
+		; Get some UITK event manager adress :
 		*ScrollBar_Event_Manager = UITK::SubClassFunction(#Scrollbar_Appearance, UITK::#SubClass_EventHandler, #Null)
 		*Radio_Event_Manager = UITK::SubClassFunction(#Radio_Custom, UITK::#SubClass_EventHandler, #Null)
 		
 		;{ Custom color selection window
-		UITK::Window(#Window_ColorChoice, 0, 0, #Appearance_ColorChoice_Width, #Appearance_ColorChoice_Height, "Color picker", UITK::#Window_Invisible | UITK::#Window_ScreenCentered | UITK::#DarkMode, WindowID)
 		OpenWindow(#Window_ColorChoice, 0, 0, #Appearance_ColorChoice_Width, #Appearance_ColorChoice_Height, "", #PB_Window_BorderLess | #PB_Window_Invisible, WindowID)
 		ContainerGadget(#Container_ColorChoice, 1, 1, #Appearance_ColorChoice_Width - 2, #Appearance_ColorChoice_Height - 2, #PB_Container_BorderLess)
-		UITK::ColorPicker(#ColorPicker_ColorChoice, 5, 5, #Appearance_ColorChoice_Width - 9, #Appearance_ColorChoice_Height - 10)
+		ContainerGadget(#Container_ColorChoice_Splitter, 35 + #Appearance_ColorPicker_Width, 30, 1, #Appearance_ColorChoice_Height - 62, #PB_Container_BorderLess)
+		CloseGadgetList()
+		
+		UITK::ColorPicker(#ColorPicker_ColorChoice, 20, 20, #Appearance_ColorPicker_Width - 9, #Appearance_ColorChoice_Height - 40)
+; 		UITK::Toggle(#Toggle_ColorChoice, 66 + #Appearance_ColorPicker_Width, #Appearance_ColorChoice_Height - 55, 170, 44, "Highlight the current color", UITK::#DarkMode)
+; 		CanvasGadget(#Canvas_ColorChoice, 81 + #Appearance_ColorPicker_Width, 90, 140, 70)
+		
+; 		UITK::Label(#Title_ColorChoice, 66 + #Appearance_ColorPicker_Width, 30, 180, 20, "Preview")
+; 		SetGadgetFont(#Title_ColorChoice, General::TitleFont)
+		
+		CanvasGadget(#Canvas_ColorChoice, 66 + #Appearance_ColorPicker_Width, 100, 185, 78)
+		RedrawPreview()
+		BindGadgetEvent(#ColorPicker_ColorChoice, @Handler_ColorPicker(), #PB_EventType_Change)
 		BindEvent(#PB_Event_DeactivateWindow, @Handler_CustomColorWindow(), #Window_ColorChoice)
 		BindEvent(#PB_Event_Timer, @Handler_CustomColorWindow_Timer(), #Window_ColorChoice)
 		;}
-		
 		
 		SetColor()
 	EndProcedure
@@ -692,7 +709,6 @@
 		If EventType() = #PB_EventType_RightClick
 			MouseHook_Button = #False
 			DisplayPopupMenu(0, WindowID(#Window))
-			
 		ElseIf EventType() = #PB_EventType_LeftDoubleClick
 			Handler_MenuOptions()
 		EndIf
@@ -843,15 +859,11 @@
 				EndIf
 				
 				Gadget = EventGadget()
-				
-				SetGadgetState(#ColorPicker_ColorChoice, General::KeyScheme(General::#Scheme_Custom, Gadget - #CustomColor0))
-				ResizeWindow(#Window_ColorChoice, GadgetX(Gadget, #PB_Gadget_ScreenCoordinate) - 81, GadgetY(Gadget, #PB_Gadget_ScreenCoordinate) - WindowHeight(#Window_ColorChoice) - 15, #PB_Ignore, #PB_Ignore)
+				CurrentColorChoice = Gadget - #CustomColor0
 				KeepColorChoice + 1
+				SetGadgetState(#ColorPicker_ColorChoice, General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice))
+				ResizeWindow(#Window_ColorChoice, GadgetX(Gadget, #PB_Gadget_ScreenCoordinate) - 86, GadgetY(Gadget, #PB_Gadget_ScreenCoordinate) - WindowHeight(#Window_ColorChoice) - 15, #PB_Ignore, #PB_Ignore)
 				HideWindow(#Window_ColorChoice, #False)
-				
-			Case #PB_EventType_MouseEnter, #PB_EventType_MouseMove
-				Event\EventType = UITK::#MouseEnter
-				CallFunctionFast(*Radio_Event_Manager, PeekI(IsGadget(#Radio_Custom) + 8), Event)
 		EndSelect
 	EndProcedure
 	
@@ -867,6 +879,14 @@
 	
 	Procedure Handler_CustomColorWindow()
 		AddWindowTimer(#Window_ColorChoice, 1, 50)
+	EndProcedure
+	
+	Procedure Handler_ColorPicker()
+		General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice) = General::SetAlpha(255, GetGadgetState(#ColorPicker_ColorChoice))
+		StartDrawing(CanvasOutput(CurrentColorChoice + #CustomColor0))
+		Box(1,1, 37, 20, General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice))
+		StopDrawing()
+		RedrawPreview()
 	EndProcedure
 	
 	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -1032,6 +1052,110 @@
 		                                                                Blue(General::ColorScheme(General::Preferences(General::#Pref_DarkMode),General::#Color_Type_BackCold))))
 	EndMacro
 	
+	Procedure RedrawPreview()
+		Protected Scale.f = 1.3
+		
+		
+		StartVectorDrawing(CanvasVectorOutput(#Canvas_ColorChoice))
+		AddPathBox(0, 0, VectorOutputWidth(), VectorOutputHeight())
+		VectorSourceColor(General::SetAlpha(255, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder)))
+		FillPath()
+		
+		SaveVectorState()
+		
+		AddPathBox(0, 0, 27 * Scale, 61 * Scale)
+		ClipPath()
+		
+		MovePathCursor(27 * Scale, 27 * Scale)
+		AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
+		AddPathArc(-3 * Scale, 28 * Scale, 22 * Scale, 30 * Scale, 10 * Scale, #PB_Path_Relative)
+		AddPathCurve(0, 0, 15 * Scale, 5 * Scale, 30 * Scale, 0,  #PB_Path_Relative)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_2))
+		FillPath(#PB_Path_Preserve)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_0))
+		StrokePath(4 * Scale)
+		
+		MovePathCursor(27 * Scale, 27 * Scale)
+		AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
+		AddPathArc(3 * Scale, -22 * Scale, 15 * Scale, -25 * Scale, 10 * Scale, #PB_Path_Relative)
+		AddPathLine(13 * Scale, 0, #PB_Path_Relative)
+		ClosePath()
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Mouse))
+		FillPath(#PB_Path_Preserve)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_0))
+		StrokePath(4 * Scale)
+		
+		RestoreVectorState()
+		SaveVectorState()
+		
+		FlipCoordinatesX(27 * Scale)
+		
+		AddPathBox(0, 0, 27 * Scale, 61 * Scale)
+		ClipPath()
+		
+		MovePathCursor(27 * Scale, 27 * Scale)
+		AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
+		AddPathArc(-3 * Scale, 28 * Scale, 22 * Scale, 30 * Scale, 10 * Scale, #PB_Path_Relative)
+		AddPathCurve(0, 0, 15 * Scale, 5 * Scale, 30 * Scale, 0,  #PB_Path_Relative)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_2))
+		FillPath(#PB_Path_Preserve)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_0))
+		StrokePath(4 * Scale)
+		
+		MovePathCursor(27 * Scale, 27 * Scale)
+		AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
+		AddPathArc(3 * Scale, -22 * Scale, 15 * Scale, -25 * Scale, 10 * Scale, #PB_Path_Relative)
+		AddPathLine(13 * Scale, 0, #PB_Path_Relative)
+		ClosePath()
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_2))
+		FillPath(#PB_Path_Preserve)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_0))
+		StrokePath(4 * Scale)
+		
+		RestoreVectorState()
+		SaveVectorState()
+		
+		AddPathCircle(27 * Scale, 12 * Scale, 6 * Scale)
+		AddPathCircle(27 * Scale, 19 * Scale, 6 * Scale)
+		AddPathBox(21 * Scale, 12 * Scale, 12 * Scale, 7 * Scale)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_0))
+		FillPath(#PB_Path_Winding)
+		
+		AddPathCircle(27 * Scale, 12 * Scale, 4 * Scale)
+		AddPathCircle(27 * Scale, 17 * Scale, 4 * Scale)
+		AddPathBox(23 * Scale, 12 * Scale, 8 * Scale, 5 * Scale)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_2))
+		FillPath(#PB_Path_Winding)
+		
+		
+		VectorFont(General::TitleFont, 30 * Scale)
+		
+		UITK::AddPathRoundedBox((80) * Scale, 0, PopupWindow::VKeyData(65)\Width * Scale, 60 * Scale, 7 * Scale)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_0))
+		FillPath()
+		
+		UITK::AddPathRoundedBox((80 + 4) * Scale, 4 * Scale, (PopupWindow::VKeyData(65)\Width - 8) * Scale, 52 * Scale, 4 * Scale)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_1))
+		FillPath()
+		
+		UITK::AddPathRoundedBox((80 + 7) * Scale, 7 * Scale, (PopupWindow::VKeyData(65)\Width - 14) * Scale, 46 * Scale, 2 * Scale)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_2))
+		FillPath()
+		
+		UITK::AddPathRoundedBox((80 + 10) * Scale, 10 * Scale, (PopupWindow::VKeyData(65)\Width - 20) * Scale, 40 * Scale, 2 * Scale)
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_3))
+		FillPath()
+		
+		MovePathCursor((80 + PopupWindow::VKeyData(65)\Offset - 10)  * Scale, 15  * Scale)
+		
+		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_4))
+		DrawVectorText(PopupWindow::VKeyData(65)\Text)
+		
+		FillPath()
+		
+		StopVectorDrawing()
+	EndProcedure
+	
 	Procedure SetColor()
 		SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #False, 0)
 		
@@ -1050,6 +1174,7 @@
 		SetTitleAppearance(#Title_InputColor)
 		SetTitleAppearance(#Title_UserInterface)
 		SetTitleAppearance(#Title_Input)
+; 		SetTitleAppearance(#Title_ColorChoice)
 ; 		SetTitleAppearance(#Title_Misc)
 		
 		SetTextAppearance(#Text_Scale)
@@ -1091,8 +1216,11 @@
 		SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #True, 0)
 		RedrawWindow_(GadgetID(#Container_Appearance), 0, 0, #RDW_ERASE | #RDW_INVALIDATE)
 		
+; 		SetGadgetColor(#Title_ColorChoice, UITK::#Color_Parent, General::SetAlpha(255, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder)))
 		SetGadgetColor(#Container_ColorChoice, #PB_Gadget_BackColor, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder))
+		SetGadgetColor(#Container_ColorChoice_Splitter, #PB_Gadget_BackColor, GetGadgetColor(#Radio_Blue, UITK::#Color_Text_Cold))
 		SetGadgetColor(#ColorPicker_ColorChoice, UITK::#Color_Parent, General::SetAlpha(255, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder)))
+
 		SetWindowColor(#Window_ColorChoice, GetGadgetColor(#Radio_Blue, UITK::#Color_Text_Cold))
 	EndProcedure
 	
@@ -1154,7 +1282,7 @@
 	
 EndModule
 ; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 838
-; FirstLine = 234
-; Folding = 6SAYAAAMAA-
+; CursorPosition = 136
+; FirstLine = 51
+; Folding = 6DCYAAAgAw9
 ; EnableXP

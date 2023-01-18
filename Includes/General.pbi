@@ -154,6 +154,13 @@ EndDeclareModule
 
 DeclareModule PopupWindow
 	; Public variables, structures and constants
+	Structure VKeyData
+		Text.s
+		Width.i
+		Offset.i
+	EndStructure
+	
+	Global Dim VKeyData.VKeyData(255)
 	
 	; Public procedures declaration
 	Declare Create(VKey)
@@ -239,7 +246,7 @@ Module General
 	EndProcedure
 EndModule
 ; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 114
-; FirstLine = 57
+; CursorPosition = 162
+; FirstLine = 81
 ; Folding = 866
 ; EnableXP
