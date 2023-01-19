@@ -206,7 +206,7 @@
 	Declare Handler_ScrollArea_Appearance()
 	Declare Handler_ScrollBar_Appearance()
 	Declare Handler_CustomColor()
-	Declare Handler_CustomColorWindow()
+	Declare Handler_CustomColor_Cancel()
 	Declare Handler_ColorPicker()
 	Declare Handler_CustomColor_Ok()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -576,7 +576,6 @@
 		
 		;{ Custom color selection window
 		UITK::Window(#Window_ColorChoice, 0, 0, #Appearance_ColorChoice_Width, #Appearance_ColorChoice_Height, "Color pick", UITK::#DarkMode | UITK::#Window_Invisible | UITK::#Window_CloseButton, WindowID)
-; 		ContainerGadget(#Container_ColorChoice, 1, 1, #Appearance_ColorChoice_Width - 2, #Appearance_ColorChoice_Height - 2, #PB_Container_BorderLess)
 		ContainerGadget(#Container_ColorChoice_Splitter, 35 + #Appearance_ColorPicker_Width, 30, 1, #Appearance_ColorChoice_Height - 62, #PB_Container_BorderLess)
 		CloseGadgetList()
 		
@@ -589,8 +588,8 @@
 		RedrawPreview()
 		BindGadgetEvent(#ColorPicker_ColorChoice, @Handler_ColorPicker(), #PB_EventType_Change)
 		BindGadgetEvent(#Button_ColorChoice_Ok, @Handler_CustomColor_Ok(), #PB_EventType_Change)
-		BindGadgetEvent(#Button_ColorChoice_Cancel, @Handler_CustomColorWindow(), #PB_EventType_Change)
-		BindEvent(#PB_Event_CloseWindow, @Handler_CustomColorWindow(), #Window_ColorChoice)
+		BindGadgetEvent(#Button_ColorChoice_Cancel, @Handler_CustomColor_Cancel(), #PB_EventType_Change)
+		BindEvent(#PB_Event_CloseWindow, @Handler_CustomColor_Cancel(), #Window_ColorChoice)
 		;}
 		
 		SetColor()
@@ -868,7 +867,7 @@
 		EndSelect
 	EndProcedure
 	
-	Procedure Handler_CustomColorWindow()
+	Procedure Handler_CustomColor_Cancel()
 		DisableWindow(#Window, #False)
 		HideWindow(#Window_ColorChoice, #True)
 		SetActiveWindow(#Window)
@@ -884,6 +883,10 @@
 	
 	Procedure Handler_CustomColor_Ok()
 		General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice) = General::SetAlpha(255, GetGadgetState(#ColorPicker_ColorChoice))
+		StartDrawing(CanvasOutput(#CustomColor0 + CurrentColorChoice))
+		Box(1,1, 37, 20, General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice))
+		StopDrawing()
+		Handler_CustomColor_Cancel()
 	EndProcedure
 	
 	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -1268,7 +1271,7 @@
 	
 EndModule
 ; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 887
-; FirstLine = 361
-; Folding = 6DCYAAAAAA9
+; CursorPosition = 81
+; FirstLine = 93
+; Folding = hAAQAAAAAA9
 ; EnableXP
