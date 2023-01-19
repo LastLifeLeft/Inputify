@@ -131,12 +131,11 @@
 		#Container_Controller
 		#ContainerCorner_Controller
 		
-		#Container_ColorChoice
 		#Container_ColorChoice_Splitter
 		#ColorPicker_ColorChoice
-; 		#Toggle_ColorChoice
 		#Canvas_ColorChoice
-; 		#Title_ColorChoice
+		#Button_ColorChoice_Ok
+		#Button_ColorChoice_Cancel
 	EndEnumeration
 	
 	#Systray = 0
@@ -166,7 +165,10 @@
 	
 	#Appearance_ColorPicker_Width = 200
 	#Appearance_ColorChoice_Height = 275
-	#Appearance_ColorChoice_Width = 480
+	#Appearance_ColorChoice_Width = 534
+	#Appearance_ColorChoice_ButtonWidth = 90
+	#Appearance_ColorChoice_ButtonHeight = 24
+	
 	
 	#Appearance_Option_Width = #Appearance_Window_Width - 2 *#Appearance_Window_TitleMargin
 	;}
@@ -204,9 +206,9 @@
 	Declare Handler_ScrollArea_Appearance()
 	Declare Handler_ScrollBar_Appearance()
 	Declare Handler_CustomColor()
-	Declare Handler_CustomColorWindow_Timer()
 	Declare Handler_CustomColorWindow()
 	Declare Handler_ColorPicker()
+	Declare Handler_CustomColor_Ok()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare LocationMouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -573,23 +575,22 @@
 		*Radio_Event_Manager = UITK::SubClassFunction(#Radio_Custom, UITK::#SubClass_EventHandler, #Null)
 		
 		;{ Custom color selection window
-		OpenWindow(#Window_ColorChoice, 0, 0, #Appearance_ColorChoice_Width, #Appearance_ColorChoice_Height, "", #PB_Window_BorderLess | #PB_Window_Invisible, WindowID)
-		ContainerGadget(#Container_ColorChoice, 1, 1, #Appearance_ColorChoice_Width - 2, #Appearance_ColorChoice_Height - 2, #PB_Container_BorderLess)
+		UITK::Window(#Window_ColorChoice, 0, 0, #Appearance_ColorChoice_Width, #Appearance_ColorChoice_Height, "Color pick", UITK::#DarkMode | UITK::#Window_Invisible | UITK::#Window_CloseButton, WindowID)
+; 		ContainerGadget(#Container_ColorChoice, 1, 1, #Appearance_ColorChoice_Width - 2, #Appearance_ColorChoice_Height - 2, #PB_Container_BorderLess)
 		ContainerGadget(#Container_ColorChoice_Splitter, 35 + #Appearance_ColorPicker_Width, 30, 1, #Appearance_ColorChoice_Height - 62, #PB_Container_BorderLess)
 		CloseGadgetList()
 		
 		UITK::ColorPicker(#ColorPicker_ColorChoice, 20, 20, #Appearance_ColorPicker_Width - 9, #Appearance_ColorChoice_Height - 40)
-; 		UITK::Toggle(#Toggle_ColorChoice, 66 + #Appearance_ColorPicker_Width, #Appearance_ColorChoice_Height - 55, 170, 44, "Highlight the current color", UITK::#DarkMode)
-; 		CanvasGadget(#Canvas_ColorChoice, 81 + #Appearance_ColorPicker_Width, 90, 140, 70)
+		UITK::Button(#Button_ColorChoice_Cancel, #Appearance_ColorChoice_Width - (#Appearance_ColorChoice_ButtonWidth + 20), #Appearance_ColorChoice_Height - 44, #Appearance_ColorChoice_ButtonWidth, #Appearance_ColorChoice_ButtonHeight, "Cancel",UITK::#Border) 
+		UITK::Button(#Button_ColorChoice_Ok, #Appearance_ColorChoice_Width - (#Appearance_ColorChoice_ButtonWidth + 20) * 2, #Appearance_ColorChoice_Height - 44, #Appearance_ColorChoice_ButtonWidth, #Appearance_ColorChoice_ButtonHeight, "Ok",UITK::#Border) 
 		
-; 		UITK::Label(#Title_ColorChoice, 66 + #Appearance_ColorPicker_Width, 30, 180, 20, "Preview")
-; 		SetGadgetFont(#Title_ColorChoice, General::TitleFont)
 		
-		CanvasGadget(#Canvas_ColorChoice, 66 + #Appearance_ColorPicker_Width, 100, 185, 78)
+		CanvasGadget(#Canvas_ColorChoice, 66 + #Appearance_ColorPicker_Width, 71, 238, 103)
 		RedrawPreview()
 		BindGadgetEvent(#ColorPicker_ColorChoice, @Handler_ColorPicker(), #PB_EventType_Change)
-		BindEvent(#PB_Event_DeactivateWindow, @Handler_CustomColorWindow(), #Window_ColorChoice)
-		BindEvent(#PB_Event_Timer, @Handler_CustomColorWindow_Timer(), #Window_ColorChoice)
+		BindGadgetEvent(#Button_ColorChoice_Ok, @Handler_CustomColor_Ok(), #PB_EventType_Change)
+		BindGadgetEvent(#Button_ColorChoice_Cancel, @Handler_CustomColorWindow(), #PB_EventType_Change)
+		BindEvent(#PB_Event_CloseWindow, @Handler_CustomColorWindow(), #Window_ColorChoice)
 		;}
 		
 		SetColor()
@@ -862,31 +863,27 @@
 				CurrentColorChoice = Gadget - #CustomColor0
 				KeepColorChoice + 1
 				SetGadgetState(#ColorPicker_ColorChoice, General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice))
-				ResizeWindow(#Window_ColorChoice, GadgetX(Gadget, #PB_Gadget_ScreenCoordinate) - 86, GadgetY(Gadget, #PB_Gadget_ScreenCoordinate) - WindowHeight(#Window_ColorChoice) - 15, #PB_Ignore, #PB_Ignore)
-				HideWindow(#Window_ColorChoice, #False)
+				HideWindow(#Window_ColorChoice, #False, #PB_Window_WindowCentered)
+				DisableWindow(#Window, #True)
 		EndSelect
 	EndProcedure
 	
-	Procedure Handler_CustomColorWindow_Timer()
-		RemoveWindowTimer(#Window_ColorChoice, 1)
-		If KeepColorChoice
-			SetActiveWindow(#Window_ColorChoice)
-		Else
-			HideWindow(#Window_ColorChoice, #True)
-		EndIf
-		KeepColorChoice - 1
-	EndProcedure
-	
 	Procedure Handler_CustomColorWindow()
-		AddWindowTimer(#Window_ColorChoice, 1, 50)
+		DisableWindow(#Window, #False)
+		HideWindow(#Window_ColorChoice, #True)
+		SetActiveWindow(#Window)
 	EndProcedure
 	
 	Procedure Handler_ColorPicker()
+		Protected CurrentColor = General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice)
+		; Change the edited color to render the preview and set it back right after.
 		General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice) = General::SetAlpha(255, GetGadgetState(#ColorPicker_ColorChoice))
-		StartDrawing(CanvasOutput(CurrentColorChoice + #CustomColor0))
-		Box(1,1, 37, 20, General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice))
-		StopDrawing()
 		RedrawPreview()
+ 		General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice) = CurrentColor
+	EndProcedure
+	
+	Procedure Handler_CustomColor_Ok()
+		General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice) = General::SetAlpha(255, GetGadgetState(#ColorPicker_ColorChoice))
 	EndProcedure
 	
 	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -1053,12 +1050,11 @@
 	EndMacro
 	
 	Procedure RedrawPreview()
-		Protected Scale.f = 1.3
-		
+		Protected Scale.f = 1.7
 		
 		StartVectorDrawing(CanvasVectorOutput(#Canvas_ColorChoice))
 		AddPathBox(0, 0, VectorOutputWidth(), VectorOutputHeight())
-		VectorSourceColor(General::SetAlpha(255, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder)))
+		VectorSourceColor(General::SetAlpha(255, GetGadgetColor(#ColorPicker_ColorChoice, UITK::#Color_Parent)))
 		FillPath()
 		
 		SaveVectorState()
@@ -1127,7 +1123,6 @@
 		VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_2))
 		FillPath(#PB_Path_Winding)
 		
-		
 		VectorFont(General::TitleFont, 30 * Scale)
 		
 		UITK::AddPathRoundedBox((80) * Scale, 0, PopupWindow::VKeyData(65)\Width * Scale, 60 * Scale, 7 * Scale)
@@ -1174,14 +1169,10 @@
 		SetTitleAppearance(#Title_InputColor)
 		SetTitleAppearance(#Title_UserInterface)
 		SetTitleAppearance(#Title_Input)
-; 		SetTitleAppearance(#Title_ColorChoice)
-; 		SetTitleAppearance(#Title_Misc)
 		
 		SetTextAppearance(#Text_Scale)
 		SetTextAppearance(#Text_Duration)
 		
-; 		SetToggleAppearance(#Toggle_DarkMode)
-; 		SetToggleAppearance(#Toggle_CheckUpdate)
 		SetToggleAppearance(#Toggle_Combo)
 		SetToggleAppearance(#Toggle_TrackKeyboard)
 		SetToggleAppearance(#Toggle_TrackMouse)
@@ -1216,12 +1207,7 @@
 		SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #True, 0)
 		RedrawWindow_(GadgetID(#Container_Appearance), 0, 0, #RDW_ERASE | #RDW_INVALIDATE)
 		
-; 		SetGadgetColor(#Title_ColorChoice, UITK::#Color_Parent, General::SetAlpha(255, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder)))
-		SetGadgetColor(#Container_ColorChoice, #PB_Gadget_BackColor, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder))
 		SetGadgetColor(#Container_ColorChoice_Splitter, #PB_Gadget_BackColor, GetGadgetColor(#Radio_Blue, UITK::#Color_Text_Cold))
-		SetGadgetColor(#ColorPicker_ColorChoice, UITK::#Color_Parent, General::SetAlpha(255, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder)))
-
-		SetWindowColor(#Window_ColorChoice, GetGadgetColor(#Radio_Blue, UITK::#Color_Text_Cold))
 	EndProcedure
 	
 	Procedure WindowCallback(hWnd, Msg, wParam, lParam)
@@ -1282,7 +1268,7 @@
 	
 EndModule
 ; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 136
-; FirstLine = 51
-; Folding = 6DCYAAAgAw9
+; CursorPosition = 887
+; FirstLine = 361
+; Folding = 6DCYAAAAAA9
 ; EnableXP
