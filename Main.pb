@@ -1,4 +1,5 @@
-﻿IncludePath "UI-Toolkit/Library"
+﻿IncludeFile "SDL_For_PB/sdl2/SDL.pbi"
+IncludePath "UI-Toolkit/Library"
 IncludeFile "UI-Toolkit.pbi"
 
 IncludePath "MarkDownModule"
@@ -21,6 +22,5 @@ Repeat
 	WaitWindowEvent()
 ForEver
 ; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 10
 ; Folding = +
 ; EnableXP

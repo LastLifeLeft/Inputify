@@ -1,3 +1,6 @@
 [submodule "UI-Toolkit"]
 	path = UI-Toolkit
 	url = https://github.com/LastLifeLeft/UI-Toolkit
+[submodule "SDL_For_PB"]
+	path = SDL_For_PB
+	url = https://github.com/GPIforGit/SDL_For_PB

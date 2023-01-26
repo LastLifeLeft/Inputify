@@ -104,9 +104,9 @@
 		#CustomColor3
 		#CustomColor4
 		#CustomColor5
-		#SubContainer_Appearance
-		#Scrollbar_Appearance
-		#Scrollarea_Appearance
+		#SubContainer_Popup
+		#Scrollbar_Popup
+		#Scrollarea_Popup
 		
 		#Title_UserInterface
 		#Title_InputColor
@@ -118,7 +118,7 @@
 		
 		#VList_Menu
 		
-		#Container_Appearance
+		#Container_Popup
 		#ContainerCorner_Appearance
 		
 		#Container_Behavior
@@ -136,6 +136,18 @@
 		#Canvas_ColorChoice
 		#Button_ColorChoice_Ok
 		#Button_ColorChoice_Cancel
+		
+		; Overlay
+		#SubContainer_Overlay
+		#Scrollbar_Overlay
+		#Scrollarea_Overlay
+		#Title_PopupBehavior
+		#Toggle_Overlay_Enable
+		#Text_Overlay_InputSource
+		#Combo_Overlay_InputSource
+		#Toggle_Overlay_GreenKey
+		#Text_Overlay_Transparency
+		#Trackbar_Transparency
 	EndEnumeration
 	
 	#Systray = 0
@@ -169,6 +181,8 @@
 	#Appearance_ColorChoice_ButtonWidth = 90
 	#Appearance_ColorChoice_ButtonHeight = 24
 	
+	#Appearance_Popup_Lenght = 780
+	#Appearance_Overlay_Lenght = 400
 	
 	#Appearance_Option_Width = #Appearance_Window_Width - 2 *#Appearance_Window_TitleMargin
 	;}
@@ -200,11 +214,13 @@
 	Declare Handler_CheckUpdate()
 	Declare Handler_Timer()
 	Declare Handler_Location()
-	Declare Handler_Wheel_Appearance()
+	Declare Handler_Wheel()
 	Declare Handler_LeftPanel()
 	Declare Handler_Radio()
-	Declare Handler_ScrollArea_Appearance()
-	Declare Handler_ScrollBar_Appearance()
+	Declare Handler_ScrollArea_Popup()
+	Declare Handler_ScrollArea_Overlay()
+	Declare Handler_ScrollBar_Popup()
+	Declare Handler_ScrollBar_Overlay()
 	Declare Handler_CustomColor()
 	Declare Handler_CustomColor_Cancel()
 	Declare Handler_ColorPicker()
@@ -225,7 +241,6 @@
 		StopDrawing()
 		BindGadgetEvent(Gadget, @Handler_CustomColor())
 	EndMacro
-	
 	;}
 	
 	;Public procedures
@@ -302,19 +317,18 @@
  		BindGadgetEvent(#VList_Menu, @Handler_LeftPanel(), #PB_EventType_Change)
  		;}
  		
- 		;{ Appearance 
-		ContainerGadget(#Container_Appearance, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
+ 		;{ Popup 
+		ContainerGadget(#Container_Popup, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
 		ImageGadget(#ContainerCorner_Appearance, 0, 0, #Appearance_Corner_Size, #Appearance_Corner_Size, 0)
 		
-		ContainerGadget(#SubContainer_Appearance, #Appearance_Corner_Size, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width - #Appearance_Corner_Size - #Appearance_Scrollbar_Size - 4, WindowHeight(#Window) - 30)
-		ScrollAreaGadget(#Scrollarea_Appearance, 0, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width + 40, WindowHeight(#Window) + 10, #Appearance_Window_Width - #Appearance_LeftPanel_Width - 40, 780, 50, #PB_ScrollArea_BorderLess)
-		BindGadgetEvent(#Scrollarea_Appearance, @Handler_ScrollArea_Appearance())
+		ContainerGadget(#SubContainer_Popup, #Appearance_Corner_Size, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width - #Appearance_Corner_Size - #Appearance_Scrollbar_Size - 4, WindowHeight(#Window) - 30)
+		ScrollAreaGadget(#Scrollarea_Popup, 0, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width + 40, WindowHeight(#Window) + 10, #Appearance_Window_Width - #Appearance_LeftPanel_Width - 40, #Appearance_Popup_Lenght, 50, #PB_ScrollArea_BorderLess)
+		BindGadgetEvent(#Scrollarea_Popup, @Handler_ScrollArea_Popup())
 		
 		Y = 60
 		
 		UITK::Label(#Title_Input, #Appearance_Window_TitleMargin, Y, 200, 20, "Behavior")
-; 		BindGadgetEvent(#Title_Input, @Handler_Wheel_Appearance(), #PB_EventType_MouseWheel)
-		BindEvent(#PB_Event_Gadget, @Handler_Wheel_Appearance(), #Window, #PB_All, #PB_All)
+		BindEvent(#PB_Event_Gadget, @Handler_Wheel(), #Window, #PB_All, #PB_All)
 		SetGadgetFont(#Title_Input, General::TitleFont)
 		
 		Y + 31
@@ -343,7 +357,7 @@
 		
 		Y + #Appearance_Window_OptionSpacing
 		
-		UITK::TrackBar(#Trackbar_Duration, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 5, 45, UITK::#Trackbar_ShowState)
+		UITK::TrackBar(#Trackbar_Duration, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 5, 45, UITK::#Trackbar_ShowState)
 		GadgetToolTip(#Trackbar_Duration, Language(#ToolTip_Duration))
 		SetGadgetState(#Trackbar_Duration, General::Preferences(General::#Pref_Duration) * 0.01)
 		SetGadgetAttribute(#Trackbar_Duration, UITK::#Trackbar_Scale, 10)
@@ -372,7 +386,7 @@
 ; 		
 ; 		Y + #Appearance_Window_OptionSpacing
 		
-		UITK::TrackBar(#Trackbar_Scale, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 25, 150, UITK::#Trackbar_ShowState)
+		UITK::TrackBar(#Trackbar_Scale, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 25, 150, UITK::#Trackbar_ShowState)
 		SetGadgetState(#Trackbar_Scale, General::Preferences(General::#Pref_Scale) * 0.5)
 		GadgetToolTip(#Trackbar_Scale, Language(#ToolTip_Scale))
 		SetGadgetAttribute(#Trackbar_Scale, UITK::#Trackbar_Scale, 50)
@@ -433,17 +447,45 @@
 		CloseGadgetList()
  		CloseGadgetList()
  		CloseGadgetList()
-		UITK::ScrollBar(#Scrollbar_Appearance, #Appearance_Window_Width - #Appearance_LeftPanel_Width - 4 - #Appearance_Scrollbar_Size, 4, #Appearance_Scrollbar_Size, WindowHeight(#Window) - 30 - 2 * 4, 0, 780, WindowHeight(#Window) + 10, UITK::#Gadget_Vertical | UITK::#DarkMode)
-		BindGadgetEvent(#Scrollbar_Appearance, @Handler_ScrollBar_Appearance(), #PB_EventType_Change)
-		SetGadgetAttribute(#Scrollbar_Appearance, UITK::#ScrollBar_ScrollStep, 50)
+		UITK::ScrollBar(#Scrollbar_Popup, #Appearance_Window_Width - #Appearance_LeftPanel_Width - 4 - #Appearance_Scrollbar_Size, 4, #Appearance_Scrollbar_Size, WindowHeight(#Window) - 30 - 2 * 4, 0, #Appearance_Popup_Lenght, WindowHeight(#Window) + 10, UITK::#Gadget_Vertical | UITK::#DarkMode)
+		BindGadgetEvent(#Scrollbar_Popup, @Handler_ScrollBar_Popup(), #PB_EventType_Change)
+		SetGadgetAttribute(#Scrollbar_Popup, UITK::#ScrollBar_ScrollStep, 50)
 		
 		CloseGadgetList() ;}
 		
-		;{ Behavior
+		;{ Overtlay
 		ContainerGadget(#Container_Behavior, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
 		HideGadget(#Container_Behavior, #True)
 		ImageGadget(#ContainerCorner_Behavior, 0, 0, 5, 5, 0)
-; 		
+		
+		ContainerGadget(#SubContainer_Overlay, #Appearance_Corner_Size, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width - #Appearance_Corner_Size - #Appearance_Scrollbar_Size - 4, WindowHeight(#Window) - 30)
+		ScrollAreaGadget(#Scrollarea_Overlay, 0, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width + 40, WindowHeight(#Window) + 10, #Appearance_Window_Width - #Appearance_LeftPanel_Width - 40, #Appearance_Overlay_Lenght, 50, #PB_ScrollArea_BorderLess)
+		BindGadgetEvent(#Scrollarea_Overlay, @Handler_ScrollArea_Overlay())
+		
+		Y = 60
+		
+		UITK::Label(#Title_PopupBehavior, #Appearance_Window_TitleMargin, Y, 200, 20, "Behavior")
+		SetGadgetFont(#Title_PopupBehavior, General::TitleFont)
+		
+		Y + 31
+		
+		UITK::Toggle(#Toggle_Overlay_Enable, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  "Enable overlay")
+		SetGadgetFont(#Toggle_Overlay_Enable, General::OptionFont)
+		GadgetToolTip(#Toggle_Overlay_Enable, Language(#ToolTip_TrackInput))
+		BindGadgetEvent(#Toggle_Overlay_Enable, @Handler_TrackKeyboard(), #PB_EventType_Change)
+		SetGadgetState(#Toggle_Overlay_Enable, General::Preferences(General::#Pref_Keyboard))
+		
+		
+		CloseGadgetList()
+ 		CloseGadgetList()
+		UITK::ScrollBar(#Scrollbar_Overlay, #Appearance_Window_Width - #Appearance_LeftPanel_Width - 4 - #Appearance_Scrollbar_Size, 4, #Appearance_Scrollbar_Size, WindowHeight(#Window) - 30 - 2 * 4, 0, #Appearance_Overlay_Lenght, WindowHeight(#Window) + 10, UITK::#Gadget_Vertical | UITK::#DarkMode)
+		BindGadgetEvent(#Scrollbar_Overlay, @Handler_ScrollBar_Overlay(), #PB_EventType_Change)
+		SetGadgetAttribute(#Scrollbar_Overlay, UITK::#ScrollBar_ScrollStep, 50)
+		CloseGadgetList()
+		
+		
+		
+		; 		
 ; 		Y = 120
 ; 		
 ; 	
@@ -459,7 +501,7 @@
 ; 		BindGadgetEvent(#Toggle_CheckUpdate, @Handler_CheckUpdate(), #PB_EventType_Change)
 ; 		SetGadgetState(#Toggle_CheckUpdate, General::Preferences(General::#Pref_CheckUpdate))
 ; 		
-		CloseGadgetList() ;}
+		;}
 		
 		;{ Controller
 		ContainerGadget(#Container_Controller, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
@@ -571,7 +613,7 @@
 		;}
 		
 		; Get some UITK event manager adress :
-		*ScrollBar_Event_Manager = UITK::SubClassFunction(#Scrollbar_Appearance, UITK::#SubClass_EventHandler, #Null)
+		*ScrollBar_Event_Manager = UITK::SubClassFunction(#Scrollbar_Popup, UITK::#SubClass_EventHandler, #Null)
 		*Radio_Event_Manager = UITK::SubClassFunction(#Radio_Custom, UITK::#SubClass_EventHandler, #Null)
 		
 		;{ Custom color selection window
@@ -787,20 +829,26 @@
 		DisableWindow(LocationInformationWindow, #False)
 	EndProcedure
 	
-	Procedure Handler_Wheel_Appearance()
+	Procedure Handler_Wheel()
 		Protected Event.UITK::Event, Gadget
 		If EventType() = #PB_EventType_MouseWheel
 			Select GetGadgetState(#VList_Menu)
 				Case 0 ; Popup
 					Gadget = EventGadget()
-					If Gadget <> #Scrollbar_Appearance
+					If Gadget <> #Scrollbar_Popup
 						Event\EventType	= UITK::#MouseWheel
 						Event\Param = GetGadgetAttribute(Gadget, #PB_Canvas_WheelDelta)
 						
-						CallFunctionFast(*ScrollBar_Event_Manager, PeekI(IsGadget(#Scrollbar_Appearance) + 8), Event) ; PeekI(IsGadget(#Scrollbar_Appearance) + 8) is a dirty hack to get the UITK gadget adress. This should be changed once the UITK API is finalized
+						CallFunctionFast(*ScrollBar_Event_Manager, PeekI(IsGadget(#Scrollbar_Popup) + 8), Event) ; PeekI(IsGadget(#Scrollbar_Popup) + 8) is a dirty hack to get the UITK gadget adress. This should be changed once the UITK API is finalized
 					EndIf
 				Case 1 ; Overlay
-					
+					Gadget = EventGadget()
+					If Gadget <> #Scrollbar_Overlay
+						Event\EventType	= UITK::#MouseWheel
+						Event\Param = GetGadgetAttribute(Gadget, #PB_Canvas_WheelDelta)
+						
+						CallFunctionFast(*ScrollBar_Event_Manager, PeekI(IsGadget(#Scrollbar_Overlay) + 8), Event) ; PeekI(IsGadget(#Scrollbar_Popup) + 8) is a dirty hack to get the UITK gadget adress. This should be changed once the UITK API is finalized
+					EndIf
 			EndSelect
 		EndIf
 	EndProcedure
@@ -808,26 +856,26 @@
 	Procedure Handler_LeftPanel()
 		Select GetGadgetState(#VList_Menu)
 			Case 0 ; Popup
-				HideGadget(#Container_Appearance, #False)
+				HideGadget(#Container_Popup, #False)
 				HideGadget(#Container_Behavior, #True)
 				HideGadget(#Container_About, #True)
 				HideGadget(#Container_Controller, #True)
 				
 			Case 1 ; Overlay
 				HideGadget(#Container_Behavior, #False)
-				HideGadget(#Container_Appearance, #True)
+				HideGadget(#Container_Popup, #True)
 				HideGadget(#Container_About, #True)
 				HideGadget(#Container_Controller, #True)
 				
 ; 			Case 2; Controller
 ; 				HideGadget(#Container_Behavior, #True)
-; 				HideGadget(#Container_Appearance, #True)
+; 				HideGadget(#Container_Popup, #True)
 ; 				HideGadget(#Container_About, #True)
 ; 				HideGadget(#Container_Controller, #False)
 				
 			Case 2 ; About
 				HideGadget(#Container_Behavior, #True)
-				HideGadget(#Container_Appearance, #True)
+				HideGadget(#Container_Popup, #True)
 				HideGadget(#Container_About, #False)
 				HideGadget(#Container_Controller, #True)
 				
@@ -838,14 +886,24 @@
 		General::Preferences(General::#Pref_InputColor) = EventGadget() - #Radio_Dark
 	EndProcedure
 	
-	Procedure Handler_ScrollArea_Appearance()
+	Procedure Handler_ScrollArea_Popup()
 		If EventType() = 0
-			SetGadgetState(#Scrollbar_Appearance, GetGadgetAttribute(#Scrollarea_Appearance, #PB_ScrollArea_Y))
+			SetGadgetState(#Scrollbar_Popup, GetGadgetAttribute(#Scrollarea_Popup, #PB_ScrollArea_Y))
 		EndIf
 	EndProcedure
 	
-	Procedure Handler_ScrollBar_Appearance()
-		SetGadgetAttribute(#Scrollarea_Appearance, #PB_ScrollArea_Y, GetGadgetState(#Scrollbar_Appearance))
+	Procedure Handler_ScrollArea_Overlay()
+		If EventType() = 0
+			SetGadgetState(#Scrollbar_Overlay, GetGadgetAttribute(#Scrollarea_Overlay, #PB_ScrollArea_Y))
+		EndIf
+	EndProcedure
+	
+	Procedure Handler_ScrollBar_Popup()
+		SetGadgetAttribute(#Scrollarea_Popup, #PB_ScrollArea_Y, GetGadgetState(#Scrollbar_Popup))
+	EndProcedure
+	
+	Procedure Handler_ScrollBar_Overlay()
+		SetGadgetAttribute(#Scrollarea_Overlay, #PB_ScrollArea_Y, GetGadgetState(#Scrollbar_Overlay))
 	EndProcedure
 	
 	Procedure Handler_CustomColor()
@@ -1155,12 +1213,14 @@
 	EndProcedure
 	
 	Procedure SetColor()
-		SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #False, 0)
+		SendMessage_(GadgetID(#Container_Popup), #WM_SETREDRAW, #False, 0)
 		
-		SetContainerColor(#Container_Appearance)
-		SetContainerColor(#SubContainer_Appearance)
-		SetContainerColor(#Scrollarea_Appearance)
+		SetContainerColor(#Container_Popup)
+		SetContainerColor(#SubContainer_Popup)
+		SetContainerColor(#Scrollarea_Popup)
 		SetContainerColor(#Container_Behavior)
+		SetContainerColor(#SubContainer_Overlay)
+		SetContainerColor(#Scrollarea_Overlay)
 		SetContainerColor(#Container_Controller)
 		SetContainerColor(#Container_About)
 		
@@ -1172,6 +1232,7 @@
 		SetTitleAppearance(#Title_InputColor)
 		SetTitleAppearance(#Title_UserInterface)
 		SetTitleAppearance(#Title_Input)
+		SetTitleAppearance(#Title_PopupBehavior)
 		
 		SetTextAppearance(#Text_Scale)
 		SetTextAppearance(#Text_Duration)
@@ -1179,6 +1240,8 @@
 		SetToggleAppearance(#Toggle_Combo)
 		SetToggleAppearance(#Toggle_TrackKeyboard)
 		SetToggleAppearance(#Toggle_TrackMouse)
+		
+		SetToggleAppearance(#Toggle_Overlay_Enable)
 		
 		SetRadioAppearance(#Radio_Dark)
 		SetRadioAppearance(#Radio_Light)
@@ -1207,8 +1270,8 @@
 		MarkDown::SetColor(#MarkDown, MarkDown::#Color_Link, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		MarkDown::SetColor(#MarkDown, MarkDown::#Color_HighlightLink, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		
-		SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #True, 0)
-		RedrawWindow_(GadgetID(#Container_Appearance), 0, 0, #RDW_ERASE | #RDW_INVALIDATE)
+		SendMessage_(GadgetID(#Container_Popup), #WM_SETREDRAW, #True, 0)
+		RedrawWindow_(GadgetID(#Container_Popup), 0, 0, #RDW_ERASE | #RDW_INVALIDATE)
 		
 		SetGadgetColor(#Container_ColorChoice_Splitter, #PB_Gadget_BackColor, GetGadgetColor(#Radio_Blue, UITK::#Color_Text_Cold))
 	EndProcedure
@@ -1271,7 +1334,7 @@
 	
 EndModule
 ; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 81
-; FirstLine = 93
-; Folding = hAAQAAAAAA9
+; CursorPosition = 518
+; FirstLine = 322
+; Folding = 6CWQQAIAAAy
 ; EnableXP
