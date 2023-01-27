@@ -141,13 +141,18 @@
 		#SubContainer_Overlay
 		#Scrollbar_Overlay
 		#Scrollarea_Overlay
-		#Title_PopupBehavior
+		#Title_Overlay_Behavior
+		#Title_Overlay_Appearance
 		#Toggle_Overlay_Enable
 		#Text_Overlay_InputSource
 		#Combo_Overlay_InputSource
 		#Toggle_Overlay_GreenKey
 		#Text_Overlay_Transparency
-		#Trackbar_Transparency
+		#Trackbar_Overlay_Transparency
+		#Trackbar_Overlay_Scale
+		#Text_Overlay_Scale
+		#Text_Overlay_Style
+		#Combo_Overlay_Style
 	EndEnumeration
 	
 	#Systray = 0
@@ -182,7 +187,7 @@
 	#Appearance_ColorChoice_ButtonHeight = 24
 	
 	#Appearance_Popup_Lenght = 780
-	#Appearance_Overlay_Lenght = 400
+	#Appearance_Overlay_Lenght = 840
 	
 	#Appearance_Option_Width = #Appearance_Window_Width - 2 *#Appearance_Window_TitleMargin
 	;}
@@ -386,14 +391,13 @@
 ; 		
 ; 		Y + #Appearance_Window_OptionSpacing
 		
-		UITK::TrackBar(#Trackbar_Scale, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 25, 150, UITK::#Trackbar_ShowState)
-		SetGadgetState(#Trackbar_Scale, General::Preferences(General::#Pref_Scale) * 0.5)
+		UITK::TrackBar(#Trackbar_Scale, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 50, 300, UITK::#Trackbar_ShowState)
+		SetGadgetState(#Trackbar_Scale, General::Preferences(General::#Pref_Scale))
 		GadgetToolTip(#Trackbar_Scale, Language(#ToolTip_Scale))
-		SetGadgetAttribute(#Trackbar_Scale, UITK::#Trackbar_Scale, 50)
-		SetGadgetText(#Trackbar_Scale, "x")
-		AddGadgetItem(#Trackbar_Scale, 25, "")
+		SetGadgetText(#Trackbar_Scale, "%")
 		AddGadgetItem(#Trackbar_Scale, 50, "")
-		AddGadgetItem(#Trackbar_Scale, 150, "")
+		AddGadgetItem(#Trackbar_Scale, 100, "")
+		AddGadgetItem(#Trackbar_Scale, 300, "")
 		BindGadgetEvent(#Trackbar_Scale, @Handler_Scale(), #PB_EventType_LeftButtonUp)
 		UITK::Label(#Text_Scale, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth - GadgetWidth(#Trackbar_Scale), 20, Language(#Lng_Scale))
 		SetGadgetFont(#Text_Scale, General::OptionFont)
@@ -464,17 +468,87 @@
 		
 		Y = 60
 		
-		UITK::Label(#Title_PopupBehavior, #Appearance_Window_TitleMargin, Y, 200, 20, "Behavior")
-		SetGadgetFont(#Title_PopupBehavior, General::TitleFont)
+		UITK::Label(#Title_Overlay_Behavior, #Appearance_Window_TitleMargin, Y, 200, 20, "Behavior")
+		SetGadgetFont(#Title_Overlay_Behavior, General::TitleFont)
 		
 		Y + 31
 		
 		UITK::Toggle(#Toggle_Overlay_Enable, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  "Enable overlay")
 		SetGadgetFont(#Toggle_Overlay_Enable, General::OptionFont)
 		GadgetToolTip(#Toggle_Overlay_Enable, Language(#ToolTip_TrackInput))
-		BindGadgetEvent(#Toggle_Overlay_Enable, @Handler_TrackKeyboard(), #PB_EventType_Change)
-		SetGadgetState(#Toggle_Overlay_Enable, General::Preferences(General::#Pref_Keyboard))
+		SetGadgetState(#Toggle_Overlay_Enable, #False)
 		
+		Y + #Appearance_Window_OptionSpacing + 5
+		
+		UITK::Label(#Text_Overlay_InputSource, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth - GadgetWidth(#Trackbar_Scale), 20, "Input Source")
+		SetGadgetFont(#Text_Overlay_InputSource, General::OptionFont)
+		GadgetToolTip(#Text_Overlay_InputSource, "Something something?")
+		
+		UITK::Combo(#Combo_Overlay_InputSource, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 14, #Appearance_TrackBar_Lenght, 35, UITK::#Border)
+		SetGadgetFont(#Combo_Overlay_InputSource, General::OptionFont)
+		AddGadgetItem(#Combo_Overlay_InputSource, -1, "Auto (Keyboard)")
+		AddGadgetItem(#Combo_Overlay_InputSource, -1, "Keyboard")
+		SetGadgetState(#Combo_Overlay_InputSource, 0)
+		
+		Y + #Appearance_Window_TitleSpacing
+		UITK::Label(#Title_Overlay_Appearance, #Appearance_Window_TitleMargin, Y, 200, 20, "Appearance")
+		SetGadgetFont(#Title_Overlay_Appearance, General::TitleFont)
+		
+		Y + 31
+		
+		UITK::Toggle(#Toggle_Overlay_GreenKey, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  "Green background for chroma key")
+		SetGadgetFont(#Toggle_Overlay_GreenKey, General::OptionFont)
+		GadgetToolTip(#Toggle_Overlay_GreenKey, Language(#ToolTip_TrackInput))
+; 		BindGadgetEvent(#Toggle_Overlay_GreenKey, @Handler_TrackKeyboard(), #PB_EventType_Change)
+		SetGadgetState(#Toggle_Overlay_GreenKey, #False)
+		
+		Y + #Appearance_Window_OptionSpacing
+		
+		UITK::TrackBar(#Trackbar_Overlay_Transparency, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 0, 255, UITK::#Trackbar_ShowState)
+		SetGadgetState(#Trackbar_Overlay_Transparency, 255)
+		GadgetToolTip(#Trackbar_Overlay_Transparency, Language(#ToolTip_Scale))
+		AddGadgetItem(#Trackbar_Overlay_Transparency, 0, "")
+		AddGadgetItem(#Trackbar_Overlay_Transparency, 255, "")
+		BindGadgetEvent(#Trackbar_Overlay_Transparency, @Handler_Scale(), #PB_EventType_LeftButtonUp)
+		UITK::Label(#Text_Overlay_Transparency, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth - GadgetWidth(#Trackbar_Scale), 20, "Overlay transparency")
+		SetGadgetFont(#Text_Overlay_Transparency, General::OptionFont)
+		GadgetToolTip(#Text_Overlay_Transparency, Language(#ToolTip_Scale))
+		
+		Y + #Appearance_Window_OptionSpacing + 5
+		
+		UITK::TrackBar(#Trackbar_Overlay_Scale, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 50, 300, UITK::#Trackbar_ShowState)
+		SetGadgetState(#Trackbar_Overlay_Scale, 100)
+		GadgetToolTip(#Trackbar_Overlay_Scale, Language(#ToolTip_Scale))
+		SetGadgetText(#Trackbar_Overlay_Scale, "%")
+		AddGadgetItem(#Trackbar_Overlay_Scale, 50, "")
+		AddGadgetItem(#Trackbar_Overlay_Scale, 100, "")
+		AddGadgetItem(#Trackbar_Overlay_Scale, 300, "")
+		UITK::Label(#Text_Overlay_Scale, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth - GadgetWidth(#Trackbar_Overlay_Scale), 20, Language(#Lng_Scale))
+		SetGadgetFont(#Text_Overlay_Scale, General::OptionFont)
+		GadgetToolTip(#Text_Overlay_Scale, Language(#ToolTip_Scale))
+		
+		Y + #Appearance_Window_OptionSpacing + 10
+		
+		UITK::Label(#Text_Overlay_Style, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth - GadgetWidth(#Trackbar_Scale), 20, "Overlay design")
+		SetGadgetFont(#Text_Overlay_Style, General::OptionFont)
+		GadgetToolTip(#Text_Overlay_Style, "Something something?")
+		
+		UITK::Combo(#Combo_Overlay_Style, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 14, #Appearance_TrackBar_Lenght, 35, UITK::#Border)
+		SetGadgetFont(#Combo_Overlay_Style, General::OptionFont)
+		AddGadgetItem(#Combo_Overlay_Style, -1, "Auto (Keyboard)")
+		AddGadgetItem(#Combo_Overlay_Style, -1, "Keyboard")
+		AddGadgetItem(#Combo_Overlay_Style, -1, "Dualshock 4", ImageID(CatchImage(#PB_Any, ?DualShock4)))
+		AddGadgetItem(#Combo_Overlay_Style, -1, "DualSense", ImageID(CatchImage(#PB_Any, ?DualSense)))
+		AddGadgetItem(#Combo_Overlay_Style, -1, "Switch Pro Controller", ImageID(CatchImage(#PB_Any, ?ProController)))
+		AddGadgetItem(#Combo_Overlay_Style, -1, "GameCube", ImageID(CatchImage(#PB_Any, ?GC)))
+		AddGadgetItem(#Combo_Overlay_Style, -1, "Snes", ImageID(CatchImage(#PB_Any, ?Snes)))
+		AddGadgetItem(#Combo_Overlay_Style, -1, "Xbox 360", ImageID(CatchImage(#PB_Any, ?Xbox360)))
+		AddGadgetItem(#Combo_Overlay_Style, -1, "Xbox One", ImageID(CatchImage(#PB_Any, ?XboxOne)))
+		AddGadgetItem(#Combo_Overlay_Style, -1, "Xbox Series", ImageID(CatchImage(#PB_Any, ?XboxSeries)))
+		AddGadgetItem(#Combo_Overlay_Style, -1, "Saturn", ImageID(CatchImage(#PB_Any, ?Saturn)))
+		AddGadgetItem(#Combo_Overlay_Style, -1, "8BitDoM30", ImageID(CatchImage(#PB_Any, ?M30)))
+		AddGadgetItem(#Combo_Overlay_Style, -1, "Create a new design...")
+		SetGadgetState(#Combo_Overlay_Style, 0)
 		
 		CloseGadgetList()
  		CloseGadgetList()
@@ -483,24 +557,6 @@
 		SetGadgetAttribute(#Scrollbar_Overlay, UITK::#ScrollBar_ScrollStep, 50)
 		CloseGadgetList()
 		
-		
-		
-		; 		
-; 		Y = 120
-; 		
-; 	
-; 		
-; 		UITK::Label(#Title_Misc, #Appearance_Window_TitleMargin, Y, 200, 20, Language(#Lng_Misc))
-; 		SetGadgetFont(#Title_Misc, General::TitleFont)
-; 		
-; 		Y + 31
-; 		
-; 		UITK::Toggle(#Toggle_CheckUpdate, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  Language(#Lng_CheckUpdate))
-; 		SetGadgetFont(#Toggle_CheckUpdate, General::OptionFont)
-; 		GadgetToolTip(#Toggle_CheckUpdate, Language(#ToolTip_CheckUpdate))
-; 		BindGadgetEvent(#Toggle_CheckUpdate, @Handler_CheckUpdate(), #PB_EventType_Change)
-; 		SetGadgetState(#Toggle_CheckUpdate, General::Preferences(General::#Pref_CheckUpdate))
-; 		
 		;}
 		
 		;{ Controller
@@ -708,7 +764,7 @@
 	EndProcedure
 	
 	Procedure Handler_Scale()
-		General::Preferences(General::#Pref_Scale) = GetGadgetState(EventGadget()) * 2
+		General::Preferences(General::#Pref_Scale) = GetGadgetState(EventGadget())
 		PopupWindow::SetScale(General::Preferences(General::#Pref_Scale))
 	EndProcedure
 	
@@ -1110,6 +1166,12 @@
 		                                                                Blue(General::ColorScheme(General::Preferences(General::#Pref_DarkMode),General::#Color_Type_BackCold))))
 	EndMacro
 	
+	Macro SetTrackBarColor(Trackbar)
+		SetGadgetColor(Trackbar, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
+		SetGadgetColor(Trackbar, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		SetGadgetColor(Trackbar, UITK::#Color_Shade_Warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_Trackbar))
+	EndMacro
+	
 	Procedure RedrawPreview()
 		Protected Scale.f = 1.7
 		
@@ -1232,7 +1294,6 @@
 		SetTitleAppearance(#Title_InputColor)
 		SetTitleAppearance(#Title_UserInterface)
 		SetTitleAppearance(#Title_Input)
-		SetTitleAppearance(#Title_PopupBehavior)
 		
 		SetTextAppearance(#Text_Scale)
 		SetTextAppearance(#Text_Duration)
@@ -1241,21 +1302,14 @@
 		SetToggleAppearance(#Toggle_TrackKeyboard)
 		SetToggleAppearance(#Toggle_TrackMouse)
 		
-		SetToggleAppearance(#Toggle_Overlay_Enable)
-		
 		SetRadioAppearance(#Radio_Dark)
 		SetRadioAppearance(#Radio_Light)
 		SetRadioAppearance(#Radio_Pink)
 		SetRadioAppearance(#Radio_Blue)
 		SetRadioAppearance(#Radio_Custom)
 		
-		SetGadgetColor(#Trackbar_Duration, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-		SetGadgetColor(#Trackbar_Duration, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-		SetGadgetColor(#Trackbar_Duration, UITK::#Color_Shade_Warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_Trackbar))
-		
-		SetGadgetColor(#Trackbar_Scale, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
-		SetGadgetColor(#Trackbar_Scale, UITK::#Color_Text_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
-		SetGadgetColor(#Trackbar_Scale, UITK::#Color_Shade_Warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_Trackbar))
+		SetTrackBarColor(#Trackbar_Duration)
+		SetTrackBarColor(#Trackbar_Scale)
 		
 		SetGadgetColor(#Button_Location, UITK::#Color_Back_Cold, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
 		SetGadgetColor(#Button_Location, UITK::#Color_Back_Warm, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackHot))
@@ -1269,6 +1323,17 @@
 		MarkDown::SetColor(#MarkDown, MarkDown::#Color_Front, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontHot))
 		MarkDown::SetColor(#MarkDown, MarkDown::#Color_Link, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		MarkDown::SetColor(#MarkDown, MarkDown::#Color_HighlightLink, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
+		
+		SetTitleAppearance(#Title_Overlay_Behavior)
+		SetToggleAppearance(#Toggle_Overlay_Enable)
+		SetTextAppearance(#Text_Overlay_InputSource)
+		SetTitleAppearance(#Title_Overlay_Appearance)
+		SetToggleAppearance(#Toggle_Overlay_GreenKey)
+		SetTextAppearance(#Text_Overlay_Transparency)
+		SetTrackBarColor(#Trackbar_Overlay_Transparency)
+		SetTextAppearance(#Text_Overlay_Scale)
+		SetTrackBarColor(#Trackbar_Overlay_Scale)
+		SetTextAppearance(#Text_Overlay_Style)
 		
 		SendMessage_(GadgetID(#Container_Popup), #WM_SETREDRAW, #True, 0)
 		RedrawWindow_(GadgetID(#Container_Popup), 0, 0, #RDW_ERASE | #RDW_INVALIDATE)
@@ -1330,11 +1395,61 @@
 		Icon18:
 		IncludeBinary "../Media/Icon/18.png"
 		
+		Zero2:
+		IncludeBinary "../Media/Controllers icons/8BitDo Zero 2 Icon.png"
+		
+		Dreamcast:
+		IncludeBinary "../Media/Controllers icons/Dreamcast Icon.png"
+		
+		DualSense:
+		IncludeBinary "../Media/Controllers icons/DualSense Icon.png"
+		
+		DualShock4:
+		IncludeBinary "../Media/Controllers icons/DualShock 4 Icon.png"
+		
+		GC:
+		IncludeBinary "../Media/Controllers icons/GC Icon.png"
+		
+		LeftJoycon:
+		IncludeBinary "../Media/Controllers icons/Left Joycon Icon.png"
+		
+		M30:
+		IncludeBinary "../Media/Controllers icons/M30 Icon.png"
+		
+		MD3Buttons:
+		IncludeBinary "../Media/Controllers icons/MD 3 Buttons Icon.png"
+		
+		N64:
+		IncludeBinary "../Media/Controllers icons/N64 Icon.png"
+		
+		NavigationController:
+		IncludeBinary "../Media/Controllers icons/Navigation Controller Icon.png"
+		
+		ProController:
+		IncludeBinary "../Media/Controllers icons/Pro Controller Icon.png"
+		
+		RightJoycon:
+		IncludeBinary "../Media/Controllers icons/Right Joycon Icon.png"
+		
+		Saturn:
+		IncludeBinary "../Media/Controllers icons/Saturn Icon.png"
+		
+		Snes:
+		IncludeBinary "../Media/Controllers icons/Snes Icon.png"
+		
+		Xbox360:
+		IncludeBinary "../Media/Controllers icons/Xbox 360 Icon.png"
+		
+		XboxOne:
+		IncludeBinary "../Media/Controllers icons/Xbox One Icon.png"
+		
+		XboxSeries:
+		IncludeBinary "../Media/Controllers icons/Xbox Series Icon.png"
 	EndDataSection
 	
 EndModule
-; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 518
-; FirstLine = 322
-; Folding = 6CWQQAIAAAy
+; IDE Options = PureBasic 6.01 LTS beta 1 (Windows - x64)
+; CursorPosition = 189
+; FirstLine = 416
+; Folding = 6CWQAAAAAAl
 ; EnableXP
