@@ -153,6 +153,7 @@
 		#Text_Overlay_Scale
 		#Text_Overlay_Style
 		#Combo_Overlay_Style
+		#Canvas_Overlay_Editor
 	EndEnumeration
 	
 	#Systray = 0
@@ -187,7 +188,10 @@
 	#Appearance_ColorChoice_ButtonHeight = 24
 	
 	#Appearance_Popup_Lenght = 780
-	#Appearance_Overlay_Lenght = 840
+	#Appearance_Overlay_Lenght = 500
+	
+	#Appearance_Canvas_Width = 450
+	#Appearance_Canvas_Height = 300
 	
 	#Appearance_Option_Width = #Appearance_Window_Width - 2 *#Appearance_Window_TitleMargin
 	;}
@@ -195,13 +199,75 @@
 	#WH_KEYBOARD_LL = 13
 	#WM_INSTANCESTART = 111
 	
+	Structure ControllerData
+		Name.s
+		Identifier.s
+		Icon.i
+	EndStructure
+	
+	Enumeration ;ControllerDesign
+		#Controller_DualShock
+		#Controller_DualSense
+		#Controller_SwitchPro
+		#Controller_GameCube
+		#Controller_Snes
+		#Controller_Xbox_360
+		#Controller_Xbox_One
+		#Controller_Xbox_Series
+		#Controller_Saturn
+		#Controller_8BitDoM30
+		
+		#_Controller_Count
+	EndEnumeration
+	
+	Structure OverlayInput
+		*Joystick.SDL::Joystick
+		Name.s
+		InstanceID.i
+	EndStructure
+	
 	Global MouseHook, MouseHook_Button, KeyboardHook
 	Global LocationMouseHook, LocationKeyboardHook, LocationInformationWindow, LocationInformationText
 	Global KeepColorChoice = -1, CurrentColorChoice
 	Global Dim CornerImage(1)
 	Global NewList LocationInformationWindows()
 	Global *ScrollBar_Event_Manager, *Radio_Event_Manager
+	Global NewList OverlayInput.OverlayInput()
+	Global AutoController = -1, AutoDesign = -1
+	Global Dim ControllerData.ControllerData(#_Controller_Count - 1)
+	ControllerData(#Controller_DualShock)\Identifier	 = "PS"
+	ControllerData(#Controller_DualSense)\Identifier	 = "DualSense"
+	ControllerData(#Controller_SwitchPro)\Identifier	 = "Switch Pro"
+	ControllerData(#Controller_GameCube)\Identifier		 = "GameCube"
+	ControllerData(#Controller_Snes)\Identifier			 = "Snes"
+	ControllerData(#Controller_Xbox_360)\Identifier		 = "Xbox 360"
+	ControllerData(#Controller_Xbox_One)\Identifier		 = "Xbox One"
+	ControllerData(#Controller_Xbox_Series)\Identifier	 = "Xbox Series"
+	ControllerData(#Controller_Saturn)\Identifier		 = "Saturn"
+	ControllerData(#Controller_8BitDoM30)\Identifier	 = "8BitDo M30"
 	
+	ControllerData(#Controller_DualShock)\Name		 = "Dualshock 4"
+	ControllerData(#Controller_DualSense)\Name		 = "DualSense"
+	ControllerData(#Controller_SwitchPro)\Name		 = "Switch Pro Controller"
+	ControllerData(#Controller_GameCube)\Name		 = "GameCube"
+	ControllerData(#Controller_Snes)\Name			 = "Snes"
+	ControllerData(#Controller_Xbox_360)\Name		 = "Xbox 360"
+	ControllerData(#Controller_Xbox_One)\Name		 = "Xbox One"
+	ControllerData(#Controller_Xbox_Series)\Name	 = "Xbox Series"
+	ControllerData(#Controller_Saturn)\Name			 = "Saturn"
+	ControllerData(#Controller_8BitDoM30)\Name		 = "8BitDoM30"
+									
+	ControllerData(#Controller_DualShock)\Icon		 = ImageID(CatchImage(#PB_Any, ?DualShock4))
+	ControllerData(#Controller_DualSense)\Icon		 = ImageID(CatchImage(#PB_Any, ?DualSense))
+	ControllerData(#Controller_SwitchPro)\Icon		 = ImageID(CatchImage(#PB_Any, ?ProController))
+	ControllerData(#Controller_GameCube)\Icon		 = ImageID(CatchImage(#PB_Any, ?GC))
+	ControllerData(#Controller_Snes)\Icon			 = ImageID(CatchImage(#PB_Any, ?Snes))
+	ControllerData(#Controller_Xbox_360)\Icon		 = ImageID(CatchImage(#PB_Any, ?Xbox360))
+	ControllerData(#Controller_Xbox_One)\Icon		 = ImageID(CatchImage(#PB_Any, ?XboxOne))
+	ControllerData(#Controller_Xbox_Series)\Icon	 = ImageID(CatchImage(#PB_Any, ?XboxSeries))
+	ControllerData(#Controller_Saturn)\Icon			 = ImageID(CatchImage(#PB_Any, ?Saturn))
+	ControllerData(#Controller_8BitDoM30)\Icon		 = ImageID(CatchImage(#PB_Any, ?M30))
+	                                                     
 	;{ Private procedures declaration
 	Declare SystrayBalloon(Title.s,Message.s,Flags)
 	Declare Handler_CloseWindow()
@@ -230,6 +296,7 @@
 	Declare Handler_CustomColor_Cancel()
 	Declare Handler_ColorPicker()
 	Declare Handler_CustomColor_Ok()
+	Declare Handler_Combo_InputSource()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare LocationMouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -238,6 +305,7 @@
 	Declare WindowCallback(hWnd, Msg, wParam, lParam)
 	Declare VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State)
 	Declare RedrawPreview()
+	Declare Automatic_Design_Selection()
 	Macro CustomColor(Gadget)
 		CanvasGadget(Gadget, 158 + (Gadget - #CustomColor0) * 48, 8, 39, 22)
 		SetGadgetAttribute(Gadget, #PB_Canvas_Cursor, #PB_Cursor_Hand)
@@ -281,8 +349,8 @@
 		
 		;{ Window
 		WindowID = UITK::Window(#Window, 0, 0, #Appearance_Window_Width, #Appearance_Window_Height, General::#AppName, UITK::#Window_Invisible | UITK::#Window_ScreenCentered | UITK::#HAlignLeft | UITK::#Window_CloseButton | UITK::#DarkMode)
-		UITK::WindowSetColor(#Window, UITK::#Color_Parent, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder))
 		StickyWindow(#Window, #True)
+		UITK::WindowSetColor(#Window, UITK::#Color_Parent, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder))
 		DisableWindow(#Window, #True)
 		UITK::SetWindowIcon(#Window, Icon)
 		;}
@@ -457,7 +525,7 @@
 		
 		CloseGadgetList() ;}
 		
-		;{ Overtlay
+		;{ Overlay
 		ContainerGadget(#Container_Behavior, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
 		HideGadget(#Container_Behavior, #True)
 		ImageGadget(#ContainerCorner_Behavior, 0, 0, 5, 5, 0)
@@ -466,7 +534,7 @@
 		ScrollAreaGadget(#Scrollarea_Overlay, 0, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width + 40, WindowHeight(#Window) + 10, #Appearance_Window_Width - #Appearance_LeftPanel_Width - 40, #Appearance_Overlay_Lenght, 50, #PB_ScrollArea_BorderLess)
 		BindGadgetEvent(#Scrollarea_Overlay, @Handler_ScrollArea_Overlay())
 		
-		Y = 60
+		Y = 100
 		
 		UITK::Label(#Title_Overlay_Behavior, #Appearance_Window_TitleMargin, Y, 200, 20, "Behavior")
 		SetGadgetFont(#Title_Overlay_Behavior, General::TitleFont)
@@ -486,8 +554,8 @@
 		
 		UITK::Combo(#Combo_Overlay_InputSource, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 14, #Appearance_TrackBar_Lenght, 35, UITK::#Border)
 		SetGadgetFont(#Combo_Overlay_InputSource, General::OptionFont)
-		AddGadgetItem(#Combo_Overlay_InputSource, -1, "Auto (Keyboard)")
-		AddGadgetItem(#Combo_Overlay_InputSource, -1, "Keyboard")
+		AddGadgetItem(#Combo_Overlay_InputSource, -1, "Auto (None)")
+		BindGadgetEvent(#Combo_Overlay_InputSource, @Handler_Combo_InputSource(), #PB_EventType_Change)
 		SetGadgetState(#Combo_Overlay_InputSource, 0)
 		
 		Y + #Appearance_Window_TitleSpacing
@@ -499,16 +567,16 @@
 		UITK::Toggle(#Toggle_Overlay_GreenKey, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  "Green background for chroma key")
 		SetGadgetFont(#Toggle_Overlay_GreenKey, General::OptionFont)
 		GadgetToolTip(#Toggle_Overlay_GreenKey, Language(#ToolTip_TrackInput))
-; 		BindGadgetEvent(#Toggle_Overlay_GreenKey, @Handler_TrackKeyboard(), #PB_EventType_Change)
 		SetGadgetState(#Toggle_Overlay_GreenKey, #False)
 		
 		Y + #Appearance_Window_OptionSpacing
 		
-		UITK::TrackBar(#Trackbar_Overlay_Transparency, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 0, 255, UITK::#Trackbar_ShowState)
-		SetGadgetState(#Trackbar_Overlay_Transparency, 255)
+		UITK::TrackBar(#Trackbar_Overlay_Transparency, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 42, 10, 100, UITK::#Trackbar_ShowState)
+		SetGadgetState(#Trackbar_Overlay_Transparency, 100)
 		GadgetToolTip(#Trackbar_Overlay_Transparency, Language(#ToolTip_Scale))
-		AddGadgetItem(#Trackbar_Overlay_Transparency, 0, "")
-		AddGadgetItem(#Trackbar_Overlay_Transparency, 255, "")
+		SetGadgetText(#Trackbar_Overlay_Transparency, "%")
+		AddGadgetItem(#Trackbar_Overlay_Transparency, 10, "")
+		AddGadgetItem(#Trackbar_Overlay_Transparency, 100, "")
 		BindGadgetEvent(#Trackbar_Overlay_Transparency, @Handler_Scale(), #PB_EventType_LeftButtonUp)
 		UITK::Label(#Text_Overlay_Transparency, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth - GadgetWidth(#Trackbar_Scale), 20, "Overlay transparency")
 		SetGadgetFont(#Text_Overlay_Transparency, General::OptionFont)
@@ -535,26 +603,30 @@
 		
 		UITK::Combo(#Combo_Overlay_Style, GadgetWidth(#Container_Popup) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 14, #Appearance_TrackBar_Lenght, 35, UITK::#Border)
 		SetGadgetFont(#Combo_Overlay_Style, General::OptionFont)
-		AddGadgetItem(#Combo_Overlay_Style, -1, "Auto (Keyboard)")
-		AddGadgetItem(#Combo_Overlay_Style, -1, "Keyboard")
-		AddGadgetItem(#Combo_Overlay_Style, -1, "Dualshock 4", ImageID(CatchImage(#PB_Any, ?DualShock4)))
-		AddGadgetItem(#Combo_Overlay_Style, -1, "DualSense", ImageID(CatchImage(#PB_Any, ?DualSense)))
-		AddGadgetItem(#Combo_Overlay_Style, -1, "Switch Pro Controller", ImageID(CatchImage(#PB_Any, ?ProController)))
-		AddGadgetItem(#Combo_Overlay_Style, -1, "GameCube", ImageID(CatchImage(#PB_Any, ?GC)))
-		AddGadgetItem(#Combo_Overlay_Style, -1, "Snes", ImageID(CatchImage(#PB_Any, ?Snes)))
-		AddGadgetItem(#Combo_Overlay_Style, -1, "Xbox 360", ImageID(CatchImage(#PB_Any, ?Xbox360)))
-		AddGadgetItem(#Combo_Overlay_Style, -1, "Xbox One", ImageID(CatchImage(#PB_Any, ?XboxOne)))
-		AddGadgetItem(#Combo_Overlay_Style, -1, "Xbox Series", ImageID(CatchImage(#PB_Any, ?XboxSeries)))
-		AddGadgetItem(#Combo_Overlay_Style, -1, "Saturn", ImageID(CatchImage(#PB_Any, ?Saturn)))
-		AddGadgetItem(#Combo_Overlay_Style, -1, "8BitDoM30", ImageID(CatchImage(#PB_Any, ?M30)))
-		AddGadgetItem(#Combo_Overlay_Style, -1, "Create a new design...")
+		
+		AddGadgetItem(#Combo_Overlay_Style, -1, "Auto (None)")
+		For Loop = 0 To #_Controller_Count - 1
+			AddGadgetItem(#Combo_Overlay_Style, -1, ControllerData(Loop)\Name, ControllerData(Loop)\Icon)
+		Next
+		
 		SetGadgetState(#Combo_Overlay_Style, 0)
+		
+; 		Y + #Appearance_Window_OptionSpacing + 5
+; 		
+; 		CanvasGadget(#Canvas_Overlay_Editor, (#Appearance_Window_Width - #Appearance_LeftPanel_Width - #Appearance_Canvas_Width) * 0.5, Y, #Appearance_Canvas_Width, #Appearance_Canvas_Height, #PB_Canvas_Container)
+; 		EditorFactory::InitializeCanvasObjects(#Canvas_Overlay_Editor, #Window)
+; 		CloseGadgetList()
+; 		EditorFactory::CreateObject(#Canvas_Overlay_Editor, 1, 20, 20, 200, 100)
+; 		EditorFactory::CreateObject(#Canvas_Overlay_Editor, 2, 320, 20, 200, 100)
+; 		EditorFactory::AddObjectHandle(2, EditorFactory::#Handle_Size | EditorFactory::#Handle_Position)
+; 		EditorFactory::AddObjectHandle(1, EditorFactory::#Handle_Size | EditorFactory::#Handle_Position)
 		
 		CloseGadgetList()
  		CloseGadgetList()
 		UITK::ScrollBar(#Scrollbar_Overlay, #Appearance_Window_Width - #Appearance_LeftPanel_Width - 4 - #Appearance_Scrollbar_Size, 4, #Appearance_Scrollbar_Size, WindowHeight(#Window) - 30 - 2 * 4, 0, #Appearance_Overlay_Lenght, WindowHeight(#Window) + 10, UITK::#Gadget_Vertical | UITK::#DarkMode)
 		BindGadgetEvent(#Scrollbar_Overlay, @Handler_ScrollBar_Overlay(), #PB_EventType_Change)
 		SetGadgetAttribute(#Scrollbar_Overlay, UITK::#ScrollBar_ScrollStep, 50)
+		HideGadget(#Scrollbar_Overlay, #True)
 		CloseGadgetList()
 		
 		;}
@@ -691,6 +763,65 @@
 		;}
 		
 		SetColor()
+	EndProcedure
+	
+	Procedure SDL_Event()
+		Protected Event.SDL::Event
+		
+		While SDL::PollEvent(Event)
+			Select Event\type
+				Case SDL::#JOYDEVICEADDED
+					LastElement(OverlayInput())
+					AddElement(OverlayInput())
+					OverlayInput()\InstanceID = SDL::JoystickGetDeviceInstanceID(Event\jdevice\which)
+					OverlayInput()\Name = SDL::GameControllerNameForIndex(Event\jdevice\which)
+					AddGadgetItem(#Combo_Overlay_InputSource, -1, OverlayInput()\Name)
+					SetGadgetItemData(#Combo_Overlay_InputSource, CountGadgetItems(#Combo_Overlay_InputSource) - 1, @OverlayInput())
+					If (Not GetGadgetState(#Toggle_Overlay_Enable)) Or GetGadgetState(#Combo_Overlay_InputSource)
+						SetGadgetItemText(#Combo_Overlay_InputSource, 0, "Auto (" + OverlayInput()\Name + ")")
+						AutoController = ListIndex(OverlayInput())
+					EndIf
+					
+					If GetGadgetState(#Combo_Overlay_InputSource) = 0
+						Automatic_Design_Selection()
+					EndIf
+					
+				Case SDL::#JOYDEVICEREMOVED
+					ForEach OverlayInput()
+						If OverlayInput()\InstanceID = Event\jdevice\which
+							Break
+						EndIf
+					Next
+					
+					If ListIndex(OverlayInput()) = AutoController
+						RemoveGadgetItem(#Combo_Overlay_InputSource, 1 + ListIndex(OverlayInput()))
+						DeleteElement(OverlayInput())
+						If ListSize(OverlayInput())
+							LastElement(OverlayInput())
+							SetGadgetItemText(#Combo_Overlay_InputSource, 0, "Auto (" + OverlayInput()\Name + ")")
+							AutoController = ListIndex(OverlayInput())
+						Else
+							SetGadgetItemText(#Combo_Overlay_InputSource, 0, "Auto (None)")
+							AutoController = -1
+						EndIf
+						
+						If GetGadgetState(#Combo_Overlay_InputSource) = 0
+							Automatic_Design_Selection()
+						EndIf
+						
+					Else
+						DeleteElement(OverlayInput())
+						RemoveGadgetItem(#Combo_Overlay_InputSource, 1 + ListIndex(OverlayInput()))
+					EndIf
+					
+					
+				Case SDL::#JOYBUTTONDOWN
+					
+				Case SDL::#JOYBUTTONUP
+					
+				Case SDL::#JOYAXISMOTION
+			EndSelect
+		Wend
 	EndProcedure
 	
 	;{ Private procedures
@@ -1001,6 +1132,10 @@
 		Box(1,1, 37, 20, General::KeyScheme(General::#Scheme_Custom, CurrentColorChoice))
 		StopDrawing()
 		Handler_CustomColor_Cancel()
+	EndProcedure
+	
+	Procedure Handler_Combo_InputSource()
+		Automatic_Design_Selection()
 	EndProcedure
 	
 	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -1382,6 +1517,33 @@
 ; 		EndIf
 		
 	EndProcedure
+	
+	Procedure Automatic_Design_Selection()
+		Protected Loop, State = GetGadgetState(#Combo_Overlay_InputSource)
+		If State = 0
+			If AutoController = -1
+				SetGadgetItemText(#Combo_Overlay_Style, 0, "Auto (None)")
+				ProcedureReturn #False
+			Else
+				State = AutoController
+			EndIf
+		EndIf
+		
+		Debug State
+		If SelectElement(OverlayInput(), State)
+			For Loop = 0 To #_Controller_Count - 1
+				If FindString(OverlayInput()\Name, ControllerData(Loop)\Identifier, 0, #PB_String_NoCase)
+					Break
+				EndIf
+			Next
+			
+			If Loop = #_Controller_Count
+				Loop = #Controller_Xbox_Series
+			EndIf
+			
+			SetGadgetItemText(#Combo_Overlay_Style, 0, "Auto (" + ControllerData(Loop)\Name + ")")
+		EndIf
+	EndProcedure
 	;}
 	
 	DataSection
@@ -1449,7 +1611,7 @@
 	
 EndModule
 ; IDE Options = PureBasic 6.01 LTS beta 1 (Windows - x64)
-; CursorPosition = 189
-; FirstLine = 416
-; Folding = 6CWQAAAAAAl
+; CursorPosition = 1137
+; FirstLine = 455
+; Folding = 6GEwAAAAIAA+
 ; EnableXP

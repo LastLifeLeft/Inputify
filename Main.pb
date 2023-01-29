@@ -19,8 +19,9 @@ General::Init()
 MainWindow::Open()
 
 Repeat
-	WaitWindowEvent()
+	WaitWindowEvent(16)
+	MainWindow::SDL_Event()
 ForEver
-; IDE Options = PureBasic 6.00 LTS (Windows - x64)
+; IDE Options = PureBasic 6.01 LTS beta 1 (Windows - x64)
 ; Folding = +
 ; EnableXP

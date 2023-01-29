@@ -150,6 +150,7 @@ DeclareModule MainWindow
 	
 	; Public procedures declaration
 	Declare Open()
+	Declare SDL_Event()
 EndDeclareModule
 
 DeclareModule PopupWindow
@@ -237,16 +238,21 @@ Module General
 		
 		PopupWindow::SetScale(Preferences(#Pref_Scale))
 		
+		SDL::SetHint(SDL::#HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1")
+		
+		If SDL::Init( SDL::#INIT_JOYSTICK | SDL::#INIT_EVENTS | SDL::#INIT_GAMECONTROLLER) < 0
+			SDL::GameControllerAddMappingsFromFile("gamecontrollerdb.txt")
+			MessageRequester(#AppName,"SDL could not initialize! SDL_Error: "+ SDL::GetError() )
+			End
+		EndIf
+		
 		If Preferences(#Pref_CheckUpdate)
 			CreateThread(@UpdateThread(), #Null)
 		EndIf
-		
-		InitJoystick()
-		
 	EndProcedure
 EndModule
-; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 162
-; FirstLine = 81
-; Folding = 866
+; IDE Options = PureBasic 6.01 LTS beta 1 (Windows - x64)
+; CursorPosition = 243
+; FirstLine = 54
+; Folding = 600
 ; EnableXP

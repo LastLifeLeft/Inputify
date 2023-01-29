@@ -7,20 +7,28 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2023-01-27 10:10" user="♥x1" host="PINOCCHIO"/>
+    <lastopen date="2023-01-29 21:09" user="♥x1" host="PINOCCHIO"/>
   </section>
   <section name="files">
     <file name="Includes\General.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="++"/>
-      <fingerprint md5="b6ea18999c68f86fda7c3f6a6b50ce2f"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="++"/>
+      <fingerprint md5="88fcdf7f7520e2fc40f69b7fa2049c6b"/>
     </file>
     <file name="Includes\MainWindow.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="++"/>
-      <fingerprint md5="7c4632da83eb89cf11668081b51ed3fd"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="++"/>
+      <fingerprint md5="d0e451303cd1fd0754522465d8a2f0b3"/>
     </file>
     <file name="Main.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="+"/>
-      <fingerprint md5="109e85614a98491e6d750c28ecda254a"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="+"/>
+      <fingerprint md5="f27848b0d9575f3419ebbb12bbaecfd5"/>
+    </file>
+    <file name="UI-Toolkit\Library\UI-Toolkit.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="4" panelstate="+++"/>
+      <fingerprint md5="d7c725604d0e30376953bf55a49ff9df"/>
+    </file>
+    <file name="SDL_For_PB\sdl2\SDL.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+++"/>
+      <fingerprint md5="c0577c0239461ddc4c5c8f81c3362fbb"/>
     </file>
     <file name="Includes\LayoutWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
@@ -34,9 +42,9 @@
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
       <fingerprint md5="a6105490f8ae363e593eb68799cf3e22"/>
     </file>
-    <file name="UI-Toolkit\Library\UI-Toolkit.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+++"/>
-      <fingerprint md5="0b5957fdef97e2c8466964d03d2cbb94"/>
+    <file name="EditorFactory\EditorFactory.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="975a4175a9ae344bc563daccf6d1c902"/>
     </file>
   </section>
   <section name="targets">
