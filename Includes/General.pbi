@@ -4,6 +4,8 @@
 	#Version = 1.0
 	#Event_Update = UITK::#Event_FirstAvailableCustomValue
 	
+	Global Dim Preprocess.f($FF)
+	
 	;{ Colors
 	Enumeration ; Colors type
 		#Color_Type_BackCold
@@ -241,7 +243,6 @@ Module General
 		SDL::SetHint(SDL::#HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1")
 		
 		If SDL::Init( SDL::#INIT_JOYSTICK | SDL::#INIT_EVENTS | SDL::#INIT_GAMECONTROLLER) < 0
-			SDL::GameControllerAddMappingsFromFile("gamecontrollerdb.txt")
 			MessageRequester(#AppName,"SDL could not initialize! SDL_Error: "+ SDL::GetError() )
 			End
 		EndIf
@@ -251,8 +252,7 @@ Module General
 		EndIf
 	EndProcedure
 EndModule
-; IDE Options = PureBasic 6.01 LTS beta 1 (Windows - x64)
-; CursorPosition = 243
-; FirstLine = 54
-; Folding = 600
+; IDE Options = PureBasic 6.00 LTS (Windows - x64)
+; CursorPosition = 6
+; Folding = 660
 ; EnableXP

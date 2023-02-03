@@ -82,6 +82,7 @@
 	#Window = 0
 	#Window_SingleInstance = 1
 	#Window_ColorChoice = 2
+	#Window_Overlay = 3
 	
 	Enumeration ;Gadget
 		#Toggle_DarkMode
@@ -153,7 +154,8 @@
 		#Text_Overlay_Scale
 		#Text_Overlay_Style
 		#Combo_Overlay_Style
-		#Canvas_Overlay_Editor
+		#Canvas_Overlay
+		
 	EndEnumeration
 	
 	#Systray = 0
@@ -229,44 +231,49 @@
 	Global MouseHook, MouseHook_Button, KeyboardHook
 	Global LocationMouseHook, LocationKeyboardHook, LocationInformationWindow, LocationInformationText
 	Global KeepColorChoice = -1, CurrentColorChoice
+	Global HiddenWindow = #True
 	Global Dim CornerImage(1)
 	Global NewList LocationInformationWindows()
 	Global *ScrollBar_Event_Manager, *Radio_Event_Manager
-	Global NewList OverlayInput.OverlayInput()
-	Global AutoController = -1, AutoDesign = -1
-	Global Dim ControllerData.ControllerData(#_Controller_Count - 1)
-	ControllerData(#Controller_DualShock)\Identifier	 = "PS"
-	ControllerData(#Controller_DualSense)\Identifier	 = "DualSense"
-	ControllerData(#Controller_SwitchPro)\Identifier	 = "Switch Pro"
-	ControllerData(#Controller_GameCube)\Identifier		 = "GameCube"
-	ControllerData(#Controller_Snes)\Identifier			 = "Snes"
-	ControllerData(#Controller_Xbox_360)\Identifier		 = "Xbox 360"
-	ControllerData(#Controller_Xbox_One)\Identifier		 = "Xbox One"
-	ControllerData(#Controller_Xbox_Series)\Identifier	 = "Xbox Series"
-	ControllerData(#Controller_Saturn)\Identifier		 = "Saturn"
-	ControllerData(#Controller_8BitDoM30)\Identifier	 = "8BitDo M30"
 	
-	ControllerData(#Controller_DualShock)\Name		 = "Dualshock 4"
-	ControllerData(#Controller_DualSense)\Name		 = "DualSense"
-	ControllerData(#Controller_SwitchPro)\Name		 = "Switch Pro Controller"
-	ControllerData(#Controller_GameCube)\Name		 = "GameCube"
-	ControllerData(#Controller_Snes)\Name			 = "Snes"
-	ControllerData(#Controller_Xbox_360)\Name		 = "Xbox 360"
-	ControllerData(#Controller_Xbox_One)\Name		 = "Xbox One"
-	ControllerData(#Controller_Xbox_Series)\Name	 = "Xbox Series"
-	ControllerData(#Controller_Saturn)\Name			 = "Saturn"
-	ControllerData(#Controller_8BitDoM30)\Name		 = "8BitDoM30"
+	
+	Global NewList OverlayInput.OverlayInput()
+	Global AutoController = -1, AutoDesign = -1, SDLJoystick, *CurrentInput.OverlayInput
+	Global OverlayX = 20, OverlayY = 20
+	Global OverlayWindowID, OverlayImage
+	Global Dim ControllerData.ControllerData(#_Controller_Count - 1)
+	ControllerData(#Controller_DualShock)\Identifier	= "PS"
+	ControllerData(#Controller_DualSense)\Identifier	= "DualSense"
+	ControllerData(#Controller_SwitchPro)\Identifier	= "Switch Pro"
+	ControllerData(#Controller_GameCube)\Identifier		= "GameCube"
+	ControllerData(#Controller_Snes)\Identifier			= "Snes"
+	ControllerData(#Controller_Xbox_360)\Identifier		= "Xbox 360"
+	ControllerData(#Controller_Xbox_One)\Identifier		= "Xbox One"
+	ControllerData(#Controller_Xbox_Series)\Identifier	= "Xbox Series"
+	ControllerData(#Controller_Saturn)\Identifier		= "Saturn"
+	ControllerData(#Controller_8BitDoM30)\Identifier	= "8BitDo M30"
+	
+	ControllerData(#Controller_DualShock)\Name			= "Dualshock 4"
+	ControllerData(#Controller_DualSense)\Name			= "DualSense"
+	ControllerData(#Controller_SwitchPro)\Name			= "Switch Pro Controller"
+	ControllerData(#Controller_GameCube)\Name			= "GameCube"
+	ControllerData(#Controller_Snes)\Name				= "Snes"
+	ControllerData(#Controller_Xbox_360)\Name			= "Xbox 360"
+	ControllerData(#Controller_Xbox_One)\Name			= "Xbox One"
+	ControllerData(#Controller_Xbox_Series)\Name		= "Xbox Series"
+	ControllerData(#Controller_Saturn)\Name				= "Saturn"
+	ControllerData(#Controller_8BitDoM30)\Name			= "8BitDoM30"
 									
-	ControllerData(#Controller_DualShock)\Icon		 = ImageID(CatchImage(#PB_Any, ?DualShock4))
-	ControllerData(#Controller_DualSense)\Icon		 = ImageID(CatchImage(#PB_Any, ?DualSense))
-	ControllerData(#Controller_SwitchPro)\Icon		 = ImageID(CatchImage(#PB_Any, ?ProController))
-	ControllerData(#Controller_GameCube)\Icon		 = ImageID(CatchImage(#PB_Any, ?GC))
-	ControllerData(#Controller_Snes)\Icon			 = ImageID(CatchImage(#PB_Any, ?Snes))
-	ControllerData(#Controller_Xbox_360)\Icon		 = ImageID(CatchImage(#PB_Any, ?Xbox360))
-	ControllerData(#Controller_Xbox_One)\Icon		 = ImageID(CatchImage(#PB_Any, ?XboxOne))
-	ControllerData(#Controller_Xbox_Series)\Icon	 = ImageID(CatchImage(#PB_Any, ?XboxSeries))
-	ControllerData(#Controller_Saturn)\Icon			 = ImageID(CatchImage(#PB_Any, ?Saturn))
-	ControllerData(#Controller_8BitDoM30)\Icon		 = ImageID(CatchImage(#PB_Any, ?M30))
+	ControllerData(#Controller_DualShock)\Icon			= ImageID(CatchImage(#PB_Any, ?Icon_DualShock4))
+	ControllerData(#Controller_DualSense)\Icon			= ImageID(CatchImage(#PB_Any, ?Icon_DualSense))
+	ControllerData(#Controller_SwitchPro)\Icon			= ImageID(CatchImage(#PB_Any, ?Icon_ProController))
+	ControllerData(#Controller_GameCube)\Icon			= ImageID(CatchImage(#PB_Any, ?Icon_GC))
+	ControllerData(#Controller_Snes)\Icon				= ImageID(CatchImage(#PB_Any, ?Icon_Snes))
+	ControllerData(#Controller_Xbox_360)\Icon			= ImageID(CatchImage(#PB_Any, ?Icon_Xbox360))
+	ControllerData(#Controller_Xbox_One)\Icon			= ImageID(CatchImage(#PB_Any, ?Icon_XboxOne))
+	ControllerData(#Controller_Xbox_Series)\Icon		= ImageID(CatchImage(#PB_Any, ?Icon_XboxSeries))
+	ControllerData(#Controller_Saturn)\Icon				= ImageID(CatchImage(#PB_Any, ?Icon_Saturn))
+	ControllerData(#Controller_8BitDoM30)\Icon			= ImageID(CatchImage(#PB_Any, ?Icon_M30))
 	                                                     
 	;{ Private procedures declaration
 	Declare SystrayBalloon(Title.s,Message.s,Flags)
@@ -297,12 +304,15 @@
 	Declare Handler_ColorPicker()
 	Declare Handler_CustomColor_Ok()
 	Declare Handler_Combo_InputSource()
+	Declare Handler_Overlay_Enable()
+	Declare Handler_Canvas_Overlay()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare LocationMouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare LocationKeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare SetColor()
 	Declare WindowCallback(hWnd, Msg, wParam, lParam)
+	Declare OverlayCallback(hWnd, Msg, wParam, lParam)
 	Declare VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State)
 	Declare RedrawPreview()
 	Declare Automatic_Design_Selection()
@@ -349,7 +359,6 @@
 		
 		;{ Window
 		WindowID = UITK::Window(#Window, 0, 0, #Appearance_Window_Width, #Appearance_Window_Height, General::#AppName, UITK::#Window_Invisible | UITK::#Window_ScreenCentered | UITK::#HAlignLeft | UITK::#Window_CloseButton | UITK::#DarkMode)
-		StickyWindow(#Window, #True)
 		UITK::WindowSetColor(#Window, UITK::#Color_Parent, UITK::WindowGetColor(#Window, UITK::#Color_WindowBorder))
 		DisableWindow(#Window, #True)
 		UITK::SetWindowIcon(#Window, Icon)
@@ -544,6 +553,7 @@
 		UITK::Toggle(#Toggle_Overlay_Enable, #Appearance_Window_Margin, Y, #Appearance_Window_ItemWidth, 24,  "Enable overlay")
 		SetGadgetFont(#Toggle_Overlay_Enable, General::OptionFont)
 		GadgetToolTip(#Toggle_Overlay_Enable, Language(#ToolTip_TrackInput))
+		BindGadgetEvent(#Toggle_Overlay_Enable, @Handler_Overlay_Enable(), #PB_EventType_Change)
 		SetGadgetState(#Toggle_Overlay_Enable, #False)
 		
 		Y + #Appearance_Window_OptionSpacing + 5
@@ -675,6 +685,9 @@
 			PopupWindow::SetPopupOrigin(10, DesktopHeight(0) - (pData\rc\bottom - pData\rc\top) - 10)
 		ElseIf pData\uEdge = #ABE_LEFT
 			PopupWindow::SetPopupOrigin(pData\rc\right + 10, DesktopHeight(0) - 10)
+			OverlayX + pData\rc\right
+		ElseIf pData\uEdge = #ABE_TOP
+			OverlayY + pData\rc\top
 		EndIf
 		;}
 		
@@ -793,6 +806,11 @@
 						EndIf
 					Next
 					
+					If *CurrentInput = @OverlayInput()
+						*CurrentInput = 0
+						CloseWindow(#Window_Overlay)
+					EndIf
+					
 					If ListIndex(OverlayInput()) = AutoController
 						RemoveGadgetItem(#Combo_Overlay_InputSource, 1 + ListIndex(OverlayInput()))
 						DeleteElement(OverlayInput())
@@ -801,6 +819,7 @@
 							SetGadgetItemText(#Combo_Overlay_InputSource, 0, "Auto (" + OverlayInput()\Name + ")")
 							AutoController = ListIndex(OverlayInput())
 						Else
+							SetGadgetState(#Toggle_Overlay_Enable, #False)
 							SetGadgetItemText(#Combo_Overlay_InputSource, 0, "Auto (None)")
 							AutoController = -1
 						EndIf
@@ -808,15 +827,13 @@
 						If GetGadgetState(#Combo_Overlay_InputSource) = 0
 							Automatic_Design_Selection()
 						EndIf
-						
 					Else
 						DeleteElement(OverlayInput())
 						RemoveGadgetItem(#Combo_Overlay_InputSource, 1 + ListIndex(OverlayInput()))
 					EndIf
 					
-					
 				Case SDL::#JOYBUTTONDOWN
-					
+					Debug "ok !"
 				Case SDL::#JOYBUTTONUP
 					
 				Case SDL::#JOYAXISMOTION
@@ -858,6 +875,7 @@
 	Procedure Handler_CloseWindow()
 		DisableWindow(#Window, #True)
 		HideWindow(#Window, #True)
+		HiddenWindow = #True
 	EndProcedure
 	
 	Procedure Handler_TrackKeyboard()
@@ -904,8 +922,14 @@
 	EndProcedure
 	
 	Procedure Handler_MenuOptions()
-		DisableWindow(#Window, #False)
-		HideWindow(#Window, #False, #PB_Window_ScreenCentered)
+		If HiddenWindow
+			HiddenWindow = #False
+			DisableWindow(#Window, #False)
+			HideWindow(#Window, #False, #PB_Window_ScreenCentered)
+		EndIf
+		StickyWindow(#Window, #True)
+		Delay(1)
+		StickyWindow(#Window, #False)
 	EndProcedure
 	
 	Procedure Handler_MenuQuit()
@@ -1136,6 +1160,133 @@
 	
 	Procedure Handler_Combo_InputSource()
 		Automatic_Design_Selection()
+	EndProcedure
+	
+	
+	
+	Procedure AlphaImageWindow2(ImageID, Alpha) ; Mettre une image PNG comme fond d'une fenêtre
+		Protected Image_HDC, Image_Bitmap.BITMAP, Image_BitmapInfo.BITMAPINFO, ContextOffset.POINT, Blend.BLENDFUNCTION
+		Protected xx, yy, x, y, Rouge, Vert, Bleu, AlphaChannel, Image_Ancienne, Couleur
+		
+		; Chargement du HDC
+		Image_HDC = CreateCompatibleDC_(#Null)
+		Image_Ancienne = SelectObject_(Image_HDC, ImageID)
+		
+		; Dimension de l'image
+		GetObject_(ImageID, SizeOf(BITMAP), @Image_Bitmap)
+		Image_BitmapInfo\bmiHeader\biSize = SizeOf(BITMAPINFOHEADER)
+		Image_BitmapInfo\bmiHeader\biWidth = Image_Bitmap\bmWidth
+		Image_BitmapInfo\bmiHeader\biHeight = Image_Bitmap\bmHeight
+		Image_BitmapInfo\bmiHeader\biPlanes = 1
+		Image_BitmapInfo\bmiHeader\biBitCount = 32
+		
+		; Zone mémoire pour copier l'image
+		xx = Image_Bitmap\bmWidth - 1
+		yy = Image_Bitmap\bmHeight - 1
+		Protected Dim Image.l(xx, yy)
+		
+		; Copie de l'image en mémoire
+		GetDIBits_(Image_HDC, ImageID, 0, Image_Bitmap\bmHeight, @Image(), @Image_BitmapInfo, #DIB_RGB_COLORS)
+		
+		; Modification de l'image en mémoire
+		For x = 0 To xx
+			For y = 0 To yy
+				Couleur = Image(x, y)
+				AlphaChannel = Couleur >> 24 & $FF
+				If AlphaChannel < $FF
+					Rouge = (Couleur & $FF) * General::Preprocess(AlphaChannel)
+					Vert = (Couleur >> 8 & $FF) * General::Preprocess(AlphaChannel)
+					Bleu = (Couleur >> 16 & $FF) * General::Preprocess(AlphaChannel)
+					Image(x, y) = Rouge | Vert << 8 | Bleu << 16 | AlphaChannel << 24
+				EndIf
+			Next
+		Next
+		
+		; Transfert de la mémoire dans la l'image de base
+		SetDIBits_(Image_HDC, ImageID, 0, Image_Bitmap\bmHeight, @Image(), @Image_BitmapInfo, #DIB_RGB_COLORS)
+		
+		; L'image est mise en skin de la fenêtre
+		Blend\SourceConstantAlpha = Alpha ; niveau de transparence
+		Blend\AlphaFormat = 1			  ; Support de la couche alpha
+		Blend\BlendOp = 0
+		Blend\BlendFlags = 0
+		UpdateLayeredWindow_(OverlayWindowID, 0, 0, @Image_BitmapInfo + 4, Image_HDC, @ContextOffset, 0, @Blend, 2)
+		
+		; Fermeture du HDC
+		SelectObject_(Image_HDC, Image_Ancienne)
+		DeleteDC_(Image_HDC)
+		
+	EndProcedure
+	
+	
+	
+	Procedure Handler_Overlay_Enable()
+		Protected Joystick, JoystickCount, Loop
+		If ListSize(OverlayInput()) = 0
+			SetGadgetState(#Toggle_Overlay_Enable, #False)
+			ProcedureReturn #False
+		EndIf
+		
+		If GetGadgetState(#Toggle_Overlay_Enable)
+			Joystick = GetGadgetState(#Combo_Overlay_InputSource)
+			If Joystick = 0
+				Joystick = AutoController
+			Else
+				Joystick - 1
+			EndIf
+			
+			SelectElement(OverlayInput(), Joystick)
+			
+			JoystickCount = SDL::NumJoysticks() - 1
+			
+			For Loop = 0 To JoystickCount
+				If SDL::JoystickGetDeviceInstanceID(Loop) = OverlayInput()\InstanceID
+					*CurrentInput = @OverlayInput()
+					SDLJoystick = SDL::JoystickOpen(Loop)
+				EndIf
+			Next
+			
+			OverlayWindowID = OpenWindow(#Window_Overlay, OverlayX, OverlayY, 450, 300, "Inputify overlay", #PB_Window_BorderLess | #PB_Window_Invisible | #PB_Window_NoGadgets, WindowID(#Window))
+			SetWindowLong_(OverlayWindowID, #GWL_EXSTYLE, GetWindowLong_(OverlayWindowID, #GWL_EXSTYLE) | #WS_EX_LAYERED)
+; 			AlphaImageWindow2(WindowID, ImageID, Alpha)
+			StickyWindow(#Window_Overlay, #True)
+; 			CanvasGadget(#Canvas_Overlay, 0, 0, 450, 300)
+; 			BindGadgetEvent(#Canvas_Overlay, @Handler_Canvas_Overlay())
+			SetWindowCallback(@OverlayCallback(), #Window_Overlay)
+			If OverlayImage
+				FreeImage(OverlayImage)
+			EndIf
+			OverlayImage = CatchImage(#PB_Any, ?Saturn)
+			ResizeImage(OverlayImage, ImageWidth(OverlayImage) * GetGadgetState(#Trackbar_Overlay_Scale) * 0.0033, ImageHeight(OverlayImage) * GetGadgetState(#Trackbar_Overlay_Scale) * 0.0033, #PB_Image_Smooth)
+			AlphaImageWindow2(ImageID(OverlayImage), GetGadgetState(#Trackbar_Overlay_Transparency) * 2.55)
+			HideWindow(#Window_Overlay, #False, #PB_Window_NoActivate)
+		Else
+			SDL::JoystickClose(SDLJoystick)
+			*CurrentInput = 0
+			CloseWindow(#Window_Overlay)
+		EndIf
+	EndProcedure
+	
+	Procedure Handler_Canvas_Overlay()
+		Static MouseX, MouseY, Moving
+		
+		Select EventType()
+			Case #PB_EventType_LeftButtonDown
+				MouseX = GetGadgetAttribute(#Canvas_Overlay, #PB_Canvas_MouseX)
+				MouseY = GetGadgetAttribute(#Canvas_Overlay, #PB_Canvas_MouseY)
+				Moving = #True
+				SetGadgetAttribute(#Canvas_Overlay, #PB_Canvas_Cursor, #PB_Cursor_Arrows)
+			Case #PB_EventType_LeftButtonUp
+				SetGadgetAttribute(#Canvas_Overlay, #PB_Canvas_Cursor, #PB_Cursor_Default)
+				Moving = #False
+			Case #PB_EventType_MouseMove
+				If Moving
+					ResizeWindow(#Window_Overlay,
+					             WindowX(#Window_Overlay) + (GetGadgetAttribute(#Canvas_Overlay, #PB_Canvas_MouseX) - MouseX),
+					             WindowY(#Window_Overlay) + (GetGadgetAttribute(#Canvas_Overlay, #PB_Canvas_MouseY) - MouseY),
+					             #PB_Ignore, #PB_Ignore)
+				EndIf
+		EndSelect
 	EndProcedure
 	
 	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
@@ -1484,6 +1635,13 @@
 		ProcedureReturn #PB_ProcessPureBasicEvents
 	EndProcedure
 	
+	Procedure OverlayCallback(hWnd, Msg, wParam, lParam)
+		If msg = #WM_LBUTTONDOWN
+			SendMessage_(WindowID(#Window_Overlay), #WM_NCLBUTTONDOWN, #HTCAPTION, 0)
+		EndIf
+		ProcedureReturn #PB_ProcessPureBasicEvents
+	EndProcedure
+	
 	Procedure VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State)
 		If State = UITK::#Cold
 			VectorSourceColor(General::ColorScheme(1, General::#Color_Type_FrontCold))
@@ -1523,13 +1681,15 @@
 		If State = 0
 			If AutoController = -1
 				SetGadgetItemText(#Combo_Overlay_Style, 0, "Auto (None)")
+				AutoDesign = -1
 				ProcedureReturn #False
 			Else
 				State = AutoController
 			EndIf
+		Else
+			State - 1
 		EndIf
 		
-		Debug State
 		If SelectElement(OverlayInput(), State)
 			For Loop = 0 To #_Controller_Count - 1
 				If FindString(OverlayInput()\Name, ControllerData(Loop)\Identifier, 0, #PB_String_NoCase)
@@ -1540,7 +1700,7 @@
 			If Loop = #_Controller_Count
 				Loop = #Controller_Xbox_Series
 			EndIf
-			
+			AutoDesign = Loop
 			SetGadgetItemText(#Combo_Overlay_Style, 0, "Auto (" + ControllerData(Loop)\Name + ")")
 		EndIf
 	EndProcedure
@@ -1557,61 +1717,47 @@
 		Icon18:
 		IncludeBinary "../Media/Icon/18.png"
 		
-		Zero2:
-		IncludeBinary "../Media/Controllers icons/8BitDo Zero 2 Icon.png"
-		
-		Dreamcast:
-		IncludeBinary "../Media/Controllers icons/Dreamcast Icon.png"
-		
-		DualSense:
+		;{ Controller Icons
+		Icon_DualSense:
 		IncludeBinary "../Media/Controllers icons/DualSense Icon.png"
 		
-		DualShock4:
+		Icon_DualShock4:
 		IncludeBinary "../Media/Controllers icons/DualShock 4 Icon.png"
 		
-		GC:
+		Icon_GC:
 		IncludeBinary "../Media/Controllers icons/GC Icon.png"
 		
-		LeftJoycon:
-		IncludeBinary "../Media/Controllers icons/Left Joycon Icon.png"
-		
-		M30:
+		Icon_M30:
 		IncludeBinary "../Media/Controllers icons/M30 Icon.png"
 		
-		MD3Buttons:
-		IncludeBinary "../Media/Controllers icons/MD 3 Buttons Icon.png"
-		
-		N64:
-		IncludeBinary "../Media/Controllers icons/N64 Icon.png"
-		
-		NavigationController:
-		IncludeBinary "../Media/Controllers icons/Navigation Controller Icon.png"
-		
-		ProController:
+		Icon_ProController:
 		IncludeBinary "../Media/Controllers icons/Pro Controller Icon.png"
 		
-		RightJoycon:
-		IncludeBinary "../Media/Controllers icons/Right Joycon Icon.png"
-		
-		Saturn:
+		Icon_Saturn:
 		IncludeBinary "../Media/Controllers icons/Saturn Icon.png"
 		
-		Snes:
+		Icon_Snes:
 		IncludeBinary "../Media/Controllers icons/Snes Icon.png"
 		
-		Xbox360:
+		Icon_Xbox360:
 		IncludeBinary "../Media/Controllers icons/Xbox 360 Icon.png"
 		
-		XboxOne:
+		Icon_XboxOne:
 		IncludeBinary "../Media/Controllers icons/Xbox One Icon.png"
 		
-		XboxSeries:
+		Icon_XboxSeries:
 		IncludeBinary "../Media/Controllers icons/Xbox Series Icon.png"
+		;}
+		
+		;{ Controllers
+		Saturn:
+		IncludeBinary "../Media/Controllers/Saturn.png"
+		;}
 	EndDataSection
 	
 EndModule
-; IDE Options = PureBasic 6.01 LTS beta 1 (Windows - x64)
-; CursorPosition = 1137
-; FirstLine = 455
-; Folding = 6GEwAAAAIAA+
+; IDE Options = PureBasic 6.00 LTS (Windows - x64)
+; CursorPosition = 1259
+; FirstLine = 326
+; Folding = pCAgAAAAgAAA-
 ; EnableXP

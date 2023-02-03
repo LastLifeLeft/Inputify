@@ -222,7 +222,7 @@
 	Global *LatestWindow.WindowData = 0
 	Global NewList WindowList.WindowData()
 	
-	Global Dim Preprocess.f($FF), Blend.BLENDFUNCTION, Image_BitmapInfo.BITMAPINFO, ContextOffset.POINT
+	Global Blend.BLENDFUNCTION, Image_BitmapInfo.BITMAPINFO, ContextOffset.POINT
 	
 	; Private procedures declaration
 	Declare HandlerTimer()
@@ -408,7 +408,7 @@
 		Protected Loop
 		
 		For Loop = 0 To $FF
-			Preprocess(Loop) = Loop / $FF
+			General::Preprocess(Loop) = Loop / $FF
 		Next
 		
 		Blend\AlphaFormat = 1
@@ -470,9 +470,9 @@
 					If AlphaChannel = 0
 						Image(x, y) = 0
 					Else
-						Red = (Color & $FF) * Preprocess(AlphaChannel)
-						Green = (Color >> 8 & $FF) * Preprocess(AlphaChannel)
-						Blue = (Color >> 16 & $FF) * Preprocess(AlphaChannel)
+						Red = (Color & $FF) * General::Preprocess(AlphaChannel)
+						Green = (Color >> 8 & $FF) * General::Preprocess(AlphaChannel)
+						Blue = (Color >> 16 & $FF) * General::Preprocess(AlphaChannel)
 						Image(x, y) = Red | Green << 8 | Blue << 16 | AlphaChannel << 24
 					EndIf
 				EndIf
@@ -697,7 +697,6 @@
 	;}
 EndModule
 ; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 656
-; FirstLine = 114
-; Folding = DIQg-
+; CursorPosition = 474
+; Folding = BAQB-
 ; EnableXP
