@@ -34,7 +34,6 @@
 		#Scheme_Light
 		#Scheme_Pink
 		#Scheme_Blue
-		#Scheme_Custom
 	EndEnumeration
 	
 	#Color_Mode_Light = 0
@@ -57,7 +56,7 @@
 	CompilerEndIf
 	
 	Global Dim ColorScheme(1, #_Color_Type_COUNT - 1)
-	Global Dim KeyScheme(4, #_KeyColor_Type_COUNT - 1)
+	Global Dim KeyScheme(3, #_KeyColor_Type_COUNT - 1)
 	
 	ColorScheme(#Color_Mode_Light, #Color_Type_BackCold) 		= SetAlpha(255, FixColor($F2F3F5))
 	ColorScheme(#Color_Mode_Light, #Color_Type_BackHot )		= SetAlpha(255, FixColor($D4D7DC))
@@ -107,13 +106,6 @@
 	KeyScheme(#Scheme_Blue, #Color_Keyboard_4)					= SetAlpha(255, FixColor($FFFFFF))
 	KeyScheme(#Scheme_Blue, #Color_Mouse)						= SetAlpha(255, FixColor($5C71EC))
 	
-	KeyScheme(#Scheme_Custom, #Color_Keyboard_0)				= SetAlpha(255, FixColor($DF5E21))
-	KeyScheme(#Scheme_Custom, #Color_Keyboard_1)				= SetAlpha(255, FixColor($EC9B5C))
-	KeyScheme(#Scheme_Custom, #Color_Keyboard_2)				= SetAlpha(255, FixColor($F6D0B8))
-	KeyScheme(#Scheme_Custom, #Color_Keyboard_3)				= SetAlpha(255, FixColor($F0B38C))
-	KeyScheme(#Scheme_Custom, #Color_Keyboard_4)				= SetAlpha(255, FixColor($FFFFFF))
-	KeyScheme(#Scheme_Custom, #Color_Mouse)						= SetAlpha(255, FixColor($EC9B5C))
-	
 	;}
 	
 	;{ Fonts
@@ -154,13 +146,6 @@ EndDeclareModule
 
 DeclareModule PopupWindow
 	; Public variables, structures and constants
-	Structure VKeyData
-		Text.s
-		Width.i
-		Offset.i
-	EndStructure
-	
-	Global Dim VKeyData.VKeyData(255)
 	
 	; Public procedures declaration
 	Declare Create(VKey)
@@ -169,10 +154,6 @@ DeclareModule PopupWindow
 	Declare ShortCut(Control, Shift, Alt, Vkey)
 	Declare AddKey(Window, VKey)
 	Declare SetScale(NewScale)
-EndDeclareModule
-
-DeclareModule LayoutWindow
-	
 EndDeclareModule
 
 Module General
@@ -246,7 +227,6 @@ Module General
 	EndProcedure
 EndModule
 ; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 162
-; FirstLine = 81
-; Folding = 866
+; CursorPosition = 135
+; Folding = 669
 ; EnableXP

@@ -21,6 +21,14 @@
 	#ApparitionDelay = 100 ; Delay until the window start appearing
 	
 	;{ Vkey
+	Structure VKeyData
+		Text.s
+		Width.i
+		Offset.i
+	EndStructure
+	
+	Global Dim VKeyData.VKeyData(255)
+	
 	;{ Alphabet
 	VKeyData('A')\Offset = 30
 	VKeyData('B')\Offset = 30
@@ -230,6 +238,7 @@
 	Declare.d Ease_CubicIn(Time.d, Original.d, Target.d, Duration.d)
 	Declare Init()
 	Declare InitAlphaBlening(*WindowData.WindowData)
+	Declare SetAlpha(*WindowData.WindowData)
 	Declare DrawKey(VKey, *WindowData.WindowData)
 	
 	Init()
@@ -491,7 +500,9 @@
  		DeleteDC_(ImageDC)
 	EndProcedure
 	
-	Macro SetAlpha()
+	Procedure SetAlpha(*WindowData.WindowData)
+		Protected ImageDC, OldDC
+		
 		ImageDC = CreateCompatibleDC_(#Null)
 		OldDC = SelectObject_(ImageDC, *WindowData\ImageID)
 		
@@ -504,11 +515,10 @@
 		SelectObject_(ImageDC, OldDC)
 		DeleteDC_(OldDC)
 		DeleteDC_(ImageDC)
-	EndMacro
+	EndProcedure
 	
 	Procedure HandlerTimer()
 		Protected Window = EventWindow()
-		Protected ImageDC, OldDC
 		Protected *WindowData.WindowData = GetWindowData(Window)
 		
 		Select EventTimer()
@@ -520,17 +530,17 @@
 				*WindowData\FadeStep + 1
 				
 				If *WindowData\FadeStep = 7
-					SetAlpha()
+					SetAlpha(*WindowData)
 					RemoveWindowTimer(Window, #Timer_FadeInAnimation)
 				Else
 					*WindowData\Alpha = Ease_CubicOut(*WindowData\FadeStep, 0, 255, 7)
-					SetAlpha()
+					SetAlpha(*WindowData)
 				EndIf
 				
 			Case #Timer_FadeOutAnimation
 				*WindowData\FadeStep - 1
 				
-				If *WindowData\FadeStep = 1
+				If *WindowData\FadeStep = 0
 					Protected Y = *WindowData\CurrentPosition
 					UnbindEvent(#PB_Event_Timer, @HandlerTimer(), Window)
 					FreeImage(*WindowData\Image)
@@ -552,8 +562,9 @@
 					
 					CloseWindow(Window)
 				Else
+					
 					*WindowData\Alpha = Ease_CubicIn(*WindowData\FadeStep, 0, 255, 7)
-					SetAlpha()
+					SetAlpha(*WindowData)
 				EndIf
 				
 			Case #Timer_Movement
@@ -595,7 +606,7 @@
 			AddPathBox(0, 0, 27 * Scale, 61 * Scale)
 			ClipPath()
 			
-			MovePathCursor(27 * Scale, 27 * Scale)
+			MovePathCursor((*WindowData\Offset + 27) * Scale, 27 * Scale)
 			AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
 			AddPathArc(-3 * Scale, 28 * Scale, 22 * Scale, 30 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathCurve(0, 0, 15 * Scale, 5 * Scale, 30 * Scale, 0,  #PB_Path_Relative)
@@ -604,7 +615,7 @@
 			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_0))
 			StrokePath(4 * Scale)
 			
-			MovePathCursor(27 * Scale, 27 * Scale)
+			MovePathCursor((*WindowData\Offset + 27) * Scale, 27 * Scale)
 			AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
 			AddPathArc(3 * Scale, -22 * Scale, 15 * Scale, -25 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathLine(13 * Scale, 0, #PB_Path_Relative)
@@ -622,7 +633,7 @@
 			AddPathBox(0, 0, 27 * Scale, 61 * Scale)
 			ClipPath()
 			
-			MovePathCursor(27 * Scale, 27 * Scale)
+			MovePathCursor((*WindowData\Offset + 27) * Scale, 27 * Scale)
 			AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
 			AddPathArc(-3 * Scale, 28 * Scale, 22 * Scale, 30 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathCurve(0, 0, 15 * Scale, 5 * Scale, 30 * Scale, 0,  #PB_Path_Relative)
@@ -631,7 +642,7 @@
 			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_0))
 			StrokePath(4 * Scale)
 			
-			MovePathCursor(27 * Scale, 27 * Scale)
+			MovePathCursor((*WindowData\Offset + 27) * Scale, 27 * Scale)
 			AddPathLine(-23 * Scale, 0, #PB_Path_Relative)
 			AddPathArc(3 * Scale, -22 * Scale, 15 * Scale, -25 * Scale, 10 * Scale, #PB_Path_Relative)
 			AddPathLine(13 * Scale, 0, #PB_Path_Relative)
@@ -696,8 +707,7 @@
 	EndProcedure
 	;}
 EndModule
-; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 656
-; FirstLine = 114
-; Folding = DIQg-
+; IDE Options = PureBasic 6.21 Beta 10 (Windows - x64)
+; CursorPosition = 708
+; Folding = BAAA-
 ; EnableXP
