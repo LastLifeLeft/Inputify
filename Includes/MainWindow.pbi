@@ -175,8 +175,8 @@
 	Declare Handler_LeftPanel()
 	Declare Handler_Radio()
 	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
-	Declare MouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
-	Declare LocationMouseHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
+	Declare MouseHook(nCode, wParam, *p.MOUSEHOOKSTRUCT)
+	Declare LocationMouseHook(nCode, wParam, *p.MOUSEHOOKSTRUCT)
 	Declare LocationKeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare SetColor()
 	Declare WindowCallback(hWnd, Msg, wParam, lParam)
@@ -1000,7 +1000,8 @@
 	EndDataSection ;}
 	
 EndModule
-; IDE Options = PureBasic 6.21 Beta 10 (Windows - x64)
-; CursorPosition = 971
-; Folding = BAAAAAAAw
+; IDE Options = PureBasic 6.40 (Windows - x64)
+; CursorPosition = 583
+; FirstLine = 21
+; Folding = hAACAAAAw
 ; EnableXP
