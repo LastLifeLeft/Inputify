@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2026-05-21 14:54" user="lastlife" host="DESKTOP-7SK2AMF"/>
+    <lastopen date="2026-07-26 20:51" user="lastlife" host="DESKTOP-7SK2AMF"/>
   </section>
   <section name="files">
     <file name="Includes\General.pbi">
@@ -27,8 +27,8 @@
       <fingerprint md5="6122d194cb17ceb464d910c8f217f1b4"/>
     </file>
     <file name="UI-Toolkit\Library\UI-Toolkit.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="5" panelstate="+++"/>
-      <fingerprint md5="a52943d14d12b518db47da628dc1caa4"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+++"/>
+      <fingerprint md5="c6da52438324b22366a9a9cbff522e39"/>
     </file>
     <file name="MarkDownModule\MarkDownModule.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
