@@ -595,7 +595,7 @@
 			WritePreferenceLong("Duration", General::Preferences(General::#Pref_Duration))				
 			WritePreferenceLong("Combo", General::Preferences(General::#Pref_Combo))
 			
-			PreferenceGroup("About")
+			PreferenceGroup("Misc")
 			WritePreferenceLong("Update", General::Preferences(General::#Pref_CheckUpdate))
 			
 			ClosePreferences()

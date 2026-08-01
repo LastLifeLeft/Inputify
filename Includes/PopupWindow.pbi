@@ -206,6 +206,7 @@
 		OriginalPosition.l
 		CurrentPosition.l
 		MovementStep.a
+		Moving.b													; Set while the window is being pushed to a new slot, so the shared mover can skip settled windows.
 		FadeStep.a
 		X.l
 		Status.b
@@ -220,7 +221,8 @@
 		Combo.a
 	EndStructure
 	
-	Global FrameDuration = 33										; The duration of a movement frame. 33ms =~ two frames on a 60fps screen
+	Global FrameDuration = 31										; The duration of a movement frame. Windows quantises timers to the ~15.6ms tick, so a 33ms
+																	; timer really fires every 46.9ms (21fps); 31 lands on the 2nd tick = 31.25ms (32fps).
 	Global FrameCount = 9											; The number of step in a movement animation.
 	Global OriginX, OriginY											; The apparition coordinates of a new window
 	Global WindowWidth = #Window_Width
@@ -228,12 +230,15 @@
 	Global Window_MovementTarget = WindowHeight + 10
 	Global Scale.d = 1
 	Global *LatestWindow.WindowData = 0
+	Global MovementWindow, MovementActive							; A single hidden window drives the movement of every popup at once (see HandlerMovement).
 	Global NewList WindowList.WindowData()
 	
 	Global Dim Preprocess.f($FF), Blend.BLENDFUNCTION, Image_BitmapInfo.BITMAPINFO, ContextOffset.POINT
 	
 	; Private procedures declaration
 	Declare HandlerTimer()
+	Declare HandlerMovement()
+	Declare StartMovement()
 	Declare.d Ease_CubicOut(Time.d, Original.d, Target.d, Duration.d)
 	Declare.d Ease_CubicIn(Time.d, Original.d, Target.d, Duration.d)
 	Declare Init()
@@ -291,8 +296,10 @@
 				WindowList()\OriginalPosition = WindowList()\CurrentPosition
 				WindowList()\MovementTarget - Window_MovementTarget
 				WindowList()\MovementStep = 0
-				AddWindowTimer(WindowList()\Window, #Timer_Movement, FrameDuration)
+				WindowList()\Moving = #True
 			Next
+			
+			StartMovement()
 			
 			Window = OpenWindow(#PB_Any, OriginX, OriginY, WindowWidth, WindowHeight, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess | #PB_Window_NoActivate | #PB_Window_NoGadgets, MainWindow::WindowID)
 			DisableWindow(Window, #True)
@@ -337,7 +344,7 @@
 	Procedure Hide(Window)
 		Protected *WindowData.WindowData = GetWindowData(Window)
 		
- 		AddWindowTimer(Window, #Timer_Duration, General::Preferences(General::#Pref_Duration) + (FrameCount - *WindowData\MovementStep) * FrameDuration)
+		AddWindowTimer(Window, #Timer_Duration, General::Preferences(General::#Pref_Duration) + (FrameCount - *WindowData\MovementStep) * FrameDuration)
 		*WindowData\Status = #Alive
 	EndProcedure
 	
@@ -497,27 +504,16 @@
 		
 		UpdateLayeredWindow_(*WindowData\WindowID, 0, 0, @Image_BitmapInfo + 4, ImageDC, @ContextOffset, 0, @Blend, 2)
 		
+		; OldDC is the bitmap SelectObject_ displaced, not a DC - only ImageDC must be released.
 		SelectObject_(ImageDC, OldDC)
 		
-		DeleteDC_(OldDC)
- 		DeleteDC_(ImageDC)
+		DeleteDC_(ImageDC)
 	EndProcedure
 	
 	Procedure SetAlpha(*WindowData.WindowData)
-		Protected ImageDC, OldDC
-		
-		ImageDC = CreateCompatibleDC_(#Null)
-		OldDC = SelectObject_(ImageDC, *WindowData\ImageID)
-		
 		Blend\SourceConstantAlpha = *WindowData\Alpha
-		Image_BitmapInfo\bmiHeader\biWidth = *WindowData\Width
-		Image_BitmapInfo\bmiHeader\biHeight = *WindowData\Height
 		
-		UpdateLayeredWindow_(*WindowData\WindowID, 0, 0, @Image_BitmapInfo + 4, ImageDC, #NUL, 0, @Blend, 2)
-		
-		SelectObject_(ImageDC, OldDC)
-		DeleteDC_(OldDC)
-		DeleteDC_(ImageDC)
+		UpdateLayeredWindow_(*WindowData\WindowID, 0, 0, 0, 0, 0, 0, @Blend, 2)
 	EndProcedure
 	
 	Procedure HandlerTimer()
@@ -556,9 +552,11 @@
 								WindowList()\OriginalPosition = WindowList()\CurrentPosition
 								WindowList()\MovementTarget + Window_MovementTarget
 								WindowList()\MovementStep = 0
-								AddWindowTimer(WindowList()\Window, #Timer_Movement, FrameDuration)
+								WindowList()\Moving = #True
 							EndIf
 						Until Not PreviousElement(WindowList())
+						
+						StartMovement()
 					Else
 						*LatestWindow = 0
 					EndIf
@@ -570,25 +568,61 @@
 					SetAlpha(*WindowData)
 				EndIf
 				
-			Case #Timer_Movement
-				*WindowData\MovementStep + 1
-				
-				If *WindowData\MovementStep = FrameCount
-					*WindowData\OriginalPosition = *WindowData\MovementTarget
-					*WindowData\CurrentPosition = *WindowData\MovementTarget
-					RemoveWindowTimer(Window, #Timer_Movement)
-				Else
-					*WindowData\CurrentPosition = Ease_CubicOut(*WindowData\MovementStep, *WindowData\OriginalPosition, *WindowData\MovementTarget, FrameCount)
-				EndIf
-				
-				; #SWP_NOACTIVATE is mandatory: without it every animation frame activates the popup and steals the
-				; foreground from the app the user is typing in.
-				SetWindowPos_(*WindowData\WindowID, 0, *WindowData\X, *WindowData\CurrentPosition, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
-				
 			Case #Timer_Apparition
 				AddWindowTimer(Window, #Timer_FadeInAnimation, FrameDuration)
 				RemoveWindowTimer(Window, #Timer_Apparition)
 		EndSelect
+	EndProcedure
+	
+	Procedure HandlerMovement()
+		Protected hDeferred, StillMoving
+		
+		hDeferred = BeginDeferWindowPos_(ListSize(WindowList()))
+		
+		ForEach WindowList()
+			If WindowList()\Moving
+				WindowList()\MovementStep + 1
+				
+				If WindowList()\MovementStep = FrameCount
+					WindowList()\OriginalPosition = WindowList()\MovementTarget
+					WindowList()\CurrentPosition = WindowList()\MovementTarget
+					WindowList()\Moving = #False
+				Else
+					WindowList()\CurrentPosition = Ease_CubicOut(WindowList()\MovementStep, WindowList()\OriginalPosition, WindowList()\MovementTarget, FrameCount)
+					StillMoving = #True
+				EndIf
+				
+				; #SWP_NOACTIVATE is mandatory: without it every animation frame activates the popup and
+				; steals the foreground from the app the user is typing in.
+				If hDeferred
+					hDeferred = DeferWindowPos_(hDeferred, WindowList()\WindowID, 0, WindowList()\X, WindowList()\CurrentPosition, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
+				Else ; The batch could not be created, fall back to moving the popups one by one.
+					SetWindowPos_(WindowList()\WindowID, 0, WindowList()\X, WindowList()\CurrentPosition, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
+				EndIf
+			EndIf
+		Next
+		
+		If hDeferred
+			EndDeferWindowPos_(hDeferred)
+		EndIf
+		
+		If Not StillMoving
+			MovementActive = #False
+			RemoveWindowTimer(MovementWindow, #Timer_Movement)
+		EndIf
+	EndProcedure
+	
+	Procedure StartMovement()
+		If Not MovementWindow
+			MovementWindow = OpenWindow(#PB_Any, 0, 0, 1, 1, "", #PB_Window_Invisible | #PB_Window_NoActivate)
+			BindEvent(#PB_Event_Timer, @HandlerMovement(), MovementWindow)
+		EndIf
+		
+		; Not restarting a running timer: a fast burst of keys would keep resetting it and stall the animation.
+		If Not MovementActive
+			MovementActive = #True
+			AddWindowTimer(MovementWindow, #Timer_Movement, FrameDuration)
+		EndIf
 	EndProcedure
 	
 	Procedure.d Ease_CubicOut(Time.d, Original.d, Target.d, Duration.d)
@@ -712,7 +746,7 @@
 	EndProcedure
 	;}
 EndModule
-; IDE Options = PureBasic 6.21 Beta 10 (Windows - x64)
-; CursorPosition = 708
-; Folding = BAAA-
+; IDE Options = PureBasic 6.40 (Windows - x64)
+; CursorPosition = 747
+; Folding = BAAA9
 ; EnableXP
