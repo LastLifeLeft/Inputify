@@ -677,13 +677,13 @@
 			LocationInformationWindows() = OpenWindow(#PB_Any, DesktopX(Loop), DesktopY(Loop), DesktopWidth(Loop), DesktopHeight(Loop), "", #PB_Window_Invisible | #PB_Window_BorderLess, WindowID)
 			SetWindowColor(LocationInformationWindows(), $141414)
 			StickyWindow(LocationInformationWindows(), #True)
-			SetWindowLongPtr_(WindowID(LocationInformationWindows()), #GWL_EXSTYLE, #WS_EX_LAYERED)
+			SetWindowLongPtr_(WindowID(LocationInformationWindows()), #GWL_EXSTYLE, GetWindowLongPtr_(WindowID(LocationInformationWindows()), #GWL_EXSTYLE) | #WS_EX_LAYERED)
 			SetLayeredWindowAttributes_(WindowID(LocationInformationWindows()), 0, 150, #LWA_ALPHA)
 			HideWindow(LocationInformationWindows(), #False)
 		Next
 		
 		SetGadgetText(LocationInformationText, "x: " + Str(DesktopMouseX() - 50) + " y: " +Str(DesktopMouseY() - 12))
-		SetWindowPos_(WindowID(LocationInformationWindow), 0, DesktopMouseX() - 50, DesktopMouseY() - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW)
+		SetWindowPos_(WindowID(LocationInformationWindow), 0, DesktopMouseX() - 50, DesktopMouseY() - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
 		HideWindow(LocationInformationWindow, #False)
 		SetActiveWindow(LocationInformationWindow)
 		ShowCursor_(#False)
@@ -837,7 +837,7 @@
 					QuitPopupPlacement
 				Case #WM_MOUSEMOVE
 					SetGadgetText(LocationInformationText, "x: " + Str(*p\pt\x - 50) + " y: " +Str(*p\pt\y - 12))
-					SetWindowPos_(WindowID(LocationInformationWindow), 0, *p\pt\x - 50, *p\pt\y - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW)
+					SetWindowPos_(WindowID(LocationInformationWindow), 0, *p\pt\x - 50, *p\pt\y - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
 					ProcedureReturn #False
 			EndSelect
 		EndIf

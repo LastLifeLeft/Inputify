@@ -312,7 +312,10 @@
 				*LatestWindow\OriginalImage = CreateImage(#PB_Any, WindowWidth, WindowHeight, 32, #PB_Image_Transparent)
 				*LatestWindow\Combo = 1
 				
-				SetWindowLongPtr_(*LatestWindow\WindowID, #GWL_EXSTYLE, #WS_EX_LAYERED)
+				; #PB_Window_NoActivate only applies to the initial show, it isn't a persistent style, so the popup
+				; stays activable for its whole life. #WS_EX_NOACTIVATE is what actually keeps it out of the
+				; activation chain, and #WS_EX_TRANSPARENT stops a click on the key art from activating the owner.
+				SetWindowLongPtr_(*LatestWindow\WindowID, #GWL_EXSTYLE, GetWindowLongPtr_(*LatestWindow\WindowID, #GWL_EXSTYLE) | #WS_EX_LAYERED | #WS_EX_NOACTIVATE | #WS_EX_TOOLWINDOW | #WS_EX_TRANSPARENT)
 				
 				SetWindowData(Window, *LatestWindow)
 				
@@ -578,7 +581,9 @@
 					*WindowData\CurrentPosition = Ease_CubicOut(*WindowData\MovementStep, *WindowData\OriginalPosition, *WindowData\MovementTarget, FrameCount)
 				EndIf
 				
-				SetWindowPos_(*WindowData\WindowID, 0, *WindowData\X, *WindowData\CurrentPosition, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW)
+				; #SWP_NOACTIVATE is mandatory: without it every animation frame activates the popup and steals the
+				; foreground from the app the user is typing in.
+				SetWindowPos_(*WindowData\WindowID, 0, *WindowData\X, *WindowData\CurrentPosition, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
 				
 			Case #Timer_Apparition
 				AddWindowTimer(Window, #Timer_FadeInAnimation, FrameDuration)
