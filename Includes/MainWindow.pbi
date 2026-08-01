@@ -148,7 +148,8 @@
 	;}
 	
 	#WH_KEYBOARD_LL = 13
-	#WM_INSTANCESTART = 111
+	#WM_INSTANCESTART = #WM_USER + 111								; Must sit above #WM_USER: 0 to $3FF is reserved for the system, so a bare 111 could be
+																	; delivered by Windows and pop the options window open on its own.
 	
 	Global MouseHook, MouseHook_Button, KeyboardHook
 	Global LocationMouseHook, LocationKeyboardHook, LocationInformationWindow, LocationInformationText

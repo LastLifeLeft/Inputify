@@ -242,6 +242,7 @@
 	Declare.d Ease_CubicOut(Time.d, Original.d, Target.d, Duration.d)
 	Declare.d Ease_CubicIn(Time.d, Original.d, Target.d, Duration.d)
 	Declare Init()
+	Declare ReleaseModifiers(Window, KeepVkey)
 	Declare InitAlphaBlening(*WindowData.WindowData)
 	Declare SetAlpha(*WindowData.WindowData)
 	Declare DrawKey(VKey, *WindowData.WindowData)
@@ -357,11 +358,9 @@
 		If *LatestWindow And *LatestWindow\Status < #Dying
 			If (General::Preferences(General::#Pref_Combo) Or (*LatestWindow And *LatestWindow\Vkey = Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU)) ; Yeah, unreadable condition (╯°□°）╯︵ ┻━┻
 				If *LatestWindow\Vkey = Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU And *LatestWindow\Combo = 1
-					MainWindow::InputArray(#VK_CONTROL) = #False
-					MainWindow::InputArray(#VK_SHIFT) = #False
-					MainWindow::InputArray(#VK_MENU) = #False
+					ReleaseModifiers(*LatestWindow\Window, Vkey)
 					MainWindow::InputArray(Vkey) = *LatestWindow\Window
-					
+
 					AddKey(*LatestWindow\Window, Vkey)
 					
 					ProcedureReturn #False
@@ -373,9 +372,7 @@
 				EndIf
 			ElseIf Not (*LatestWindow\Vkey > Control * #VK_CONTROL + Shift * #VK_SHIFT + Alt * #VK_MENU)
 				Create(Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU)
-				MainWindow::InputArray(#VK_CONTROL) = #False
-				MainWindow::InputArray(#VK_SHIFT) = #False
-				MainWindow::InputArray(#VK_MENU) = #False
+				ReleaseModifiers(*LatestWindow\Window, Vkey)
 				MainWindow::InputArray(Vkey) = *LatestWindow\Window
 				AddKey(*LatestWindow\Window, Vkey)
 				ProcedureReturn #False
@@ -384,10 +381,6 @@
 				*LatestWindow = 0
 			EndIf
 		EndIf
-		
-		MainWindow::InputArray(#VK_CONTROL) = #False
-		MainWindow::InputArray(#VK_SHIFT) = #False
-		MainWindow::InputArray(#VK_MENU) = #False
 		
 		If Control
 			MainWindow::InputArray(Vkey) = Create(#VK_CONTROL)
@@ -408,7 +401,11 @@
 				MainWindow::InputArray(Vkey) = Create(#VK_MENU)
 			EndIf
 		EndIf
-		
+
+		; Released only now: until the popups above are built we do not know which window ends up
+		; carrying the modifiers, and disowning a slot that holds a different popup would strand it.
+		ReleaseModifiers(MainWindow::InputArray(Vkey), Vkey)
+
 		AddKey(MainWindow::InputArray(Vkey), Vkey)
 	EndProcedure
 	
@@ -467,6 +464,27 @@
 		Next
 	EndProcedure
 	
+	; A shortcut hands the modifiers over to the popup that displays them, so the modifier slots that
+	; pointed at that popup must be cleared - otherwise releasing Ctrl and then the letter would hide
+	; the same window twice. Only that window may be disowned though: a slot holding a *different*
+	; popup (Shift or Alt pressed before Ctrl, so it never became *LatestWindow) has to keep its owner.
+	; Nothing else would ever release it - only Hide() arms #Timer_Duration - and it would stay on
+	; screen until Inputify quits. KeepVkey guards the slot the caller is about to take ownership of,
+	; since Vkey is itself a modifier when a shortcut is built out of modifiers alone.
+	Procedure ReleaseModifiers(Window, KeepVkey)
+		If KeepVkey <> #VK_CONTROL And MainWindow::InputArray(#VK_CONTROL) = Window
+			MainWindow::InputArray(#VK_CONTROL) = #False
+		EndIf
+
+		If KeepVkey <> #VK_SHIFT And MainWindow::InputArray(#VK_SHIFT) = Window
+			MainWindow::InputArray(#VK_SHIFT) = #False
+		EndIf
+
+		If KeepVkey <> #VK_MENU And MainWindow::InputArray(#VK_MENU) = Window
+			MainWindow::InputArray(#VK_MENU) = #False
+		EndIf
+	EndProcedure
+
 	Procedure InitAlphaBlening(*WindowData.WindowData)
 		Protected Width, Height, x, y, Red, Green, Blue, AlphaChannel, Color, ImageDC, OldDC
 		
