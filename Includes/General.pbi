@@ -1,7 +1,7 @@
 ﻿DeclareModule General
 	; Public variables, structures and constants
 	#AppName = "Inputify"
-	#Version = 1.0
+	#Version = 1.1
 	#Event_Update = UITK::#Event_FirstAvailableCustomValue
 	
 	;{ Colors
@@ -226,7 +226,7 @@ Module General
 		
 	EndProcedure
 EndModule
-; IDE Options = PureBasic 6.00 LTS (Windows - x64)
-; CursorPosition = 135
+; IDE Options = PureBasic 6.40 (Windows - x64)
+; CursorPosition = 3
 ; Folding = 669
 ; EnableXP

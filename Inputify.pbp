@@ -7,12 +7,12 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2026-08-01 20:42" user="lastlife" host="DESKTOP-7SK2AMF"/>
+    <lastopen date="2026-08-01 21:10" user="lastlife" host="DESKTOP-7SK2AMF"/>
   </section>
   <section name="files">
     <file name="Includes\General.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="++"/>
-      <fingerprint md5="67043b26445694284aaa1d350a884fb9"/>
+      <fingerprint md5="fc9cb4dc964f65f48e2a9512383d8853"/>
     </file>
     <file name="Includes\MainWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="++"/>
@@ -39,7 +39,7 @@
     <target name="C Compiler" enabled="1" default="1">
       <inputfile value="Main.pb"/>
       <outputfile value="Inputify.exe"/>
-      <compiler version="PureBasic 6.21 Beta 10 - C Backend (Windows - x64)"/>
+      <compiler version="PureBasic 6.40 - C Backend (Windows - x64)"/>
       <executable value="Inputify.exe"/>
       <options asm="1" xpskin="1" optimizer="1"/>
       <icon enable="1">Media\Inputify.ico</icon>
