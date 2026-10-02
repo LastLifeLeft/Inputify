@@ -302,10 +302,16 @@
 			
 			StartMovement()
 			
-			Window = OpenWindow(#PB_Any, OriginX, OriginY, WindowWidth, WindowHeight, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess | #PB_Window_NoActivate | #PB_Window_NoGadgets, MainWindow::WindowID)
-			DisableWindow(Window, #True)
+			Window = OpenWindow(#PB_Any, 0, 0, WindowWidth, WindowHeight, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess | #PB_Window_NoActivate | #PB_Window_NoGadgets, MainWindow::WindowID)
 			
 			If Window
+				DisableWindow(Window, #True)
+				
+				; The origin and every later move are in SetWindowPos_ units (pixels in a DPI aware build), while
+				; OpenWindow takes points: opened at the origin, a popup lands 25% lower at 125% scaling, below the
+				; screen, and only shows up once the next input pushes it into view.
+				SetWindowPos_(WindowID(Window), 0, OriginX, OriginY, 0, 0, #SWP_NOSIZE | #SWP_NOZORDER | #SWP_NOACTIVATE)
+				
 				; Set up the window data
 				*LatestWindow = AddElement(WindowList())
 				*LatestWindow\Window = Window
@@ -411,7 +417,7 @@
 	
 	Procedure SetScale(NewScale)
 		OriginY + WindowHeight
-		Scale = NewScale / 100
+		Scale = NewScale / 100 * DesktopResolutionX()					; The popups are drawn in pixels: a DPI aware build must scale them itself.
 		WindowWidth = #Window_Width * Scale
 		WindowHeight = (#Window_Height - 20) * Scale
 		Window_MovementTarget = (#Window_Height * Scale)

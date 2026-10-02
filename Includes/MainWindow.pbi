@@ -152,7 +152,7 @@
 																	; delivered by Windows and pop the options window open on its own.
 	
 	Global MouseHook, MouseHook_Button, KeyboardHook
-	Global LocationMouseHook, LocationKeyboardHook, LocationInformationWindow, LocationInformationText
+	Global LocationMouseHook, LocationKeyboardHook, LocationInformationWindow, LocationInformationText, LocationOffsetX, LocationOffsetY
 	Global Dim CornerImage(1)
 	Global NewList LocationInformationWindows()
 	
@@ -181,7 +181,7 @@
 	Declare LocationKeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 	Declare SetColor()
 	Declare WindowCallback(hWnd, Msg, wParam, lParam)
-	Declare VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State)
+	Declare VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State, *Theme.UITK::Theme)
 	;}
 	
 	;Public procedures
@@ -276,6 +276,7 @@
 		Y + #Appearance_Window_OptionSpacing
 		
 		UITK::TrackBar(#Trackbar_Scale, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 40, 25, 150, UITK::#Trackbar_ShowState)
+		SetGadgetFont(#Trackbar_Scale, General::OptionFont)
 		SetGadgetState(#Trackbar_Scale, General::Preferences(General::#Pref_Scale) * 0.5)
 		GadgetToolTip(#Trackbar_Scale, Language(#ToolTip_Scale))
 		SetGadgetAttribute(#Trackbar_Scale, UITK::#Trackbar_Scale, 50)
@@ -355,6 +356,7 @@
 		Y + #Appearance_Window_OptionSpacing
 		
 		UITK::TrackBar(#Trackbar_Duration, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 40, 5, 45, UITK::#Trackbar_ShowState)
+		SetGadgetFont(#Trackbar_Duration, General::OptionFont)
 		GadgetToolTip(#Trackbar_Duration, Language(#ToolTip_Duration))
 		SetGadgetState(#Trackbar_Duration, General::Preferences(General::#Pref_Duration) * 0.01)
 		SetGadgetAttribute(#Trackbar_Duration, UITK::#Trackbar_Scale, 10)
@@ -425,12 +427,13 @@
 		;{ Set up the popup window origin point to not interfere with the taskbar. See : https://docs.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shappbarmessage
 		Protected pData.APPBARDATA
 		SHAppBarMessage_(#ABM_GETTASKBARPOS, pData)
-		ExamineDesktops()
 		
+		; The taskbar rect and GetSystemMetrics_ answer in this process's own units, like SetWindowPos_ which moves the
+		; popups. PB's DesktopHeight does not: it is the physical mode even in a DPI unaware build.
 		If pData\uEdge = #ABE_BOTTOM
-			PopupWindow::SetPopupOrigin(10, DesktopHeight(0) - (pData\rc\bottom - pData\rc\top) - 10)
+			PopupWindow::SetPopupOrigin(10, GetSystemMetrics_(#SM_CYSCREEN) - (pData\rc\bottom - pData\rc\top) - 10)
 		ElseIf pData\uEdge = #ABE_LEFT
-			PopupWindow::SetPopupOrigin(pData\rc\right + 10, DesktopHeight(0) - 10)
+			PopupWindow::SetPopupOrigin(pData\rc\right + 10, GetSystemMetrics_(#SM_CYSCREEN) - 10)
 		EndIf
 		;}
 		
@@ -465,23 +468,28 @@
 		SetWindowLong_(WindowID(LocationInformationWindow), #GWL_EXSTYLE, GetWindowLong_(WindowID(LocationInformationWindow), #GWL_EXSTYLE) | #WS_EX_LAYERED)
 		SetLayeredWindowAttributes_(WindowID(LocationInformationWindow), $FF00FF, 255, #LWA_COLORKEY)
 		
+		; The window and its gadgets are laid out in points, but the canvas is drawn in pixels: the crosshair is
+		; drawn around its scaled centre, and the hooks place the window by that same pixel offset.
+		LocationOffsetX = DesktopScaledX(50)
+		LocationOffsetY = DesktopScaledY(12)
+		
 		StartDrawing(CanvasOutput(CanvasGadget(#PB_Any, 0, 0, 101, 50, #PB_Canvas_Container)))
-		Box(0, 0, 101, 30, $FF00FF)
+		Box(0, 0, OutputWidth(), OutputHeight(), $FF00FF)
 		FrontColor($FFFFFF)
-		Line(50, 0, 1, 10)
-		Line(50, 15, 1, 10)
-		Line(38, 12, 10, 1)
-		Line(53, 12, 10, 1)
-		Plot(49, 10)
-		Plot(51, 10)
-		Plot(48, 11)
-		Plot(52, 11)
-		Plot(48, 13)
-		Plot(52, 13)
-		Plot(49, 14)
-		Plot(51, 14)
-		Box(0, 30, 101, 20, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_Trackbar))
-		Box(1, 31, 99, 18, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold))
+		Line(LocationOffsetX, LocationOffsetY - 12, 1, 10)
+		Line(LocationOffsetX, LocationOffsetY + 3, 1, 10)
+		Line(LocationOffsetX - 12, LocationOffsetY, 10, 1)
+		Line(LocationOffsetX + 3, LocationOffsetY, 10, 1)
+		Plot(LocationOffsetX - 1, LocationOffsetY - 2)
+		Plot(LocationOffsetX + 1, LocationOffsetY - 2)
+		Plot(LocationOffsetX - 2, LocationOffsetY - 1)
+		Plot(LocationOffsetX + 2, LocationOffsetY - 1)
+		Plot(LocationOffsetX - 2, LocationOffsetY + 1)
+		Plot(LocationOffsetX + 2, LocationOffsetY + 1)
+		Plot(LocationOffsetX - 1, LocationOffsetY + 2)
+		Plot(LocationOffsetX + 1, LocationOffsetY + 2)
+		Box(0, DesktopScaledY(30), OutputWidth(), OutputHeight() - DesktopScaledY(30), General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_Trackbar))
+		Box(1, DesktopScaledY(30) + 1, OutputWidth() - 2, OutputHeight() - DesktopScaledY(30) - 2, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold))
 		StopDrawing()
 		
 		LocationInformationText = TextGadget(#PB_Any, 1, 31, 99, 18, "x: y:", #PB_Text_Center)
@@ -675,7 +683,8 @@
 		
 		For Loop = 0 To DesktopCount
 			AddElement(LocationInformationWindows())
-			LocationInformationWindows() = OpenWindow(#PB_Any, DesktopX(Loop), DesktopY(Loop), DesktopWidth(Loop), DesktopHeight(Loop), "", #PB_Window_Invisible | #PB_Window_BorderLess, WindowID)
+			LocationInformationWindows() = OpenWindow(#PB_Any, 0, 0, 10, 10, "", #PB_Window_Invisible | #PB_Window_BorderLess, WindowID)
+			SetWindowPos_(WindowID(LocationInformationWindows()), 0, DesktopX(Loop), DesktopY(Loop), DesktopWidth(Loop), DesktopHeight(Loop), #SWP_NOZORDER | #SWP_NOACTIVATE)	; Desktop* are pixels, OpenWindow takes points
 			SetWindowColor(LocationInformationWindows(), $141414)
 			StickyWindow(LocationInformationWindows(), #True)
 			SetWindowLongPtr_(WindowID(LocationInformationWindows()), #GWL_EXSTYLE, GetWindowLongPtr_(WindowID(LocationInformationWindows()), #GWL_EXSTYLE) | #WS_EX_LAYERED)
@@ -683,8 +692,8 @@
 			HideWindow(LocationInformationWindows(), #False)
 		Next
 		
-		SetGadgetText(LocationInformationText, "x: " + Str(DesktopMouseX() - 50) + " y: " +Str(DesktopMouseY() - 12))
-		SetWindowPos_(WindowID(LocationInformationWindow), 0, DesktopMouseX() - 50, DesktopMouseY() - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
+		SetGadgetText(LocationInformationText, "x: " + Str(DesktopMouseX() - LocationOffsetX) + " y: " +Str(DesktopMouseY() - LocationOffsetY))
+		SetWindowPos_(WindowID(LocationInformationWindow), 0, DesktopMouseX() - LocationOffsetX, DesktopMouseY() - LocationOffsetY, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
 		HideWindow(LocationInformationWindow, #False)
 		SetActiveWindow(LocationInformationWindow)
 		ShowCursor_(#False)
@@ -837,8 +846,8 @@
 				Case #WM_RBUTTONDOWN
 					QuitPopupPlacement
 				Case #WM_MOUSEMOVE
-					SetGadgetText(LocationInformationText, "x: " + Str(*p\pt\x - 50) + " y: " +Str(*p\pt\y - 12))
-					SetWindowPos_(WindowID(LocationInformationWindow), 0, *p\pt\x - 50, *p\pt\y - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
+					SetGadgetText(LocationInformationText, "x: " + Str(*p\pt\x - LocationOffsetX) + " y: " +Str(*p\pt\y - LocationOffsetY))
+					SetWindowPos_(WindowID(LocationInformationWindow), 0, *p\pt\x - LocationOffsetX, *p\pt\y - LocationOffsetY, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
 					ProcedureReturn #False
 			EndSelect
 		EndIf
@@ -952,7 +961,7 @@
 		ProcedureReturn #PB_ProcessPureBasicEvents
 	EndProcedure
 	
-	Procedure VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State)
+	Procedure VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State, *Theme.UITK::Theme)
 		If State = UITK::#Cold
 			VectorSourceColor(General::ColorScheme(1, General::#Color_Type_FrontCold))
 		Else
