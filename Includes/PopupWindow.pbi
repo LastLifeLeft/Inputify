@@ -1,5 +1,8 @@
 ﻿Module PopupWindow
 	EnableExplicit
+	CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+		UseModule VK
+	CompilerEndIf
 	;{ Private variables, structures and constants
 	Enumeration ;Timer
 		#Timer_Apparition
@@ -99,6 +102,12 @@
 	VKeyData(#VK_SPACE)\Text = "Space"
 	VKeyData(#VK_SPACE)\Width = 121
 	VKeyData(#VK_SPACE)\Offset = 26
+	
+	CompilerIf #PB_Compiler_OS = #PB_OS_MacOS					; Widths are measured in Init(): these labels are Mac only
+		VKeyData(#VK_MENU)\Text = "⌥ Opt"
+		VKeyData(#VK_LWIN)\Text = "⌘ Cmd"
+		VKeyData(#VK_LWIN)\Offset = 24
+	CompilerEndIf
 	;}
 	
 	;{ Arrow
@@ -215,6 +224,9 @@
 		Vkey.l
 		Offset.i
 		Image.i
+		CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+			Layer.i												; The content view's CALayer, which shows the popup image
+		CompilerEndIf
 		OriginalImage.i												; We must keep a copy of the original image for proper alphablending calculation down the line.
 		ImageID.i
 		Alpha.a
@@ -233,7 +245,11 @@
 	Global MovementWindow, MovementActive							; A single hidden window drives the movement of every popup at once (see HandlerMovement).
 	Global NewList WindowList.WindowData()
 	
-	Global Dim Preprocess.f($FF), Blend.BLENDFUNCTION, Image_BitmapInfo.BITMAPINFO, ContextOffset.POINT
+	CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+		Global Dim Preprocess.f($FF), Blend.BLENDFUNCTION, Image_BitmapInfo.BITMAPINFO, ContextOffset.POINT
+	CompilerElse
+		Global PixelRatio.d = 1										; Positions and sizes stay in pixels as on Windows, but Cocoa places windows in points.
+	CompilerEndIf
 	
 	; Private procedures declaration
 	Declare HandlerTimer()
@@ -246,6 +262,9 @@
 	Declare InitAlphaBlening(*WindowData.WindowData)
 	Declare SetAlpha(*WindowData.WindowData)
 	Declare DrawKey(VKey, *WindowData.WindowData)
+	CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+		Declare PlaceWindow(*WindowData.WindowData)
+	CompilerEndIf
 	
 	Init()
 	;}
@@ -302,15 +321,21 @@
 			
 			StartMovement()
 			
-			Window = OpenWindow(#PB_Any, 0, 0, WindowWidth, WindowHeight, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess | #PB_Window_NoActivate | #PB_Window_NoGadgets, MainWindow::WindowID)
+			CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+				Window = OpenWindow(#PB_Any, 0, 0, WindowWidth, WindowHeight, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess | #PB_Window_NoActivate | #PB_Window_NoGadgets, MainWindow::WindowID)
+			CompilerElse ; No owner: a Cocoa child window drags its parent on screen, and moves with it.
+				Window = OpenWindow(#PB_Any, OriginX / PixelRatio, OriginY / PixelRatio, WindowWidth / PixelRatio, WindowHeight / PixelRatio, General::#AppName, #PB_Window_Invisible | #PB_Window_BorderLess | #PB_Window_NoActivate | #PB_Window_NoGadgets)
+			CompilerEndIf
 			
 			If Window
 				DisableWindow(Window, #True)
 				
-				; The origin and every later move are in SetWindowPos_ units (pixels in a DPI aware build), while
-				; OpenWindow takes points: opened at the origin, a popup lands 25% lower at 125% scaling, below the
-				; screen, and only shows up once the next input pushes it into view.
-				SetWindowPos_(WindowID(Window), 0, OriginX, OriginY, 0, 0, #SWP_NOSIZE | #SWP_NOZORDER | #SWP_NOACTIVATE)
+				CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+					; The origin and every later move are in SetWindowPos_ units (pixels in a DPI aware build), while
+					; OpenWindow takes points: opened at the origin, a popup lands 25% lower at 125% scaling, below the
+					; screen, and only shows up once the next input pushes it into view.
+					SetWindowPos_(WindowID(Window), 0, OriginX, OriginY, 0, 0, #SWP_NOSIZE | #SWP_NOZORDER | #SWP_NOACTIVATE)
+				CompilerEndIf
 				
 				; Set up the window data
 				*LatestWindow = AddElement(WindowList())
@@ -326,20 +351,34 @@
 				*LatestWindow\OriginalImage = CreateImage(#PB_Any, WindowWidth, WindowHeight, 32, #PB_Image_Transparent)
 				*LatestWindow\Combo = 1
 				
-				; #PB_Window_NoActivate only applies to the initial show, it isn't a persistent style, so the popup
-				; stays activable for its whole life. #WS_EX_NOACTIVATE is what actually keeps it out of the
-				; activation chain, and #WS_EX_TRANSPARENT stops a click on the key art from activating the owner.
-				SetWindowLongPtr_(*LatestWindow\WindowID, #GWL_EXSTYLE, GetWindowLongPtr_(*LatestWindow\WindowID, #GWL_EXSTYLE) | #WS_EX_LAYERED | #WS_EX_NOACTIVATE | #WS_EX_TOOLWINDOW | #WS_EX_TRANSPARENT)
+				CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+					; #PB_Window_NoActivate only applies to the initial show, it isn't a persistent style, so the popup
+					; stays activable for its whole life. #WS_EX_NOACTIVATE is what actually keeps it out of the
+					; activation chain, and #WS_EX_TRANSPARENT stops a click on the key art from activating the owner.
+					SetWindowLongPtr_(*LatestWindow\WindowID, #GWL_EXSTYLE, GetWindowLongPtr_(*LatestWindow\WindowID, #GWL_EXSTYLE) | #WS_EX_LAYERED | #WS_EX_NOACTIVATE | #WS_EX_TOOLWINDOW | #WS_EX_TRANSPARENT)
+				CompilerElse
+					; A clear, shadowless, click-through window above everything, on every Space and over full screen apps.
+					CocoaMessage(0, *LatestWindow\WindowID, "setCollectionBehavior:", 1 | 16 | 64 | 256)	; CanJoinAllSpaces | Stationary | IgnoresCycle | FullScreenAuxiliary
+					*LatestWindow\Layer = ImageLayer(*LatestWindow\WindowID)
+					SetAlpha(*LatestWindow)
+				CompilerEndIf
 				
 				SetWindowData(Window, *LatestWindow)
 				
 				DrawKey(VKey, *LatestWindow)
 				
 				StickyWindow(Window, #True)
+				CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+					CocoaMessage(0, *LatestWindow\WindowID, "setLevel:", 101)	; NSPopUpMenuWindowLevel, StickyWindow's floating level sits below other apps' panels
+				CompilerEndIf
 				BindEvent(#PB_Event_Timer, @HandlerTimer(), Window)
 				
 				; Set up the alpha blending
-				HideWindow(Window, #False, #PB_Window_NoActivate)
+				CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+					HideWindow(Window, #False, #PB_Window_NoActivate)
+				CompilerElse
+					CocoaMessage(0, *LatestWindow\WindowID, "orderFrontRegardless")	; Shown without activating Inputify: the user's app keeps the keyboard
+				CompilerEndIf
 				
 				; Delay the apparition to limit overlap.
 				AddWindowTimer(Window, #Timer_Apparition, #ApparitionDelay)
@@ -356,28 +395,43 @@
 	EndProcedure
 	
 	Procedure SetPopupOrigin(X, Y)
+		CompilerIf #PB_Compiler_OS = #PB_OS_MacOS					; Given in points, like everything Cocoa answers
+			X * PixelRatio
+			Y * PixelRatio
+		CompilerEndIf
 		OriginX = X
 		OriginY = Y - WindowHeight
 	EndProcedure
 	
-	Procedure ShortCut(Control, Shift, Alt,Vkey)
+	CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+		Procedure.d PixelRatio()
+			ProcedureReturn PixelRatio
+		EndProcedure
+	CompilerEndIf
+	
+	Procedure ShortCut(Control, Shift, Alt, Command, Vkey)
+		; Held: the modifiers other than Vkey, as the sum a popup showing them carries. All: every held modifier.
+		; Command is the Mac's own modifier, never set on Windows.
+		Protected Held = (Control * Bool(Not Vkey = #VK_CONTROL)) * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU + (Command * Bool(Not Vkey = #VK_LWIN)) * #VK_LWIN
+		Protected All = Control * #VK_CONTROL + Shift * #VK_SHIFT + Alt * #VK_MENU + Command * #VK_LWIN
+		
 		If *LatestWindow And *LatestWindow\Status < #Dying
-			If (General::Preferences(General::#Pref_Combo) Or (*LatestWindow And *LatestWindow\Vkey = Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU)) ; Yeah, unreadable condition (╯°□°）╯︵ ┻━┻
-				If *LatestWindow\Vkey = Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU And *LatestWindow\Combo = 1
+			If (General::Preferences(General::#Pref_Combo) Or (*LatestWindow And *LatestWindow\Vkey = Held)) ; Yeah, unreadable condition (╯°□°）╯︵ ┻━┻
+				If *LatestWindow\Vkey = Held And *LatestWindow\Combo = 1
 					ReleaseModifiers(*LatestWindow\Window, Vkey)
 					MainWindow::InputArray(Vkey) = *LatestWindow\Window
 
 					AddKey(*LatestWindow\Window, Vkey)
 					
 					ProcedureReturn #False
-				ElseIf *LatestWindow\Vkey = Control * #VK_CONTROL + Shift * #VK_SHIFT + Alt * #VK_MENU + Vkey
+				ElseIf *LatestWindow\Vkey = All + Vkey
 					Create(*LatestWindow\Vkey)
 					MainWindow::InputArray(Vkey) = *LatestWindow\Window
 					
 					ProcedureReturn #False
 				EndIf
-			ElseIf Not (*LatestWindow\Vkey > Control * #VK_CONTROL + Shift * #VK_SHIFT + Alt * #VK_MENU)
-				Create(Control * #VK_CONTROL + (Shift * Bool(Not Vkey = #VK_SHIFT)) * #VK_SHIFT + (Alt * Bool(Not Vkey = #VK_MENU)) * #VK_MENU)
+			ElseIf Not (*LatestWindow\Vkey > All)
+				Create(Held)
 				ReleaseModifiers(*LatestWindow\Window, Vkey)
 				MainWindow::InputArray(Vkey) = *LatestWindow\Window
 				AddKey(*LatestWindow\Window, Vkey)
@@ -407,6 +461,14 @@
 				MainWindow::InputArray(Vkey) = Create(#VK_MENU)
 			EndIf
 		EndIf
+		
+		If Command
+			If MainWindow::InputArray(Vkey)
+				AddKey(MainWindow::InputArray(Vkey), #VK_LWIN)
+			Else
+				MainWindow::InputArray(Vkey) = Create(#VK_LWIN)
+			EndIf
+		EndIf
 
 		; Released only now: until the popups above are built we do not know which window ends up
 		; carrying the modifiers, and disowning a slot that holds a different popup would strand it.
@@ -417,7 +479,11 @@
 	
 	Procedure SetScale(NewScale)
 		OriginY + WindowHeight
-		Scale = NewScale / 100 * DesktopResolutionX()					; The popups are drawn in pixels: a DPI aware build must scale them itself.
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+			Scale = NewScale / 100 * DesktopResolutionX()				; The popups are drawn in pixels: a DPI aware build must scale them itself.
+		CompilerElse
+			Scale = NewScale / 100 * PixelRatio						; Drawn at the backing scale, so the popups are sharp on a Retina screen.
+		CompilerEndIf
 		WindowWidth = #Window_Width * Scale
 		WindowHeight = (#Window_Height - 20) * Scale
 		Window_MovementTarget = (#Window_Height * Scale)
@@ -429,17 +495,24 @@
 	Procedure Init()
 		Protected Loop
 		
-		For Loop = 0 To $FF
-			Preprocess(Loop) = Loop / $FF
-		Next
-		
-		Blend\AlphaFormat = 1
-		Blend\BlendOp = 0
-		Blend\BlendFlags = 0
-		
-		Image_BitmapInfo\bmiHeader\biSize = SizeOf(BITMAPINFOHEADER)
-		Image_BitmapInfo\bmiHeader\biPlanes = 1
-		Image_BitmapInfo\bmiHeader\biBitCount = 32
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+			For Loop = 0 To $FF
+				Preprocess(Loop) = Loop / $FF
+			Next
+			
+			Blend\AlphaFormat = 1
+			Blend\BlendOp = 0
+			Blend\BlendFlags = 0
+			
+			Image_BitmapInfo\bmiHeader\biSize = SizeOf(BITMAPINFOHEADER)
+			Image_BitmapInfo\bmiHeader\biPlanes = 1
+			Image_BitmapInfo\bmiHeader\biBitCount = 32
+		CompilerElse
+			Protected Screen = CocoaMessage(0, 0, "NSScreen mainScreen")
+			If Screen
+				CocoaMessage(@PixelRatio, Screen, "backingScaleFactor")
+			EndIf
+		CompilerEndIf
 		
 		For Loop = '0' To '9'
 			VKeyData(Loop)\Text = Chr(Loop)
@@ -468,6 +541,20 @@
 			VKeyData(Loop)\Text = Chr(Loop)
 			VKeyData(Loop)\Width = 60
 		Next
+		
+		CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+			; The widths and offsets above were fitted to the Windows font: a label that outgrows its key gets a wider one.
+			Protected Image = CreateImage(#PB_Any, 1, 1, 32, #PB_Image_Transparent)
+			StartVectorDrawing(ImageVectorOutput(Image))
+			VectorFont(General::TitleFont, 30)
+			For Loop = 0 To $FF
+				If VKeyData(Loop)\Text <> "" And VKeyData(Loop)\Width < VectorTextWidth(VKeyData(Loop)\Text) + 40
+					VKeyData(Loop)\Width = Round(VectorTextWidth(VKeyData(Loop)\Text), #PB_Round_Up) + 40
+				EndIf
+			Next
+			StopVectorDrawing()
+			FreeImage(Image)
+		CompilerEndIf
 	EndProcedure
 	
 	; A shortcut hands the modifiers over to the popup that displays them, so the modifier slots that
@@ -489,8 +576,57 @@
 		If KeepVkey <> #VK_MENU And MainWindow::InputArray(#VK_MENU) = Window
 			MainWindow::InputArray(#VK_MENU) = #False
 		EndIf
+		
+		If KeepVkey <> #VK_LWIN And MainWindow::InputArray(#VK_LWIN) = Window
+			MainWindow::InputArray(#VK_LWIN) = #False
+		EndIf
 	EndProcedure
 
+	CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+	; Makes WindowID a clear, shadowless, click-through window and returns the layer that shows its image, which Core
+	; Animation scales from pixels to the window's point size. It must be a sublayer: AppKit owns the content view's own
+	; layer and replaces its contents with the view's (empty) drawing when the window is first displayed.
+	Procedure ImageLayer(WindowID)
+		Protected ContentView = CocoaMessage(0, WindowID, "contentView"), Layer = CocoaMessage(0, 0, "CALayer layer"), Bounds.NSRect
+		
+		CocoaMessage(0, WindowID, "setOpaque:", #NO)
+		CocoaMessage(0, WindowID, "setBackgroundColor:", CocoaMessage(0, 0, "NSColor clearColor"))
+		CocoaMessage(0, WindowID, "setHasShadow:", #NO)
+		CocoaMessage(0, WindowID, "setIgnoresMouseEvents:", #YES)
+		CocoaMessage(0, ContentView, "setWantsLayer:", #YES)
+		
+		CocoaMessage(@Bounds, ContentView, "bounds")
+		CocoaMessage(0, Layer, "setFrame:@", @Bounds)
+		CocoaMessage(0, Layer, "setAutoresizingMask:", 2 | 16)		; Width and height sizable
+		CocoaMessage(0, CocoaMessage(0, ContentView, "layer"), "addSublayer:", Layer)
+		
+		ProcedureReturn Layer
+	EndProcedure
+	
+	Procedure InitAlphaBlening(*WindowData.WindowData)
+		; Core Animation blends the image itself. The layer retains the NSImage, so it outlives the PB image.
+		CocoaMessage(0, *WindowData\Layer, "setContents:", *WindowData\ImageID)
+	EndProcedure
+	
+	Procedure SetAlpha(*WindowData.WindowData)
+		Protected Alpha.d = *WindowData\Alpha / 255
+		
+		CocoaMessage(0, *WindowData\WindowID, "setAlphaValue:@", @Alpha)
+	EndProcedure
+	
+	Procedure PlaceWindow(*WindowData.WindowData)
+		Protected Frame.NSRect, Screen = CocoaMessage(0, CocoaMessage(0, 0, "NSScreen screens"), "objectAtIndex:", 0)
+		Protected ScreenFrame.NSRect
+		
+		; Cocoa's origin is the bottom left corner of the main screen, and setFrameOrigin is cheaper than ResizeWindow's
+		; full frame update for a window that only moves.
+		CocoaMessage(@ScreenFrame, Screen, "frame")
+		CocoaMessage(@Frame, *WindowData\WindowID, "frame")
+		Frame\origin\x = *WindowData\X / PixelRatio
+		Frame\origin\y = ScreenFrame\size\height - *WindowData\CurrentPosition / PixelRatio - Frame\size\height
+		CocoaMessage(0, *WindowData\WindowID, "setFrameOrigin:@", @Frame\origin)
+	EndProcedure
+	CompilerElse
 	Procedure InitAlphaBlening(*WindowData.WindowData)
 		Protected Width, Height, x, y, Red, Green, Blue, AlphaChannel, Color, ImageDC, OldDC
 		
@@ -539,6 +675,7 @@
 		
 		UpdateLayeredWindow_(*WindowData\WindowID, 0, 0, 0, 0, 0, 0, @Blend, 2)
 	EndProcedure
+	CompilerEndIf
 	
 	Procedure HandlerTimer()
 		Protected Window = EventWindow()
@@ -601,7 +738,9 @@
 	Procedure HandlerMovement()
 		Protected hDeferred, StillMoving
 		
-		hDeferred = BeginDeferWindowPos_(ListSize(WindowList()))
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+			hDeferred = BeginDeferWindowPos_(ListSize(WindowList()))
+		CompilerEndIf
 		
 		ForEach WindowList()
 			If WindowList()\Moving
@@ -616,19 +755,25 @@
 					StillMoving = #True
 				EndIf
 				
-				; #SWP_NOACTIVATE is mandatory: without it every animation frame activates the popup and
-				; steals the foreground from the app the user is typing in.
-				If hDeferred
-					hDeferred = DeferWindowPos_(hDeferred, WindowList()\WindowID, 0, WindowList()\X, WindowList()\CurrentPosition, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
-				Else ; The batch could not be created, fall back to moving the popups one by one.
-					SetWindowPos_(WindowList()\WindowID, 0, WindowList()\X, WindowList()\CurrentPosition, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
-				EndIf
+				CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+					; #SWP_NOACTIVATE is mandatory: without it every animation frame activates the popup and
+					; steals the foreground from the app the user is typing in.
+					If hDeferred
+						hDeferred = DeferWindowPos_(hDeferred, WindowList()\WindowID, 0, WindowList()\X, WindowList()\CurrentPosition, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
+					Else ; The batch could not be created, fall back to moving the popups one by one.
+						SetWindowPos_(WindowList()\WindowID, 0, WindowList()\X, WindowList()\CurrentPosition, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
+					EndIf
+				CompilerElse
+					PlaceWindow(@WindowList())
+				CompilerEndIf
 			EndIf
 		Next
 		
-		If hDeferred
-			EndDeferWindowPos_(hDeferred)
-		EndIf
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+			If hDeferred
+				EndDeferWindowPos_(hDeferred)
+			EndIf
+		CompilerEndIf
 		
 		If Not StillMoving
 			MovementActive = #False
@@ -749,7 +894,11 @@
 			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_3))
 			FillPath()
 			
-			MovePathCursor((*WindowData\Offset + VKeyData(VKey)\Offset - 10)  * Scale, 15  * Scale)
+			CompilerIf #PB_Compiler_OS = #PB_OS_MacOS					; The fitted offsets centre the Windows font only
+				MovePathCursor((*WindowData\Offset + VKeyData(VKey)\Width * 0.5) * Scale - VectorTextWidth(VKeyData(VKey)\Text) * 0.5, 30 * Scale - VectorTextHeight(VKeyData(VKey)\Text) * 0.5)
+			CompilerElse
+				MovePathCursor((*WindowData\Offset + VKeyData(VKey)\Offset - 10)  * Scale, 15  * Scale)
+			CompilerEndIf
 			
 			VectorSourceColor(General::KeyScheme(General::Preferences(General::#Pref_InputColor), General::#Color_Keyboard_4))
 			DrawVectorText(VKeyData(VKey)\Text)
