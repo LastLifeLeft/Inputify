@@ -1005,7 +1005,7 @@
 				*p\vkCode = #VK_MENU
 			EndIf
 			
-			ProcessKey(*p\vkCode, Bool(wParam = #WM_KEYDOWN))
+			ProcessKey(*p\vkCode, Bool(wParam = #WM_KEYDOWN Or wParam = #WM_SYSKEYDOWN))
 		EndIf
 		
 		ProcedureReturn CallNextHookEx_(#NUL, nCode, wParam, *p)

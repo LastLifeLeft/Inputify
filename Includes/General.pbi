@@ -202,7 +202,7 @@ Module General
 	UsePNGImageDecoder()
 	
 	Procedure UpdateThread(Null)
-		Protected Text.s, URL.s, HTTPRequest, LineCount, Loop
+		Protected Text.s, Line.s, URL.s, HTTPRequest, LineCount, Loop
 		HTTPRequest = HTTPRequest(#PB_HTTP_Get, "https://github.com/LastLifeLeft/Inputify/releases/latest")
 		
 		If HTTPRequest
@@ -210,8 +210,9 @@ Module General
 			LineCount = CountString(Text, #CRLF$)
 			
 			For loop = 1 To LineCount
-				If StringField(StringField(Text, loop, #CRLF$), 1, ":") = "Location"
-					URL.s = StringField(StringField(Text, loop, #CRLF$), 2, "Location:")
+				Line = StringField(Text, loop, #CRLF$)
+				If LCase(Trim(StringField(Line, 1, ":"))) = "location"
+					URL.s = Trim(Mid(Line, FindString(Line, ":") + 1))
 					If ValF(StringField(URL, CountString(URL, "/") + 1, "/")) > #Version
 						PostEvent(#Event_Update)
 					EndIf
@@ -266,14 +267,10 @@ Module General
 		If Preferences(#Pref_CheckUpdate)
 			CreateThread(@UpdateThread(), #Null)
 		EndIf
-		
-		CompilerIf #PB_Compiler_OS = #PB_OS_Windows					; On macOS it opens an IOHIDManager, which raises the Input Monitoring prompt by itself
-			InitJoystick()
-		CompilerEndIf
-		
 	EndProcedure
 EndModule
-; IDE Options = PureBasic 6.40 (Windows - x64)
-; CursorPosition = 3
-; Folding = 669
+; IDE Options = PureBasic 6.50 beta 1 (Windows - x64)
+; CursorPosition = 268
+; FirstLine = 150
+; Folding = 0J+
 ; EnableXP
