@@ -237,6 +237,7 @@
 																	; timer really fires every 46.9ms (21fps); 31 lands on the 2nd tick = 31.25ms (32fps).
 	Global FrameCount = 9											; The number of step in a movement animation.
 	Global OriginX, OriginY											; The apparition coordinates of a new window
+	Global BaseWidth = #Window_Width								; The popup width at scale 1: wider on macOS, see Init()
 	Global WindowWidth = #Window_Width
 	Global WindowHeight = #Window_Height
 	Global Window_MovementTarget = WindowHeight + 10
@@ -484,7 +485,7 @@
 		CompilerElse
 			Scale = NewScale / 100 * PixelRatio						; Drawn at the backing scale, so the popups are sharp on a Retina screen.
 		CompilerEndIf
-		WindowWidth = #Window_Width * Scale
+		WindowWidth = BaseWidth * Scale
 		WindowHeight = (#Window_Height - 20) * Scale
 		Window_MovementTarget = (#Window_Height * Scale)
 		OriginY - WindowHeight
@@ -544,14 +545,26 @@
 		
 		CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
 			; The widths and offsets above were fitted to the Windows font: a label that outgrows its key gets a wider one.
-			Protected Image = CreateImage(#PB_Any, 1, 1, 32, #PB_Image_Transparent)
+			Protected Image = CreateImage(#PB_Any, 1, 1, 32, #PB_Image_Transparent), Widest
 			StartVectorDrawing(ImageVectorOutput(Image))
 			VectorFont(General::TitleFont, 30)
 			For Loop = 0 To $FF
 				If VKeyData(Loop)\Text <> "" And VKeyData(Loop)\Width < VectorTextWidth(VKeyData(Loop)\Text) + 40
 					VKeyData(Loop)\Width = Round(VectorTextWidth(VKeyData(Loop)\Text), #PB_Round_Up) + 40
 				EndIf
+				If Loop <> #VK_CONTROL And Loop <> #VK_SHIFT And Loop <> #VK_MENU And Loop <> #VK_LWIN And VKeyData(Loop)\Width > Widest
+					Widest = VKeyData(Loop)\Width
+				EndIf
 			Next
+			
+			; The 320 fitted to Ctrl+Shift+Alt+key on Windows: macOS has a fourth modifier and wider labels. The popup is
+			; transparent and click-through, so it is sized for the widest shortcut, each key followed by its 5 gap,
+			; plus room for the combo counter drawn after it.
+			VectorFont(General::TitleFont, 20)
+			BaseWidth = VKeyData(#VK_CONTROL)\Width + VKeyData(#VK_SHIFT)\Width + VKeyData(#VK_MENU)\Width + VKeyData(#VK_LWIN)\Width + Widest + 5 * 5 + 30 + VectorTextWidth("x99")
+			If BaseWidth < #Window_Width
+				BaseWidth = #Window_Width
+			EndIf
 			StopVectorDrawing()
 			FreeImage(Image)
 		CompilerEndIf
