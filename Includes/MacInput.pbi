@@ -159,21 +159,25 @@ Procedure StartKeyboardTap()
 		ProcedureReturn
 	EndIf
 
-	; Keys need Input Monitoring. Without it the tap would be created but stay deaf, so the grant is checked first.
-	; macOS shows its own prompt only once, and a grant only applies to the next launch.
-	If CGPreflightListenEventAccess() & $FF
-		KeyTap = CreateTap(#KeyboardMask, @KeySource)
-	Else
-		If Not PermissionAsked
-			PermissionAsked = #True
-			If (CGRequestListenEventAccess() & $FF) = 0 And General::Preferences(General::#Pref_InputMonitoringAsked)
+	; Keys need Input Monitoring: without it the tap would be created but stay deaf. IOHIDCheckAccess tells an undecided
+	; user, who gets macOS's own prompt, from one who refused it, who is offered System Settings instead. A grant only
+	; applies to the next launch.
+	Select IOHIDCheckAccess(#kIOHIDRequestTypeListenEvent)
+		Case #kIOHIDAccessTypeGranted
+			KeyTap = CreateTap(#KeyboardMask, @KeySource)
+		Case #kIOHIDAccessTypeUnknown
+			If Not PermissionAsked
+				PermissionAsked = #True
+				CGRequestListenEventAccess()
+			EndIf
+		Default
+			If Not PermissionAsked
+				PermissionAsked = #True
 				If MessageRequester(General::#AppName, Language(#Lng_InputMonitoring), #PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
 					RunProgram("open", "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent", "")
 				EndIf
 			EndIf
-			General::Preferences(General::#Pref_InputMonitoringAsked) = #True
-		EndIf
-	EndIf
+	EndSelect
 EndProcedure
 
 Procedure StopKeyboardTap()

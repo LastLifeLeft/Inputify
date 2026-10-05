@@ -170,7 +170,6 @@
 			CGEventTapEnable(Tap, Enable.l)
 			CGEventGetIntegerValueField.q(Event, Field.l)
 			CGEventGetFlags.q(Event)
-			CGPreflightListenEventAccess()
 			CGRequestListenEventAccess()
 			CFMachPortCreateRunLoopSource(Allocator, Port, Order.i)
 			CFMachPortInvalidate(Port)
@@ -180,6 +179,17 @@
 			CFRelease(Object)
 			dlsym(Handle, *Symbol)
 		EndImport
+		
+		ImportC "-framework IOKit"
+			IOHIDCheckAccess.l(RequestType.l)
+		EndImport
+		
+		#kIOHIDRequestTypeListenEvent = 1
+		Enumeration ; IOHIDAccessType
+			#kIOHIDAccessTypeGranted
+			#kIOHIDAccessTypeDenied
+			#kIOHIDAccessTypeUnknown
+		EndEnumeration
 		
 		#RTLD_DEFAULT = -2
 		
@@ -255,6 +265,7 @@
 		Declare DrawLocationInformation(X, Y)
 		Declare Handler_MacTimer()
 		Declare Handler_LocationCanvas()
+		Declare Handler_AppQuit()
 	CompilerEndIf
 	Declare SetColor()
 	Declare VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State, *Theme.UITK::Theme)
@@ -559,6 +570,9 @@
 		BindMenuEvent(0, #Menu_MouseTracking, @Handler_TrackMouse())
 		BindMenuEvent(0, #Menu_Options, @Handler_MenuOptions())
 		BindMenuEvent(0, #Menu_Quit, @Handler_MenuQuit())
+		CompilerIf #PB_Compiler_OS = #PB_OS_MacOS					; PB turns a quit request (Cmd+Q, logout, System Settings' "Quit & Reopen") into
+			BindEvent(#PB_Event_Menu, @Handler_AppQuit())			; #PB_Menu_Quit and cancels it: unhandled, Inputify would refuse to quit
+		CompilerEndIf
 		
 		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
 		OpenWindow(#Window_SingleInstance, 0, 0, 10, 0, "60e272b1-eb20-4caa-9354-2142e2be78a0", #PB_Window_Invisible)
@@ -754,6 +768,14 @@
 		CompilerEndIf
 	EndProcedure
 	
+	CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+	Procedure Handler_AppQuit()
+		If EventMenu() = #PB_Menu_Quit
+			Handler_MenuQuit()
+		EndIf
+	EndProcedure
+	CompilerEndIf
+	
 	Procedure Handler_MenuQuit()
 		If CreatePreferences(General::PreferenceFile)
 			PreferenceGroup("Appearance")
@@ -769,9 +791,6 @@
 			
 			PreferenceGroup("Misc")
 			WritePreferenceLong("Update", General::Preferences(General::#Pref_CheckUpdate))
-			CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
-				WritePreferenceLong("InputMonitoringAsked", General::Preferences(General::#Pref_InputMonitoringAsked))
-			CompilerEndIf
 			
 			ClosePreferences()
 		EndIf

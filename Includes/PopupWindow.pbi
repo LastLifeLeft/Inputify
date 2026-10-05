@@ -678,7 +678,7 @@
 	CompilerEndIf
 	
 	Procedure HandlerTimer()
-		Protected Window = EventWindow()
+		Protected Window = EventWindow(), Loop
 		Protected *WindowData.WindowData = GetWindowData(Window)
 		
 		Select EventTimer()
@@ -706,6 +706,19 @@
 					FreeImage(*WindowData\Image)
 					FreeImage(*WindowData\OriginalImage)
 					
+					; A popup can be shared by several held keys (a shortcut), and Hide() through one of them leaves the others
+					; pointing at it: releasing one of those after the fade would hide a closed window. The same goes for
+					; *LatestWindow when the newest popup dies before older ones.
+					For Loop = 0 To 255
+						If MainWindow::InputArray(Loop) = Window
+							MainWindow::InputArray(Loop) = #False
+						EndIf
+					Next
+					
+					If *LatestWindow = *WindowData
+						*LatestWindow = 0
+					EndIf
+					
 					ChangeCurrentElement(WindowList(), *WindowData)
 					If DeleteElement(WindowList(), #True)
 						Repeat  ; Check if later objects should be moved back down.
@@ -718,10 +731,16 @@
 						Until Not PreviousElement(WindowList())
 						
 						StartMovement()
-					Else
-						*LatestWindow = 0
 					EndIf
 					
+					CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+						; Moving a window queues an accessibility notification that AppKit posts to it later, while moving
+						; another one. Freed at once by CloseWindow, the popup receives it dead and Inputify crashes (with any
+						; accessibility client running): the NSWindow is kept alive until the notifications have gone out.
+						Protected NSWindow = WindowID(Window), ReleaseDelay.d = 2
+						CocoaMessage(0, NSWindow, "retain")
+						CocoaMessage(0, NSWindow, "performSelector:", sel_registerName_("release"), "withObject:", #Null, "afterDelay:@", @ReleaseDelay)
+					CompilerEndIf
 					CloseWindow(Window)
 				Else
 					

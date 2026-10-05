@@ -7,16 +7,16 @@
   <section name="data">
     <explorer view="C:/ProgramData/PureBasic/Examples/" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2026-10-05 06:25" user="poshu" host="MacBook-Air-de-Yolande.local"/>
+    <lastopen date="2026-10-05 06:30" user="poshu" host="MacBook-Air-de-Yolande.local"/>
   </section>
   <section name="files">
     <file name="Includes/General.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="+-"/>
-      <fingerprint md5="d21d614b4a723ab78db21d2551712be1"/>
+      <fingerprint md5="9d4128cdf497a429a781698852b56b28"/>
     </file>
     <file name="Includes/MainWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="+-"/>
-      <fingerprint md5="32008c82a5a2f3031132844713b07d82"/>
+      <fingerprint md5="c16bff948461980e979c7065cd0a05dc"/>
     </file>
     <file name="Includes/PopupWindow.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="+-"/>

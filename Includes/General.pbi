@@ -160,7 +160,6 @@ DeclareModule General
 		#Pref_Combo
 		#Pref_CheckUpdate
 		#Pref_InputColor
-		#Pref_InputMonitoringAsked										; macOS: the system prompt shows once, later launches offer System Settings
 		
 		#_Pref_COUNT
 	EndEnumeration
@@ -259,7 +258,6 @@ Module General
 		
 		PreferenceGroup("Misc")
 		Preferences(#Pref_CheckUpdate) = ReadPreferenceLong("Update", #True)
-		Preferences(#Pref_InputMonitoringAsked) = ReadPreferenceLong("InputMonitoringAsked", #False)
 		
 		ClosePreferences()
 		
@@ -269,7 +267,9 @@ Module General
 			CreateThread(@UpdateThread(), #Null)
 		EndIf
 		
-		InitJoystick()
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows					; On macOS it opens an IOHIDManager, which raises the Input Monitoring prompt by itself
+			InitJoystick()
+		CompilerEndIf
 		
 	EndProcedure
 EndModule
