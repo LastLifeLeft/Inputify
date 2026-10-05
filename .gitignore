@@ -1,3 +1,6 @@
 
 Preference.ini
 Inputify.exe
+build/
+Inputify.app/
+.DS_Store

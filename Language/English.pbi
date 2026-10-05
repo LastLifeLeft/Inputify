@@ -1,7 +1,7 @@
 ﻿Data.s "Dark mode", "Input scale", "Track mouse inputs", "Popup duration", "Combo regroupment", "Move popup origin", "Auto-update", "Input color", "Switch between the dark and light theme",
        "Changes the size of the input popup", "Include mouse click in the tracked inputs", "Change the time spent on screen by an input popup", "Regroup identical inputs as a group", "Enable the tracking altogether.", "Check update at startup",
        "Appearance", "Behavior", "About", "Controller", "General", "Input", "Misc", "Track keyboard inputs", "Preferences", "Quit", "Inputify has started, you can find it in your system tray icons!",
-       "Light theme", "Dark theme", "Blue theme", "Pink theme"
+       "Light theme", "Dark theme", "Blue theme", "Pink theme", ~"Inputify needs the Input Monitoring permission to see your keyboard.\nOpen System Settings to allow it? Inputify must be relaunched afterwards."
 ; About markdown :
 Data.s "### About Inputify ###" + #LF$ +
        "Thank you for using my program!  " + #LF$ + #LF$ +

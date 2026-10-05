@@ -1,6 +1,10 @@
 ﻿Module MainWindow
 	EnableExplicit
+	CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+		UseModule VK
+	CompilerEndIf
 	; Private variables, structures and constants
+	CompilerIf #PB_Compiler_OS = #PB_OS_Windows
 	;{ Notification
 	Structure NOTIFYICONDATA_ Align #PB_Structure_AlignC
 		cbSize.l
@@ -31,6 +35,7 @@
 	#NIIF_INFO  = $1
 		
 	;}
+	CompilerEndIf
 	
 	;{ Language
 	Enumeration 
@@ -69,6 +74,7 @@
 		#Lng_DarkTheme
 		#Lng_BlueTheme
 		#Lng_PinkTheme
+		#Lng_InputMonitoring
 		
 		#Lng_Markdown
 		
@@ -145,19 +151,78 @@
 	#Appearance_Window_ItemWidth = #Appearance_Window_Width - #Appearance_LeftPanel_Width - 2 * #Appearance_Window_Margin
 	
 	#Appearance_Option_Width = #Appearance_Window_Width - 2 *#Appearance_Window_TitleMargin
+	
+	CompilerIf #PB_Compiler_OS = #PB_OS_MacOS						; The title bar UITK draws inside the window on Windows is Cocoa's own, outside it
+		#Appearance_TitleBar_Height = 0
+	CompilerElse
+		#Appearance_TitleBar_Height = 30
+	CompilerEndIf
 	;}
 	
-	#WH_KEYBOARD_LL = 13
-	#WM_INSTANCESTART = #WM_USER + 111								; Must sit above #WM_USER: 0 to $3FF is reserved for the system, so a bare 111 could be
-																	; delivered by Windows and pop the options window open on its own.
+	CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+		#WH_KEYBOARD_LL = 13
+		#WM_INSTANCESTART = #WM_USER + 111								; Must sit above #WM_USER: 0 to $3FF is reserved for the system, so a bare 111 could be
+																		; delivered by Windows and pop the options window open on its own.
+	CompilerElse
+		;{ Event taps: the macOS counterpart of the low level hooks
+		ImportC "-framework ApplicationServices"
+			CGEventTapCreate(Tap.l, Place.l, Options.l, Mask.q, *Callback, *UserInfo)
+			CGEventTapEnable(Tap, Enable.l)
+			CGEventGetIntegerValueField.q(Event, Field.l)
+			CGEventGetFlags.q(Event)
+			CGPreflightListenEventAccess()
+			CGRequestListenEventAccess()
+			CFMachPortCreateRunLoopSource(Allocator, Port, Order.i)
+			CFMachPortInvalidate(Port)
+			CFRunLoopGetMain()
+			CFRunLoopAddSource(RunLoop, Source, Mode)
+			CFRunLoopRemoveSource(RunLoop, Source, Mode)
+			CFRelease(Object)
+			dlsym(Handle, *Symbol)
+		EndImport
+		
+		#RTLD_DEFAULT = -2
+		
+		#kCGSessionEventTap = 1
+		#kCGHeadInsertEventTap = 0
+		#kCGEventTapOptionListenOnly = 1
+		#kCGKeyboardEventKeycode = 9
+		#kCGMouseEventButtonNumber = 3
+		
+		Enumeration ; CGEventType
+			#kCGEventLeftMouseDown = 1
+			#kCGEventLeftMouseUp
+			#kCGEventRightMouseDown
+			#kCGEventRightMouseUp
+			#kCGEventKeyDown = 10
+			#kCGEventKeyUp
+			#kCGEventFlagsChanged
+			#kCGEventOtherMouseDown = 25
+			#kCGEventOtherMouseUp
+			#kCGEventTapDisabledByTimeout = -2						; $FFFFFFFE, read through a signed .l
+			#kCGEventTapDisabledByUserInput = -1
+		EndEnumeration
+		
+		#KeyboardMask = 1 << #kCGEventKeyDown | 1 << #kCGEventKeyUp | 1 << #kCGEventFlagsChanged
+		#MouseMask = 1 << #kCGEventLeftMouseDown | 1 << #kCGEventLeftMouseUp | 1 << #kCGEventRightMouseDown | 1 << #kCGEventRightMouseUp | 1 << #kCGEventOtherMouseDown | 1 << #kCGEventOtherMouseUp
+		
+		#Timer_Location = 0											; On LocationInformationWindow
+		
+		Global KeyTap, KeySource, LocationLayer, MouseTap, MouseSource, PermissionAsked, LocationImage, LocationLastX = -1, LocationLastY = -1
+		Global Dim MacVK.a(127)										; macOS virtual key code -> Windows VK, for keys whose character says nothing
+		;}
+	CompilerEndIf
 	
 	Global MouseHook, MouseHook_Button, KeyboardHook
-	Global LocationMouseHook, LocationKeyboardHook, LocationInformationWindow, LocationInformationText
+	Global LocationMouseHook, LocationKeyboardHook, LocationInformationWindow, LocationInformationText, LocationOffsetX, LocationOffsetY
 	Global Dim CornerImage(1)
 	Global NewList LocationInformationWindows()
 	
 	;{ Private procedures declaration
-	Declare SystrayBalloon(Title.s,Message.s,Flags)
+	CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+		Declare SystrayBalloon(Title.s,Message.s,Flags)
+		Declare Handler_Timer()
+	CompilerEndIf
 	Declare Handler_CloseWindow()
 	Declare Handler_TrackKeyboard()
 	Declare Handler_MenuOptions()
@@ -171,34 +236,63 @@
 	Declare Handler_TrackMouse()
 	Declare Handler_Combo()
 	Declare Handler_CheckUpdate()
-	Declare Handler_Timer()
 	Declare Handler_Location()
 	Declare Handler_LeftPanel()
 	Declare Handler_Radio()
-	Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
-	Declare MouseHook(nCode, wParam, *p.MOUSEHOOKSTRUCT)
-	Declare LocationMouseHook(nCode, wParam, *p.MOUSEHOOKSTRUCT)
-	Declare LocationKeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
+	Declare ProcessKey(VKey, Down)
+	CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+		Declare KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
+		Declare MouseHook(nCode, wParam, *p.MOUSEHOOKSTRUCT)
+		Declare LocationMouseHook(nCode, wParam, *p.MOUSEHOOKSTRUCT)
+		Declare LocationKeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
+		Declare WindowCallback(hWnd, Msg, wParam, lParam)
+	CompilerElse
+		Declare StartKeyboardTap()
+		Declare StopKeyboardTap()
+		Declare StartMouseTap()
+		Declare StopMouseTap()
+		Declare InitMacVK()
+		Declare DrawLocationInformation(X, Y)
+		Declare Handler_MacTimer()
+		Declare Handler_LocationCanvas()
+	CompilerEndIf
 	Declare SetColor()
-	Declare WindowCallback(hWnd, Msg, wParam, lParam)
-	Declare VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State)
+	Declare VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State, *Theme.UITK::Theme)
 	;}
+	
 	
 	;Public procedures
 	Procedure Open()
-		; Check if another instance is already running signal it
-		Protected InstanceWindow = FindWindow_(#Null, "60e272b1-eb20-4caa-9354-2142e2be78a0")
 		Protected cchData, lpLCData.s, Loop, Y, Icon = ImageID(CatchImage(#PB_Any, ?Icon18))
 		
-		If InstanceWindow
-			SendMessage_(InstanceWindow, #WM_INSTANCESTART, 0, 0)
-			Handler_MenuQuit() 
-		EndIf
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+			; Check if another instance is already running signal it
+			Protected InstanceWindow = FindWindow_(#Null, "60e272b1-eb20-4caa-9354-2142e2be78a0")
+			
+			If InstanceWindow
+				SendMessage_(InstanceWindow, #WM_INSTANCESTART, 0, 0)
+				Handler_MenuQuit() 
+			EndIf
+		CompilerElse
+			; Launch Services already keeps a bundle to one instance. An accessory app has no Dock icon and no menu bar:
+			; Inputify lives in its status item, and showing a popup never activates it.
+			CocoaMessage(0, CocoaMessage(0, 0, "NSApplication sharedApplication"), "setActivationPolicy:", 1)
+			InitMacVK()
+		CompilerEndIf
 		
 		;{ Language
-		cchData = GetLocaleInfo_(#LOCALE_USER_DEFAULT, #LOCALE_SNATIVELANGNAME, @lpLCData, 0)
-		lpLCData = Space(cchData)
-		GetLocaleInfo_(#LOCALE_USER_DEFAULT, #LOCALE_SNATIVELANGNAME, @lpLCData, cchData)
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+			cchData = GetLocaleInfo_(#LOCALE_USER_DEFAULT, #LOCALE_SNATIVELANGNAME, @lpLCData, 0)
+			lpLCData = Space(cchData)
+			GetLocaleInfo_(#LOCALE_USER_DEFAULT, #LOCALE_SNATIVELANGNAME, @lpLCData, cchData)
+		CompilerElse
+			Protected Languages = CocoaMessage(0, 0, "NSLocale preferredLanguages")
+			If Languages And CocoaMessage(0, Languages, "count")
+				If LCase(Left(PeekS(CocoaMessage(0, CocoaMessage(0, Languages, "objectAtIndex:", 0), "UTF8String"), -1, #PB_UTF8), 2)) = "fr"
+					lpLCData = "français"
+				EndIf
+			EndIf
+		CompilerEndIf
 		
 		Select lpLCData
 			Case "français"
@@ -251,12 +345,12 @@
 ;  		AddGadgetItem(#VList_Menu, -1, Language(#Lng_Controller))
  		AddGadgetItem(#VList_Menu, -1, Language(#Lng_About))
  		SetGadgetState(#VList_Menu, 0)
- 		ResizeGadget(#VList_Menu, #PB_Ignore, (WindowHeight(#Window) - 30 - (#Appearance_LeftPanel_ItemHeight * CountGadgetItems(#VList_Menu))) * 0.5, #PB_Ignore, #PB_Ignore)
+ 		ResizeGadget(#VList_Menu, #PB_Ignore, (WindowHeight(#Window) - #Appearance_TitleBar_Height - (#Appearance_LeftPanel_ItemHeight * CountGadgetItems(#VList_Menu))) * 0.5, #PB_Ignore, #PB_Ignore)
  		BindGadgetEvent(#VList_Menu, @Handler_LeftPanel(), #PB_EventType_Change)
  		;}
  		
  		;{ Appearance 
-		ContainerGadget(#Container_Appearance, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
+		ContainerGadget(#Container_Appearance, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - #Appearance_TitleBar_Height, #PB_Container_BorderLess)
 		ImageGadget(#ContainerCorner_Appearance, 0, 0, 5, 5, 0)
 		UITK::SetWindowIcon(#Window, Icon)
 		
@@ -276,6 +370,7 @@
 		Y + #Appearance_Window_OptionSpacing
 		
 		UITK::TrackBar(#Trackbar_Scale, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 40, 25, 150, UITK::#Trackbar_ShowState)
+		SetGadgetFont(#Trackbar_Scale, General::OptionFont)
 		SetGadgetState(#Trackbar_Scale, General::Preferences(General::#Pref_Scale) * 0.5)
 		GadgetToolTip(#Trackbar_Scale, Language(#ToolTip_Scale))
 		SetGadgetAttribute(#Trackbar_Scale, UITK::#Trackbar_Scale, 50)
@@ -319,7 +414,7 @@
 		CloseGadgetList() ;}
 		
 		;{ Behavior
-		ContainerGadget(#Container_Behavior, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
+		ContainerGadget(#Container_Behavior, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - #Appearance_TitleBar_Height, #PB_Container_BorderLess)
 		HideGadget(#Container_Behavior, #True)
 		ImageGadget(#ContainerCorner_Behavior, 0, 0, 5, 5, 0)
 		
@@ -355,6 +450,7 @@
 		Y + #Appearance_Window_OptionSpacing
 		
 		UITK::TrackBar(#Trackbar_Duration, GadgetWidth(#Container_Appearance) - #Appearance_Window_Margin - #Appearance_TrackBar_Lenght, Y - 9, #Appearance_TrackBar_Lenght, 40, 5, 45, UITK::#Trackbar_ShowState)
+		SetGadgetFont(#Trackbar_Duration, General::OptionFont)
 		GadgetToolTip(#Trackbar_Duration, Language(#ToolTip_Duration))
 		SetGadgetState(#Trackbar_Duration, General::Preferences(General::#Pref_Duration) * 0.01)
 		SetGadgetAttribute(#Trackbar_Duration, UITK::#Trackbar_Scale, 10)
@@ -388,7 +484,7 @@
 		CloseGadgetList() ;}
 		
 		;{ Controller
-		ContainerGadget(#Container_Controller, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
+		ContainerGadget(#Container_Controller, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - #Appearance_TitleBar_Height, #PB_Container_BorderLess)
 		HideGadget(#Container_Controller, #True)
 		ImageGadget(#ContainerCorner_Controller, 0, 0, 5, 5, 0)
 		
@@ -396,18 +492,24 @@
 		;}
 		
 		;{ About
-		ContainerGadget(#Container_About, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - 30, #PB_Container_BorderLess)
+		ContainerGadget(#Container_About, #Appearance_LeftPanel_Width, 0, #Appearance_Window_Width - #Appearance_LeftPanel_Width, WindowHeight(#Window) - #Appearance_TitleBar_Height, #PB_Container_BorderLess)
 		HideGadget(#Container_About, #True)
 		ImageGadget(#ContainerCorner_About, 0, 0, 5, 5, 0)
 		
 		MarkDown::Gadget(#MarkDown, #Appearance_MarkDown_Margin, 10, #Appearance_Window_Width - #Appearance_LeftPanel_Width - #Appearance_MarkDown_Margin * 2, GadgetHeight(#Container_About) - 20, MarkDown::#Borderless)
 		MarkDown::SetText(#MarkDown, Language(#Lng_Markdown))
-		MarkDown::SetFont(#MarkDown, "Segoe UI", 10)
+		MarkDown::SetFont(#MarkDown, General::#MarkDownFont, General::#MarkDownFontSize)
 		CloseGadgetList()
 		;}
 		
 		;{ Systray
-		AddSysTrayIcon(#Systray, WindowID, Icon)
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+			AddSysTrayIcon(#Systray, WindowID, Icon)
+		CompilerElse
+			; The status item and its menu get a plain window of their own: macOS drops the menu events of a disabled
+			; window, and the UITK options window is disabled whenever it is hidden.
+			AddSysTrayIcon(#Systray, WindowID(OpenWindow(#PB_Any, 0, 0, 1, 1, "", #PB_Window_Invisible | #PB_Window_NoGadgets)), Icon)
+		CompilerEndIf
 		SysTrayIconToolTip(#Systray, General::#AppName)
 		
 		CreatePopupMenu(0)
@@ -420,19 +522,33 @@
 		
 		SetMenuItemState(0, #Menu_KeyboardTracking, General::Preferences(General::#Pref_Keyboard))
 		SetMenuItemState(0, #Menu_MouseTracking, General::Preferences(General::#Pref_TrackMouse))
+		
+		CompilerIf #PB_Compiler_OS = #PB_OS_MacOS					; A status item shows its menu itself, on a left click as Mac users expect
+			SysTrayIconMenu(#Systray, MenuID(0))
+		CompilerEndIf
 		;}
 		
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
 		;{ Set up the popup window origin point to not interfere with the taskbar. See : https://docs.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shappbarmessage
 		Protected pData.APPBARDATA
 		SHAppBarMessage_(#ABM_GETTASKBARPOS, pData)
-		ExamineDesktops()
 		
+		; The taskbar rect and GetSystemMetrics_ answer in this process's own units, like SetWindowPos_ which moves the
+		; popups. PB's DesktopHeight does not: it is the physical mode even in a DPI unaware build.
 		If pData\uEdge = #ABE_BOTTOM
-			PopupWindow::SetPopupOrigin(10, DesktopHeight(0) - (pData\rc\bottom - pData\rc\top) - 10)
+			PopupWindow::SetPopupOrigin(10, GetSystemMetrics_(#SM_CYSCREEN) - (pData\rc\bottom - pData\rc\top) - 10)
 		ElseIf pData\uEdge = #ABE_LEFT
-			PopupWindow::SetPopupOrigin(pData\rc\right + 10, DesktopHeight(0) - 10)
+			PopupWindow::SetPopupOrigin(pData\rc\right + 10, GetSystemMetrics_(#SM_CYSCREEN) - 10)
 		EndIf
 		;}
+		CompilerElse
+		;{ Set up the popup window origin point above the Dock: the visible frame leaves out the Dock and the menu bar
+		Protected Screen = CocoaMessage(0, CocoaMessage(0, 0, "NSScreen screens"), "objectAtIndex:", 0), Frame.NSRect, Visible.NSRect
+		CocoaMessage(@Frame, Screen, "frame")
+		CocoaMessage(@Visible, Screen, "visibleFrame")
+		PopupWindow::SetPopupOrigin(Visible\origin\x + 10, Frame\size\height - Visible\origin\y - 10)	; Cocoa's y grows upward
+		;}
+		CompilerEndIf
 		
 		;{ Event bindings
 		BindEvent(#PB_Event_CloseWindow, @Handler_CloseWindow(), #Window)
@@ -444,6 +560,7 @@
 		BindMenuEvent(0, #Menu_Options, @Handler_MenuOptions())
 		BindMenuEvent(0, #Menu_Quit, @Handler_MenuQuit())
 		
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
 		OpenWindow(#Window_SingleInstance, 0, 0, 10, 0, "60e272b1-eb20-4caa-9354-2142e2be78a0", #PB_Window_Invisible)
 		SetWindowCallback(@WindowCallback(), #Window_SingleInstance)
 		
@@ -458,30 +575,61 @@
 		If General::FirstStart
 			SystrayBalloon(General::#AppName, Language(#Lng_FirstStart), #NIIF_USER|#NIIF_INFO )
 		EndIf
+		CompilerEndIf
 		;}
+		
+		CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+		;{ The location selector: a click-through crosshair over one dimmed, click catching window per screen
+		LocationInformationWindow = OpenWindow(#PB_Any, 0, 0, 101, 50, "", #PB_Window_Invisible | #PB_Window_BorderLess | #PB_Window_NoGadgets)
+		LocationLayer = PopupWindow::ImageLayer(WindowID(LocationInformationWindow))
+		CocoaMessage(0, WindowID(LocationInformationWindow), "setLevel:", 102)
+		LocationOffsetX = 50
+		LocationOffsetY = 12
+		BindEvent(#PB_Event_Timer, @Handler_MacTimer(), LocationInformationWindow)
+		;}
+		
+		If General::Preferences(General::#Pref_Keyboard)
+			StartKeyboardTap()
+		EndIf
+		
+		If General::Preferences(General::#Pref_TrackMouse)
+			StartMouseTap()
+		EndIf
+		
+		SetColor()
+		
+		If General::FirstStart										; No balloon on macOS: show where the settings are instead
+			Handler_MenuOptions()
+		EndIf
+		CompilerElse
 		
 		;{ Create the location selector window (it works but it's very hacky, there has to be a proper solution): 
 		LocationInformationWindow = OpenWindow(#PB_Any, 0, 0, 101, 50, "", #PB_Window_Invisible | #PB_Window_BorderLess, WindowID)
 		SetWindowLong_(WindowID(LocationInformationWindow), #GWL_EXSTYLE, GetWindowLong_(WindowID(LocationInformationWindow), #GWL_EXSTYLE) | #WS_EX_LAYERED)
 		SetLayeredWindowAttributes_(WindowID(LocationInformationWindow), $FF00FF, 255, #LWA_COLORKEY)
 		
+		; The window and its gadgets are laid out in points, but the canvas is drawn in pixels: the crosshair is
+		; drawn around its scaled centre, and the hooks place the window by that same pixel offset.
+		LocationOffsetX = DesktopScaledX(50)
+		LocationOffsetY = DesktopScaledY(12)
+		
 		StartDrawing(CanvasOutput(CanvasGadget(#PB_Any, 0, 0, 101, 50, #PB_Canvas_Container)))
-		Box(0, 0, 101, 30, $FF00FF)
+		Box(0, 0, OutputWidth(), OutputHeight(), $FF00FF)
 		FrontColor($FFFFFF)
-		Line(50, 0, 1, 10)
-		Line(50, 15, 1, 10)
-		Line(38, 12, 10, 1)
-		Line(53, 12, 10, 1)
-		Plot(49, 10)
-		Plot(51, 10)
-		Plot(48, 11)
-		Plot(52, 11)
-		Plot(48, 13)
-		Plot(52, 13)
-		Plot(49, 14)
-		Plot(51, 14)
-		Box(0, 30, 101, 20, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_Trackbar))
-		Box(1, 31, 99, 18, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold))
+		Line(LocationOffsetX, LocationOffsetY - 12, 1, 10)
+		Line(LocationOffsetX, LocationOffsetY + 3, 1, 10)
+		Line(LocationOffsetX - 12, LocationOffsetY, 10, 1)
+		Line(LocationOffsetX + 3, LocationOffsetY, 10, 1)
+		Plot(LocationOffsetX - 1, LocationOffsetY - 2)
+		Plot(LocationOffsetX + 1, LocationOffsetY - 2)
+		Plot(LocationOffsetX - 2, LocationOffsetY - 1)
+		Plot(LocationOffsetX + 2, LocationOffsetY - 1)
+		Plot(LocationOffsetX - 2, LocationOffsetY + 1)
+		Plot(LocationOffsetX + 2, LocationOffsetY + 1)
+		Plot(LocationOffsetX - 1, LocationOffsetY + 2)
+		Plot(LocationOffsetX + 1, LocationOffsetY + 2)
+		Box(0, DesktopScaledY(30), OutputWidth(), OutputHeight() - DesktopScaledY(30), General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_Trackbar))
+		Box(1, DesktopScaledY(30) + 1, OutputWidth() - 2, OutputHeight() - DesktopScaledY(30) - 2, General::ColorScheme(General::#Color_Mode_Dark, General::#Color_Type_BackCold))
 		StopDrawing()
 		
 		LocationInformationText = TextGadget(#PB_Any, 1, 31, 99, 18, "x: y:", #PB_Text_Center)
@@ -497,9 +645,11 @@
 		;}
 		
 		SetColor()
+		CompilerEndIf
 	EndProcedure
 	
 	;{ Private procedures
+	CompilerIf #PB_Compiler_OS = #PB_OS_Windows
 	Procedure SystrayBalloon(Title.s,Message.s,Flags)
 		If OSVersion() >= #PB_OS_Windows_Vista
 			SysTrayInfo\cbSize = SizeOf(NOTIFYICONDATA_)
@@ -529,6 +679,7 @@
 		
 		ProcedureReturn #False
 	EndProcedure
+	CompilerEndIf
 	
 	Procedure Handler_CloseWindow()
 		DisableWindow(#Window, #True)
@@ -543,11 +694,20 @@
 		SetMenuItemState(0, #Menu_KeyboardTracking, General::Preferences(General::#Pref_Keyboard))
 		
 		If General::Preferences(General::#Pref_Keyboard) 
-			KeyboardHook = SetWindowsHookEx_(#WH_KEYBOARD_LL, @KeyboardHook(), GetModuleHandle_(0), 0)
+			CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+				KeyboardHook = SetWindowsHookEx_(#WH_KEYBOARD_LL, @KeyboardHook(), GetModuleHandle_(0), 0)
+			CompilerElse
+				StartKeyboardTap()
+			CompilerEndIf
 			
 		Else
-			UnhookWindowsHookEx_(KeyboardHook)
-			KeyboardHook = 0
+			CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+				UnhookWindowsHookEx_(KeyboardHook)
+				KeyboardHook = 0
+			CompilerElse
+				StopKeyboardTap()
+				Ctrl = #False : Shift = #False : Alt = #False : Cmd = #False	; A release that comes while the tap is off is never seen
+			CompilerEndIf
 			
 			For Loop = 0 To 255
 				If InputArray(Loop)
@@ -561,12 +721,20 @@
 	
 	Procedure Handler_Update()
 		If MessageRequester(General::#AppName, ~"A new version is available!\nDo you want to download it?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
-			RunProgram("https://github.com/LastLifeLeft/Inputify/releases/latest")
+			CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+				RunProgram("open", "https://github.com/LastLifeLeft/Inputify/releases/latest", "")
+			CompilerElse
+				RunProgram("https://github.com/LastLifeLeft/Inputify/releases/latest")
+			CompilerEndIf
 		EndIf
 	EndProcedure
 	
 	Procedure Handler_HyperLink()
-		RunProgram("http://lastlife.net/")
+		CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+			RunProgram("open", "http://lastlife.net/", "")
+		CompilerElse
+			RunProgram("http://lastlife.net/")
+		CompilerEndIf
 	EndProcedure
 	
 	Procedure Handler_Scale()
@@ -581,6 +749,9 @@
 	Procedure Handler_MenuOptions()
 		DisableWindow(#Window, #False)
 		HideWindow(#Window, #False, #PB_Window_ScreenCentered)
+		CompilerIf #PB_Compiler_OS = #PB_OS_MacOS					; An accessory app is not brought forward by showing a window
+			CocoaMessage(0, CocoaMessage(0, 0, "NSApplication sharedApplication"), "activateIgnoringOtherApps:", #YES)
+		CompilerEndIf
 	EndProcedure
 	
 	Procedure Handler_MenuQuit()
@@ -598,6 +769,9 @@
 			
 			PreferenceGroup("Misc")
 			WritePreferenceLong("Update", General::Preferences(General::#Pref_CheckUpdate))
+			CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+				WritePreferenceLong("InputMonitoringAsked", General::Preferences(General::#Pref_InputMonitoringAsked))
+			CompilerEndIf
 			
 			ClosePreferences()
 		EndIf
@@ -630,10 +804,18 @@
 		SetMenuItemState(0, #Menu_MouseTracking, General::Preferences(General::#Pref_TrackMouse))
 		
 		If General::Preferences(General::#Pref_TrackMouse)
-			MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
+			CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+				MouseHook = SetWindowsHookEx_(#WH_MOUSE_LL, @MouseHook(), GetModuleHandle_(0), 0)
+			CompilerElse
+				StartMouseTap()
+			CompilerEndIf
 		Else
-			UnhookWindowsHookEx_(MouseHook)
-			MouseHook = 0
+			CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+				UnhookWindowsHookEx_(MouseHook)
+				MouseHook = 0
+			CompilerElse
+				StopMouseTap()
+			CompilerEndIf
 			If InputArray(#VK_LBUTTON)
 				PopupWindow::Hide(InputArray(#VK_LBUTTON))
 				InputArray(#VK_LBUTTON) = #False
@@ -659,6 +841,7 @@
 		General::Preferences(General::#Pref_CheckUpdate) = GetGadgetState(#Toggle_CheckUpdate)
 	EndProcedure
 	
+	CompilerIf #PB_Compiler_OS = #PB_OS_Windows
 	Procedure Handler_Timer()
 		RemoveWindowTimer(LocationInformationWindow, 0)
 		If MouseHook_Button
@@ -675,7 +858,8 @@
 		
 		For Loop = 0 To DesktopCount
 			AddElement(LocationInformationWindows())
-			LocationInformationWindows() = OpenWindow(#PB_Any, DesktopX(Loop), DesktopY(Loop), DesktopWidth(Loop), DesktopHeight(Loop), "", #PB_Window_Invisible | #PB_Window_BorderLess, WindowID)
+			LocationInformationWindows() = OpenWindow(#PB_Any, 0, 0, 10, 10, "", #PB_Window_Invisible | #PB_Window_BorderLess, WindowID)
+			SetWindowPos_(WindowID(LocationInformationWindows()), 0, DesktopX(Loop), DesktopY(Loop), DesktopWidth(Loop), DesktopHeight(Loop), #SWP_NOZORDER | #SWP_NOACTIVATE)	; Desktop* are pixels, OpenWindow takes points
 			SetWindowColor(LocationInformationWindows(), $141414)
 			StickyWindow(LocationInformationWindows(), #True)
 			SetWindowLongPtr_(WindowID(LocationInformationWindows()), #GWL_EXSTYLE, GetWindowLongPtr_(WindowID(LocationInformationWindows()), #GWL_EXSTYLE) | #WS_EX_LAYERED)
@@ -683,14 +867,15 @@
 			HideWindow(LocationInformationWindows(), #False)
 		Next
 		
-		SetGadgetText(LocationInformationText, "x: " + Str(DesktopMouseX() - 50) + " y: " +Str(DesktopMouseY() - 12))
-		SetWindowPos_(WindowID(LocationInformationWindow), 0, DesktopMouseX() - 50, DesktopMouseY() - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
+		SetGadgetText(LocationInformationText, "x: " + Str(DesktopMouseX() - LocationOffsetX) + " y: " +Str(DesktopMouseY() - LocationOffsetY))
+		SetWindowPos_(WindowID(LocationInformationWindow), 0, DesktopMouseX() - LocationOffsetX, DesktopMouseY() - LocationOffsetY, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
 		HideWindow(LocationInformationWindow, #False)
 		SetActiveWindow(LocationInformationWindow)
 		ShowCursor_(#False)
 		
 		DisableWindow(LocationInformationWindow, #False)
 	EndProcedure
+	CompilerEndIf
 	
 	Procedure Handler_LeftPanel()
 		Select GetGadgetState(#VList_Menu)
@@ -724,6 +909,73 @@
 		General::Preferences(General::#Pref_InputColor) = EventGadget() - #Radio_Dark
 	EndProcedure
 	
+	; Shared by the Windows hook and the macOS event tap. Ctrl and Command both start a shortcut: Command is the
+	; Mac's shortcut key, and Cmd is never set on Windows.
+	Procedure ProcessKey(VKey, Down)
+		If Down
+			If Not InputArray(VKey)
+				If (VKey = #VK_CONTROL)
+					CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+						If Cmd
+							PopupWindow::ShortCut(Ctrl, Shift, Alt, Cmd, VKey)
+						Else
+							InputArray(VKey) = PopupWindow::Create(VKey)
+						EndIf
+					CompilerElse
+						InputArray(VKey) = PopupWindow::Create(VKey)
+					CompilerEndIf
+					Ctrl = #True
+				ElseIf (VKey = #VK_SHIFT)
+					If Ctrl Or Cmd
+						PopupWindow::ShortCut(Ctrl, Shift, Alt, Cmd, VKey)
+					Else
+						InputArray(VKey) = PopupWindow::Create(VKey)
+					EndIf
+					Shift = #True
+				ElseIf (VKey = #VK_MENU)
+					If Ctrl Or Cmd
+						PopupWindow::ShortCut(Ctrl, Shift, Alt, Cmd, VKey)
+					Else 
+						InputArray(VKey) = PopupWindow::Create(VKey)
+					EndIf
+					Alt = #True
+				CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+				ElseIf (VKey = #VK_LWIN)
+					If Ctrl
+						PopupWindow::ShortCut(Ctrl, Shift, Alt, Cmd, VKey)
+					Else
+						InputArray(VKey) = PopupWindow::Create(VKey)
+					EndIf
+					Cmd = #True
+				CompilerEndIf
+				ElseIf Ctrl Or Shift Or Alt Or Cmd
+					PopupWindow::ShortCut(Ctrl, Shift, Alt, Cmd, VKey)
+				Else
+					InputArray(VKey) = PopupWindow::Create(VKey)
+				EndIf
+			Else
+				; Hold!
+			EndIf
+		Else
+			If (VKey = #VK_CONTROL)
+				Ctrl = #False
+			ElseIf (VKey = #VK_SHIFT)
+				Shift = #False
+			ElseIf (VKey = #VK_MENU)
+				Alt = #False
+			ElseIf (VKey = #VK_LWIN)
+				Cmd = #False
+			EndIf
+			
+			If InputArray(VKey)
+				; An input has been released, start the windows disparition timer
+				PopupWindow::Hide(InputArray(VKey))
+				InputArray(VKey) = #False
+			EndIf
+		EndIf
+	EndProcedure
+	
+	CompilerIf #PB_Compiler_OS = #PB_OS_Windows
 	Procedure KeyboardHook(nCode, wParam, *p.KBDLLHOOKSTRUCT)
 		If nCode = #HC_ACTION
 			If (*p\vkCode = #VK_LCONTROL Or *p\vkCode = #VK_RCONTROL)
@@ -734,48 +986,7 @@
 				*p\vkCode = #VK_MENU
 			EndIf
 			
-			If wParam = #WM_KEYDOWN
-				If Not InputArray(*p\vkCode)
-					If (*p\vkCode = #VK_CONTROL)
-						InputArray(*p\vkCode) = PopupWindow::Create(*p\vkCode)
-						Ctrl = #True
-					ElseIf (*p\vkCode = #VK_SHIFT)
-						If Ctrl
-							PopupWindow::ShortCut(Ctrl, Shift, Alt, *p\vkCode)
-						Else
-							InputArray(*p\vkCode) = PopupWindow::Create(*p\vkCode)
-						EndIf
-						Shift = #True
-					ElseIf (*p\vkCode = #VK_MENU)
-						If Ctrl
-							PopupWindow::ShortCut(Ctrl, Shift, Alt, *p\vkCode)
-						Else 
-							InputArray(*p\vkCode) = PopupWindow::Create(*p\vkCode)
-						EndIf
-						Alt = #True
-					ElseIf Ctrl Or Shift Or Alt
-						PopupWindow::ShortCut(Ctrl, Shift, Alt, *p\vkCode)
-					Else
-						InputArray(*p\vkCode) = PopupWindow::Create(*p\vkCode)
-					EndIf
-				Else
-					; Hold!
-				EndIf
-			Else
-				If (*p\vkCode = #VK_CONTROL)
-					Ctrl = #False
-				ElseIf (*p\vkCode = #VK_SHIFT)
-					Shift = #False
-				ElseIf (*p\vkCode = #VK_MENU)
-					Alt = #False
-				EndIf
-				
-				If InputArray(*p\vkCode)
-					; An input has been released, start the windows disparition timer
-					PopupWindow::Hide(InputArray(*p\vkCode))
-					InputArray(*p\vkCode) = #False
-				EndIf
-			EndIf
+			ProcessKey(*p\vkCode, Bool(wParam = #WM_KEYDOWN))
 		EndIf
 		
 		ProcedureReturn CallNextHookEx_(#NUL, nCode, wParam, *p)
@@ -837,8 +1048,8 @@
 				Case #WM_RBUTTONDOWN
 					QuitPopupPlacement
 				Case #WM_MOUSEMOVE
-					SetGadgetText(LocationInformationText, "x: " + Str(*p\pt\x - 50) + " y: " +Str(*p\pt\y - 12))
-					SetWindowPos_(WindowID(LocationInformationWindow), 0, *p\pt\x - 50, *p\pt\y - 12, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
+					SetGadgetText(LocationInformationText, "x: " + Str(*p\pt\x - LocationOffsetX) + " y: " +Str(*p\pt\y - LocationOffsetY))
+					SetWindowPos_(WindowID(LocationInformationWindow), 0, *p\pt\x - LocationOffsetX, *p\pt\y - LocationOffsetY, 0, 0, #SWP_NOSIZE|#SWP_NOZORDER|#SWP_NOREDRAW|#SWP_NOACTIVATE)
 					ProcedureReturn #False
 			EndSelect
 		EndIf
@@ -854,6 +1065,7 @@
 		EndIf
 		ProcedureReturn #True
 	EndProcedure
+	CompilerEndIf
 	
 	Macro SetRadioAppearance(Button)
 		SetGadgetColor(Button, UITK::#Color_Parent, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_BackCold))
@@ -888,7 +1100,9 @@
 	EndMacro
 	
 	Procedure SetColor()
-		SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #False, 0)
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+			SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #False, 0)
+		CompilerEndIf
 		
 		SetContainerColor(#Container_Appearance)
 		SetContainerColor(#Container_Behavior)
@@ -940,10 +1154,13 @@
 		MarkDown::SetColor(#MarkDown, MarkDown::#Color_Link, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		MarkDown::SetColor(#MarkDown, MarkDown::#Color_HighlightLink, General::ColorScheme(General::Preferences(General::#Pref_DarkMode), General::#Color_Type_FrontCold))
 		
-		SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #True, 0)
-		RedrawWindow_(GadgetID(#Container_Appearance), 0, 0, #RDW_ERASE | #RDW_INVALIDATE) 
+		CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+			SendMessage_(GadgetID(#Container_Appearance), #WM_SETREDRAW, #True, 0)
+			RedrawWindow_(GadgetID(#Container_Appearance), 0, 0, #RDW_ERASE | #RDW_INVALIDATE) 
+		CompilerEndIf
 	EndProcedure
 	
+	CompilerIf #PB_Compiler_OS = #PB_OS_Windows
 	Procedure WindowCallback(hWnd, Msg, wParam, lParam)
 		If Msg = #WM_INSTANCESTART
 			Handler_MenuOptions()
@@ -951,8 +1168,11 @@
 		
 		ProcedureReturn #PB_ProcessPureBasicEvents
 	EndProcedure
+	CompilerElse
+	XIncludeFile "MacInput.pbi"
+	CompilerEndIf
 	
-	Procedure VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State)
+	Procedure VListItemRedraw(*Item.UITK::VerticalListItem, X, Y, Width, Height, State, *Theme.UITK::Theme)
 		If State = UITK::#Cold
 			VectorSourceColor(General::ColorScheme(1, General::#Color_Type_FrontCold))
 		Else

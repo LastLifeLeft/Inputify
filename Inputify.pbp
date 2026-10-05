@@ -1,49 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.40 (Windows - x64)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.50 beta 1 - C Backend (MacOS X - arm64)">
   <section name="config">
     <options closefiles="1" openmode="0" name="Inputify"/>
   </section>
   <section name="data">
-    <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
+    <explorer view="C:/ProgramData/PureBasic/Examples/" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2026-08-01 21:10" user="lastlife" host="DESKTOP-7SK2AMF"/>
+    <lastopen date="2026-10-05 06:25" user="poshu" host="MacBook-Air-de-Yolande.local"/>
   </section>
   <section name="files">
-    <file name="Includes\General.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="++"/>
-      <fingerprint md5="fc9cb4dc964f65f48e2a9512383d8853"/>
+    <file name="Includes/General.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="+-"/>
+      <fingerprint md5="d21d614b4a723ab78db21d2551712be1"/>
     </file>
-    <file name="Includes\MainWindow.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="++"/>
-      <fingerprint md5="c348298fdac439c41137d4995674d859"/>
+    <file name="Includes/MainWindow.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="+-"/>
+      <fingerprint md5="32008c82a5a2f3031132844713b07d82"/>
     </file>
-    <file name="Includes\PopupWindow.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="++"/>
-      <fingerprint md5="84fb7d90be869b881b25039c59cdce4f"/>
+    <file name="Includes/PopupWindow.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="+-"/>
+      <fingerprint md5="c0d554f9375154d9ddb8e5ecf75f758f"/>
     </file>
     <file name="Main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="4" panelstate="+"/>
-      <fingerprint md5="6122d194cb17ceb464d910c8f217f1b4"/>
+      <fingerprint md5="e94bf8e926da6e933decc6d2f0471ee2"/>
     </file>
-    <file name="UI-Toolkit\Library\UI-Toolkit.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+++"/>
-      <fingerprint md5="4491eefce766f1d8a9efda70e5467b0a"/>
+    <file name="UI-Toolkit/Library/UI-Toolkit.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+--"/>
+      <fingerprint md5="88fcea6c980d55882f5b90e7ab0c2daa"/>
     </file>
-    <file name="MarkDownModule\MarkDownModule.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="67e64c8c0c954f6387b3b18944b5c9a8"/>
+    <file name="MarkDownModule/MarkDownModule.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+-"/>
+      <fingerprint md5="284484d0fa1b6a49ded09d9504ed456a"/>
     </file>
   </section>
   <section name="targets">
-    <target name="C Compiler" enabled="1" default="1">
+    <target name="C Compiler" enabled="1" default="0">
       <inputfile value="Main.pb"/>
       <outputfile value="Inputify.exe"/>
-      <compiler version="PureBasic 6.40 - C Backend (Windows - x64)"/>
+      <compiler version="PureBasic 6.50 beta 1 - C Backend (MacOS X - arm64)"/>
       <executable value="Inputify.exe"/>
-      <options asm="1" xpskin="1" optimizer="1"/>
+      <options asm="1" xpskin="1" dpiaware="1" optimizer="1"/>
       <icon enable="1">Media\Inputify.ico</icon>
-      <format exe="default" cpu="5"/>
+      <format exe="default" cpu="-1"/>
+    </target>
+    <target name="C Compiler (MacOS)" enabled="1" default="1">
+      <inputfile value="Main.pb"/>
+      <outputfile value="Inputify.app"/>
+      <compiler version="PureBasic 6.50 beta 1 - C Backend (MacOS X - arm64)"/>
+      <executable value="Inputify.app"/>
+      <options asm="1" xpskin="1" dpiaware="1" optimizer="1"/>
+      <icon enable="1">Media/Icon/512.png</icon>
     </target>
   </section>
 </project>

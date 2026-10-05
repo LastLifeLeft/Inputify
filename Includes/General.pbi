@@ -1,4 +1,40 @@
-﻿DeclareModule General
+﻿CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+	DeclareModule VK											; The Windows virtual key codes the popups are keyed on: macOS key codes are translated to these.
+		#VK_LBUTTON = $01
+		#VK_RBUTTON = $02
+		#VK_MBUTTON = $04
+		#VK_BACK = $08
+		#VK_TAB = $09
+		#VK_RETURN = $0D
+		#VK_SHIFT = $10
+		#VK_CONTROL = $11
+		#VK_MENU = $12
+		#VK_CAPITAL = $14
+		#VK_ESCAPE = $1B
+		#VK_SPACE = $20
+		#VK_PRIOR = $21
+		#VK_NEXT = $22
+		#VK_END = $23
+		#VK_HOME = $24
+		#VK_LEFT = $25
+		#VK_UP = $26
+		#VK_RIGHT = $27
+		#VK_DOWN = $28
+		#VK_INSERT = $2D
+		#VK_DELETE = $2E
+		#VK_LWIN = $5B											; Command
+		#VK_NUMPAD0 = $60
+		#VK_MULTIPLY = $6A
+		#VK_ADD = $6B
+		#VK_SUBTRACT = $6D
+		#VK_DECIMAL = $6E
+		#VK_DIVIDE = $6F
+		#VK_F1 = $70
+	EndDeclareModule
+	Module VK : EndModule
+CompilerEndIf
+
+DeclareModule General
 	; Public variables, structures and constants
 	#AppName = "Inputify"
 	#Version = 1.1
@@ -39,21 +75,13 @@
 	#Color_Mode_Light = 0
 	#Color_Mode_Dark = 1
 	
-	CompilerIf #PB_Compiler_OS = #PB_OS_Windows
-		Macro FixColor(Color)
-			RGB(Blue(Color), Green(Color), Red(Color))
-		EndMacro
-		Macro SetAlpha(Alpha, Color)
-			Alpha << 24 + Color
-		EndMacro
-	CompilerElse
-		Macro FixColor(Color)
-			Color
-		EndMacro
-		Macro SetAlpha(Alpha, Color) ; Not tested...
-			Color << 8 + Alpha
-		EndMacro
-	CompilerEndIf
+	; PB colours are $AABBGGRR on every OS, so the swap and the alpha shift are not Windows specific.
+	Macro FixColor(Color)
+		RGB(Blue(Color), Green(Color), Red(Color))
+	EndMacro
+	Macro SetAlpha(Alpha, Color)
+		Alpha << 24 + Color
+	EndMacro
 	
 	Global Dim ColorScheme(1, #_Color_Type_COUNT - 1)
 	Global Dim KeyScheme(3, #_KeyColor_Type_COUNT - 1)
@@ -109,8 +137,17 @@
 	;}
 	
 	;{ Fonts
-	Global OptionFont = FontID(LoadFont(#PB_Any, "Calibry", 9, #PB_Font_HighQuality))
-	Global TitleFont = FontID(LoadFont(#PB_Any, "Calibry", 9, #PB_Font_HighQuality | #PB_Font_Bold))
+	CompilerIf #PB_Compiler_OS = #PB_OS_MacOS						; Cocoa sizes are 1pt = 1px where Windows is 9pt = 12px
+		Global OptionFont = FontID(LoadFont(#PB_Any, "Helvetica Neue", 12, #PB_Font_HighQuality))
+		Global TitleFont = FontID(LoadFont(#PB_Any, "Helvetica Neue", 12, #PB_Font_HighQuality | #PB_Font_Bold))
+		#MarkDownFont = "Helvetica Neue"
+		#MarkDownFontSize = 13
+	CompilerElse
+		Global OptionFont = FontID(LoadFont(#PB_Any, "Calibry", 9, #PB_Font_HighQuality))
+		Global TitleFont = FontID(LoadFont(#PB_Any, "Calibry", 9, #PB_Font_HighQuality | #PB_Font_Bold))
+		#MarkDownFont = "Segoe UI"
+		#MarkDownFontSize = 10
+	CompilerEndIf
 	;}
 	
 	;{ Preferences
@@ -123,6 +160,7 @@
 		#Pref_Combo
 		#Pref_CheckUpdate
 		#Pref_InputColor
+		#Pref_InputMonitoringAsked										; macOS: the system prompt shows once, later launches offer System Settings
 		
 		#_Pref_COUNT
 	EndEnumeration
@@ -136,7 +174,7 @@ EndDeclareModule
 
 DeclareModule MainWindow
 	; Public variables, structures and constants
-	Global Ctrl, Shift, Alt
+	Global Ctrl, Shift, Alt, Cmd										; Cmd is the Mac's Command key
 	Global WindowID
 	Global Dim InputArray.i(255)
 	
@@ -151,9 +189,13 @@ DeclareModule PopupWindow
 	Declare Create(VKey)
 	Declare Hide(Window)
 	Declare SetPopupOrigin(X, Y)
-	Declare ShortCut(Control, Shift, Alt, Vkey)
+	Declare ShortCut(Control, Shift, Alt, Command, Vkey)
 	Declare AddKey(Window, VKey)
 	Declare SetScale(NewScale)
+	CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+		Declare.d PixelRatio()
+		Declare ImageLayer(WindowID)
+	CompilerEndIf
 EndDeclareModule
 
 Module General
@@ -185,7 +227,11 @@ Module General
 	EndProcedure
 	
 	Procedure Init()
-		Protected AppData.s = GetEnvironmentVariable("APPDATA"), CurrentDirectory.s = GetCurrentDirectory()
+		CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+			Protected AppData.s = GetHomeDirectory() + "Library/Application Support", CurrentDirectory.s = GetCurrentDirectory()
+		CompilerElse
+			Protected AppData.s = GetEnvironmentVariable("APPDATA"), CurrentDirectory.s = GetCurrentDirectory()
+		CompilerEndIf
 		
 		If FileSize(CurrentDirectory + "Preference.ini") > 0 Or LCase(ProgramParameter()) = "-portable"
 			PreferenceFile = CurrentDirectory + "Preference.ini"
@@ -213,6 +259,7 @@ Module General
 		
 		PreferenceGroup("Misc")
 		Preferences(#Pref_CheckUpdate) = ReadPreferenceLong("Update", #True)
+		Preferences(#Pref_InputMonitoringAsked) = ReadPreferenceLong("InputMonitoringAsked", #False)
 		
 		ClosePreferences()
 		
